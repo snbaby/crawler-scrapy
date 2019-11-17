@@ -2,6 +2,7 @@ import copy
 import datetime
 import pymysql
 from twisted.enterprise import adbapi
+from scrapy.exceptions import DropItem
 
 class MysqlTwistedPipeline(object):
 
@@ -73,6 +74,7 @@ class MysqlTwistedPipeline(object):
             )
             cursor.execute(sql, parm)
         except Exception as e:
+            raise DropItem("Duplicate item found: %s" % item)
             self.fp.write(datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S') + '----' + e.__str__() + '\n')
 
         def close_spider(self, spider):

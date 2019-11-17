@@ -17,5 +17,5 @@ class DuplicatesPipeline(object):
         if bf2 :
             raise DropItem("Duplicate item found:%s" % item)
         self.bf.add(item['link'])
-        logging.info("=====================================================item not foud, added!")
+        logging.info("=====================================================item inserted, added!")
         return item
