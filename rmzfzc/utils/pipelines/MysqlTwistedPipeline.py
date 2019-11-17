@@ -26,10 +26,13 @@ class MysqlTwistedPipeline(object):
         return cls(dbpool)
 
     def process_item(self, item, spider):
-        # 使用twisted将mysql插入变成异步执行
-        asynItem = copy.deepcopy(item)
-        query = self.dbpool.runInteraction(self.do_insert, asynItem)
-        query.addErrback(self.handle_error, item, spider)  # 处理异常
+        try:
+            # 使用twisted将mysql插入变成异步执行
+            asynItem = copy.deepcopy(item)
+            query = self.dbpool.runInteraction(self.do_insert, asynItem)
+            query.addErrback(self.handle_error, item, spider)  # 处理异常
+        except Exception as e:
+            self.fp.write(datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S') + '----' + e.__str__() + '\n')
         return item
 
     def handle_error(self, failure, item, spider):

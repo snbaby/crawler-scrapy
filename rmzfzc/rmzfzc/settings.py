@@ -73,7 +73,6 @@ ITEM_PIPELINES = {
 #     'hgsj.pipelines.MysqlTwistedPipeline': 128,
 #     'hgsj.pipelines.DuplicatesPipeline': 64,
 }
-# USER_AGENT = 'MY_USER_AGENT'
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
 AUTOTHROTTLE_ENABLED = True
@@ -94,8 +93,10 @@ AUTOTHROTTLE_ENABLED = True
 # HTTPCACHE_DIR = 'httpcache'
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
-# LOG_FILE = "mySpider.log"
-# LOG_LEVEL = "error"
+
+LOG_ENABLED = True
+LOG_FILE = "spiders.log"
+LOG_LEVEL = "WARNING"
 
 
 # MYSQL_HOST = '10.8.32.125'

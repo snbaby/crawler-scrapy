@@ -1,6 +1,6 @@
 import redis
+import logging
 from scrapy.exceptions import DropItem
-
 from .BloomFilter import PyBloomFilter
 
 class DuplicatesPipeline(object):
@@ -15,8 +15,7 @@ class DuplicatesPipeline(object):
     def process_item(self, item, spider):
         bf2 = self.bf.is_exist(item['link'])
         if bf2 :
-            print('=================================================')
             raise DropItem("Duplicate item found:%s" % item)
         self.bf.add(item['link'])
-        print("=====================================================item not foud, added!")
+        logging.info("=====================================================item not foud, added!")
         return item
