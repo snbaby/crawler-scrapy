@@ -33,8 +33,37 @@ class QuanguoZuixinSpider(scrapy.Spider):
         'HTTPCACHE_STORAGE':'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL' :'http://localhost:8050/'
     }
+    def __init__(self, pagenum=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_pagenum = pagenum
 
     def start_requests(self):
+        try:
+            url = "http://sousuo.gov.cn/column/30469/0.htm"
+            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+
+    def parse_page(self, response):
+        page_count  = self.parse_pagenum(response)
+        try:
+            for pagenum in range(page_count):
+                url = "http://sousuo.gov.cn/column/30469/" + str(pagenum) +".htm"
+                yield  SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+
+    def parse_pagenum(self, response):
+        try:
+            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
+            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
+            if not self.add_pagenum:
+                self.add_pagenum = response.css("#toPage li::text").extract_first()[1:-1]
+            return self.add_pagenum
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+
+    def parse_one_pagenum(self, response):
         try:
             url = 'http://sousuo.gov.cn/column/30469/1.htm'
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
