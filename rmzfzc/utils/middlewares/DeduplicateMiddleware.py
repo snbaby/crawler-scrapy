@@ -3,7 +3,7 @@ import logging
 from utils.pipelines.BloomFilter import PyBloomFilter
 from scrapy.exceptions import IgnoreRequest
 
-class DuplicatesFilterMiddleware(object):
+class DeduplicateMiddleware(object):
     # 设置redis连接
     def __init__(self):
         host = '47.106.239.73'

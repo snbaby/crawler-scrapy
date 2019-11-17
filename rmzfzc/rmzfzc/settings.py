@@ -94,9 +94,9 @@ AUTOTHROTTLE_ENABLED = True
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-LOG_ENABLED = True
-LOG_FILE = "spiders.log"
-LOG_LEVEL = "WARNING"
+#LOG_ENABLED = True
+#LOG_FILE = "spiders.log"
+#LOG_LEVEL = "WARNING"
 
 
 # MYSQL_HOST = '10.8.32.125'
