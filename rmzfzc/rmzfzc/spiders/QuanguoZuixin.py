@@ -3,7 +3,7 @@ import scrapy
 import logging
 
 from scrapy_splash import SplashRequest
-from rmzfzc.rmzfzc.items import rmzfzcItem
+from rmzfzc.items import rmzfzcItem
 
 script ="""
 function main(splash, args)
@@ -23,10 +23,11 @@ class QuanguoZuixinSpider(scrapy.Spider):
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
             'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
+            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware':130,
         },
         'ITEM_PIPELINES': {
-            'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 100,
-            'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 64,
+            'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
+            'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
 
         'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
@@ -43,15 +44,17 @@ class QuanguoZuixinSpider(scrapy.Spider):
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
     def parse_page(self, response):
-        page_count  = self.parse_pagenum(response)
+        page_count  = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 url = "http://sousuo.gov.cn/column/30469/" + str(pagenum) +".htm"
                 yield  SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
     def parse_pagenum(self, response):
         try:
@@ -62,6 +65,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
     def parse_one_pagenum(self, response):
         try:
@@ -69,14 +73,15 @@ class QuanguoZuixinSpider(scrapy.Spider):
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
     def parse(self, response):
         for href in response.xpath('//ul[@class="listTxt"]/li/h4/a/@href'):
             try:
-                print(href.extract())
                 yield scrapy.Request(href.extract(), callback=self.parse_item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
+                logging.exception(e)
         # 处理翻页
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
@@ -97,4 +102,5 @@ class QuanguoZuixinSpider(scrapy.Spider):
             item['link'] = response.request.url
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())
+            logging.exception(e)
         yield item
