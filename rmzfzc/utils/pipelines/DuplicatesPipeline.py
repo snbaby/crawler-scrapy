@@ -15,7 +15,7 @@ class DuplicatesPipeline(object):
     def process_item(self, item, spider):
         bf2 = self.bf.is_exist(item['link'])
         if bf2 :
-            raise DropItem("Duplicate item found:%s" % item)
+            raise DropItem("Duplicate item found:%s" % item['link'])
         self.bf.add(item['link'])
         logging.info("=====================================================item inserted, added!")
         return item

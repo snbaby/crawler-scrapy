@@ -1,5 +1,6 @@
 import copy
 import datetime
+import time
 import pymysql
 from twisted.enterprise import adbapi
 from scrapy.exceptions import DropItem
@@ -55,10 +56,11 @@ class MysqlTwistedPipeline(object):
                 `area`,
                 `website`,
                 `link`,
+                `create_time`
                 )
-                values (%s,%s, %s, 
-                %s, %s, %s,%s)
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s)
         '''
+            create_time = time.time()
             parm = (
                 item['title'],
                 item['article_num'],
@@ -71,6 +73,7 @@ class MysqlTwistedPipeline(object):
                 item['area'],
                 item['website'],
                 item['link'],
+                int(round(create_time * 1000))
             )
             cursor.execute(sql, parm)
         except Exception as e:
