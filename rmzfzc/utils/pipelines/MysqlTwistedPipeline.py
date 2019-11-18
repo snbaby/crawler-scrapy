@@ -28,6 +28,7 @@ class MysqlTwistedPipeline(object):
         return cls(dbpool)
 
     def process_item(self, item, spider):
+        print("insert into mysql........")
         try:
             # 使用twisted将mysql插入变成异步执行
             asynItem = copy.deepcopy(item)
@@ -73,9 +74,10 @@ class MysqlTwistedPipeline(object):
                 item['area'],
                 item['website'],
                 item['link'],
-                int(round(create_time * 1000))
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             )
             cursor.execute(sql, parm)
+            print("insert into mysql success")
         except Exception as e:
             raise DropItem("Duplicate item found: %s" % item)
             self.fp.write(datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S') + '----' + e.__str__() + '\n')
