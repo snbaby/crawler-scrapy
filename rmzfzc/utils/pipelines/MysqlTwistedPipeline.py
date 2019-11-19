@@ -5,6 +5,7 @@ import pymysql
 from twisted.enterprise import adbapi
 from scrapy.exceptions import DropItem
 
+
 class MysqlTwistedPipeline(object):
 
     def __init__(self, dbpool):
@@ -35,12 +36,14 @@ class MysqlTwistedPipeline(object):
             query = self.dbpool.runInteraction(self.do_insert, asynItem)
             query.addErrback(self.handle_error, item, spider)  # 处理异常
         except Exception as e:
-            self.fp.write(datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S') + '----' + e.__str__() + '\n')
+            self.fp.write(datetime.datetime.today().strftime(
+                '%Y-%m-%d %H:%M:%S') + '----' + e.__str__() + '\n')
         return item
 
     def handle_error(self, failure, item, spider):
         # 处理异步插入的异常
-        self.fp.write(datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S') + '----' + str(failure) + '\n')
+        self.fp.write(datetime.datetime.today().strftime(
+            '%Y-%m-%d %H:%M:%S') + '----' + str(failure) + '\n')
 
     def do_insert(self, cursor, item):
         try:
@@ -80,7 +83,8 @@ class MysqlTwistedPipeline(object):
             print("insert into mysql success")
         except Exception as e:
             raise DropItem("Duplicate item found: %s" % item)
-            self.fp.write(datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S') + '----' + e.__str__() + '\n')
+            self.fp.write(datetime.datetime.today().strftime(
+                '%Y-%m-%d %H:%M:%S') + '----' + e.__str__() + '\n')
 
         def close_spider(self, spider):
             self.dbpool.close()

@@ -8,8 +8,7 @@ import re
 from urllib import parse
 from scrapy.item import Field
 import scrapy
-from scrapy.loader.processors import TakeFirst, MapCompose,Join
-
+from scrapy.loader.processors import TakeFirst, MapCompose, Join
 
 
 class rmzfzcItem(scrapy.Item):
@@ -24,3 +23,7 @@ class rmzfzcItem(scrapy.Item):
     area = scrapy.Field()
     website = scrapy.Field()
     link = scrapy.Field()
+    spider_name = scrapy.Field()
+    module_name = scrapy.Field()
+    appendix_name = scrapy.Field()
+    txt = scrapy.Field()
