@@ -102,8 +102,8 @@ class BeijingZfwjSpider(scrapy.Spider):
             item['website'] = '北京市人民政府'
             item['module_name'] = '北京市人民政府-政府文件'
             item['spider_name'] = 'beijing_zfwj'
-            item['txt'] = response.xpath(
-                '//div[@id="mainText"]//text()').extract()
+            item['txt'] = "".join(response.xpath(
+                '//div[@id="mainText"]//text()').extract())
             item['appendix_name'] = ''
             item['link'] = response.request.url
             appendix = []
