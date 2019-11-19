@@ -80,4 +80,37 @@ class XinjiangSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        pass
+        for href in response.css('#sub1 div.list  ul  a::attr(href)').extract():
+            try:
+                yield scrapy.Request("http://www.xinjiang.gov.cn" + href,
+                                     callback=self.parse_item, dont_filter=True)
+            except Exception as e:
+                logging.error(self.name + ": " + e.__str__())
+                logging.exception(e)
+        # 处理翻页
+        # 1. 获取翻页链接
+        # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
+
+    def parse_item(self, response):
+        try:
+            item = rmzfzcItem()
+            item['title'] = response.css('div.title h1::text').extract_first()
+            item['article_num'] = ''
+            item['content'] = response.css('#news_content').extract_first()
+            item['appendix'] = ''
+            item['source'] = response.css('div.title div.t_left span:nth-child(2)::text').extract_first().replace('来源：','')
+            item['time'] = response.css('div.title div.t_left span:nth-child(1)::text').extract_first().replace('时间：','')
+            item['province'] = ''
+            item['city'] = ''
+            item['area'] = ''
+            item['website'] = '新疆维吾尔自治区人民政府'
+            item['link'] = response.request.url
+            item['txt'] = ''.join(response.css('#news_content *::text').extract())
+            item['appendix_name'] = ''
+            item['module_name'] = '新疆维吾尔自治区人民政府'
+            item['spider_name'] = 'xinjiang'
+            print("===========================>crawled one item" + response.request.url)
+        except Exception as e:
+            logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())
+            logging.exception(e)
+        yield item
