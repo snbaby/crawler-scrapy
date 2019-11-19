@@ -90,8 +90,9 @@ class BeijingZfwjSpider(scrapy.Spider):
             article_num = response.xpath('//*[@id="mainText"]/p[1]/text()').extract()[0] if response.xpath(
                 '//*[@id="mainText"]/p[1]/text()').extract() else \
                 response.xpath('//*[@id="mainText"]/div/p[1]/text()').extract()[0]
-            item['article_num'] = article_num if len(article_num) < 50 else ''
-            item['content'] = response.text
+            item['article_num'] = article_num if len(article_num) < 20 else ''
+            item['content'] = "".join(
+                response.xpath('//div[@id="mainText"]').extract())
             item['source'] = ''
             item['time'] = response.xpath(
                 '/html/body/div[3]/div/ol/li[8]/span/text()').extract_first()
@@ -99,6 +100,11 @@ class BeijingZfwjSpider(scrapy.Spider):
             item['city'] = ''
             item['area'] = ''
             item['website'] = '北京市人民政府'
+            item['module_name'] = '北京市人民政府-政府文件'
+            item['spider_name'] = 'beijing_zfwj'
+            item['txt'] = response.xpath(
+                '//div[@id="mainText"]//text()').extract()
+            item['appendix_name'] = ''
             item['link'] = response.request.url
             appendix = []
             # for href in response.xpath('.relevantdoc.xgjd a::href'):

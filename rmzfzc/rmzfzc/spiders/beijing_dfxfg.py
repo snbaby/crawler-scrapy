@@ -17,7 +17,7 @@ end
 
 
 class BeijingZfwjSpider(scrapy.Spider):
-    name = 'beijing_gwywj'
+    name = 'beijing_dfxfg'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -41,7 +41,7 @@ class BeijingZfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://www.beijing.gov.cn/zhengce/gwywj/index.html"
+            url = "http://www.beijing.gov.cn/zhengce/dfxfg/index.html"
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -51,7 +51,7 @@ class BeijingZfwjSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = "http://www.beijing.gov.cn/zhengce/gwywj/index_" + \
+                url = "http://www.beijing.gov.cn/zhengce/dfxfg/index_" + \
                     str(pagenum) + ".html"
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
         except Exception as e:
@@ -73,7 +73,7 @@ class BeijingZfwjSpider(scrapy.Spider):
     def parse(self, response):
         for href in response.xpath('//ul[@class="list"]/li/a/@href'):
             try:
-                yield scrapy.Request("http://www.beijing.gov.cn/zhengce/gwywj" + href.extract()[1:],
+                yield scrapy.Request("http://www.beijing.gov.cn/zhengce/dfxfg" + href.extract()[1:],
                                      callback=self.parse_item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -87,10 +87,10 @@ class BeijingZfwjSpider(scrapy.Spider):
             item = rmzfzcItem()
             item['title'] = response.xpath(
                 '//div[@class="header"]/p/text()').extract_first().strip()
-            article_num = response.xpath('//*[@id="mainText"]/p[1]/text()').extract()[0] if response.xpath(
-                '//*[@id="mainText"]/p[1]/text()').extract() else \
+            article_num = response.xpath('//*[@id="mainText"]/p[2]/text()').extract()[0] if response.xpath(
+                '//*[@id="mainText"]/p[2]/text()').extract() else \
                 response.xpath('//*[@id="mainText"]/div/p[1]/text()').extract()[0]
-            item['article_num'] = article_num if len(article_num) < 50 else ''
+            item['article_num'] = article_num if len(article_num) < 20 else ''
             item['content'] = "".join(response.xpath('//div[@id="mainText"]').extract())
             item['source'] = ''
             item['time'] = response.xpath(
@@ -99,8 +99,8 @@ class BeijingZfwjSpider(scrapy.Spider):
             item['city'] = ''
             item['area'] = ''
             item['website'] = '北京市人民政府'
-            item['module_name'] = '北京市人民政府-国务院文件'
-            item['spider_name'] = 'beijing_gwywj'
+            item['module_name'] = '北京市人民政府-地方性法规'
+            item['spider_name'] = 'beijing_dfxfg'
             item['txt'] = response.xpath(
                 '//div[@id="mainText"]//text()').extract()
             item['appendix_name'] = ''
