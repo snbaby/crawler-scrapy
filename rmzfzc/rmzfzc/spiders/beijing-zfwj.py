@@ -5,7 +5,7 @@ import logging
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 
-script ="""
+script = """
 function main(splash, args)
   assert(splash:go(args.url))
   assert(splash:wait(1))
@@ -14,26 +14,29 @@ function main(splash, args)
   }
 end
 """
+
+
 class BeijingZfwjSpider(scrapy.Spider):
     name = 'beijing-zfwj'
     custom_settings = {
-        'SPIDER_MIDDLEWARES':{
+        'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
             'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
-            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware':130,
+            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
 
-        'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE':'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL' :'http://localhost:8050/'
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
+        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
+        'SPLASH_URL': 'http://localhost:8050/'
     }
+
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_pagenum = pagenum
@@ -47,11 +50,11 @@ class BeijingZfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response):
-        page_count  = int(self.parse_pagenum(response))
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 url = "http://www.beijing.gov.cn/zhengce/zhengcefagui/index_" + str(pagenum) + ".html"
-                yield  SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -61,7 +64,10 @@ class BeijingZfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                self.add_pagenum = int(response.xpath('//div[@class="changepage"]').re('([1-9]\d*\.?\d*)')[0])
+                self.add_pagenum = int(response.css(
+                    '#sub1 > div.f_page > ul > li:nth-last-child(1) a::attr(href)').extract_first().replace('index',
+                                                                                                            '').replace(
+                    '.html', ''))
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -85,7 +91,7 @@ class BeijingZfwjSpider(scrapy.Spider):
             item['title'] = response.xpath('//div[@class="header"]/p/text()').extract_first().strip()
             item['article_num'] = response.xpath('//*[@id="mainText"]/p[1]/text()').extract()[0] if response.xpath(
                 '//*[@id="mainText"]/p[1]/text()').extract() else \
-            response.xpath('//*[@id="mainText"]/div/p[1]/text()').extract()[0]
+                response.xpath('//*[@id="mainText"]/div/p[1]/text()').extract()[0]
             item['content'] = response.text
             item['source'] = ''
             item['time'] = response.xpath('/html/body/div[3]/div/ol/li[8]/span/text()').extract_first()
