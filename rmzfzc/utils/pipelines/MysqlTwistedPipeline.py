@@ -1,16 +1,14 @@
 import copy
-import datetime
 import time
 import pymysql
 from twisted.enterprise import adbapi
 from scrapy.exceptions import DropItem
-
+import logging
 
 class MysqlTwistedPipeline(object):
 
     def __init__(self, dbpool):
         self.dbpool = dbpool
-        self.fp = open('msyql_save_err.log', 'a', encoding='utf-8')
 
     @classmethod
     def from_settings(cls, settings):
@@ -28,24 +26,26 @@ class MysqlTwistedPipeline(object):
 
         return cls(dbpool)
 
+    def open_spider(self, spider):
+        self.spider = spider
+
     def process_item(self, item, spider):
-        print("insert into mysql........")
         try:
             # 使用twisted将mysql插入变成异步执行
             asynItem = copy.deepcopy(item)
             query = self.dbpool.runInteraction(self.do_insert, asynItem)
             query.addErrback(self.handle_error, item, spider)  # 处理异常
         except Exception as e:
-            self.fp.write(datetime.datetime.today().strftime(
-                '%Y-%m-%d %H:%M:%S') + '----' + e.__str__() + '\n')
+            logging.error("Got exception {}, {}".format(e))
+
         return item
 
     def handle_error(self, failure, item, spider):
         # 处理异步插入的异常
-        self.fp.write(datetime.datetime.today().strftime(
-            '%Y-%m-%d %H:%M:%S') + '----' + str(failure) + '\n')
+        logging.error("spider {} on itemm failed: {}".format(self.spider.name, str(failure)))
 
     def do_insert(self, cursor, item):
+        logging.info(self.spider.name + ": " + "insert into mysql........")
         try:
             sql = f'''
                 insert into `topic_info_government_policy`(
@@ -88,12 +88,11 @@ class MysqlTwistedPipeline(object):
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             )
             cursor.execute(sql, parm)
-            print("insert into mysql success")
+            logging.info(self.spider.name + ": " + "insert into mysql success")
         except Exception as e:
             raise DropItem("Duplicate item found: %s" % item)
-            self.fp.write(datetime.datetime.today().strftime(
-                '%Y-%m-%d %H:%M:%S') + '----' + e.__str__() + '\n')
+            logging.info("Spider insert item failed: {}".format(e))
 
-        def close_spider(self, spider):
-            self.dbpool.close()
-            self.fp.close()
+    def close_spider(self, spider):
+        self.dbpool.close()
+        self.spider = None

@@ -110,9 +110,7 @@ class BeijingZfwjSpider(scrapy.Spider):
             # for href in response.xpath('.relevantdoc.xgjd a::href'):
             #    appendix.append(href.extract())
             item['appendix'] = ''
-            print(
-                "===========================>crawled one item" +
-                response.request.url)
+            logging.info("===========================>crawled one item" + response.request.url)
         except Exception as e:
             logging.error(
                 self.name +

@@ -23,7 +23,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
             'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
-            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware':130,
+            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,

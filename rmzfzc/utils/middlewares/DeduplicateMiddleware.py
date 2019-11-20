@@ -1,5 +1,4 @@
 import redis
-import logging
 from utils.pipelines.BloomFilter import PyBloomFilter
 from scrapy.exceptions import IgnoreRequest
 
