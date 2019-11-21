@@ -50,6 +50,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
     def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
+            # 在解析翻页数之前，首先解析首页内容
+            self.parse(response)
             for pagenum in range(page_count):
                 url = "http://gk.tj.gov.cn/glllm/szfwj/index_57_" + \
                     str(pagenum) + ".html"
