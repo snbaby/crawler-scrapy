@@ -81,7 +81,12 @@ class XizangSpider(scrapy.Spider):
     def parse(self, response):
         for href in response.css('div.zwyw_con.lf ul li a::attr(href)').extract():
             try:
-                yield scrapy.Request(response.request.url.replace('index.html',href),
+                if response.request.url.find('fgwj') > 0:
+                    url = 'http://www.xizang.gov.cn/zwgk/xxfb/fgwj/'+href.replace('./','')
+                else:
+                    url = 'http://www.xizang.gov.cn/zwgk/xxfb/zcjd_435/'+href.replace('./','')
+
+                yield scrapy.Request(url,
                                      callback=self.parse_item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -92,23 +97,42 @@ class XizangSpider(scrapy.Spider):
 
     def parse_item(self, response):
         try:
-            item = rmzfzcItem()
-            item['title'] = response.css('div.title h1::text').extract_first()
-            item['article_num'] = ''
-            item['content'] = response.css('#news_content').extract_first()
-            item['appendix'] = ''
-            item['source'] = response.css('div.title div.t_left span:nth-child(2)::text').extract_first().replace('来源：','')
-            item['time'] = response.css('div.title div.t_left span:nth-child(1)::text').extract_first().replace('时间：','')
-            item['province'] = ''
-            item['city'] = ''
-            item['area'] = ''
-            item['website'] = '新疆维吾尔自治区人民政府'
-            item['link'] = response.request.url
-            item['txt'] = ''.join(response.css('#news_content *::text').extract())
-            item['appendix_name'] = ''
-            item['module_name'] = '新疆维吾尔自治区人民政府'
-            item['spider_name'] = 'xinjiang'
-            print("===========================>crawled one item" + response.request.url)
+            if response.request.url.find('fgwj') > 0:
+                item = rmzfzcItem()
+                item['title'] = response.css('table tr:nth-child(1) td:nth-child(2)::text').extract_first()
+                item['article_num'] = response.css('table tr:nth-child(2) td:nth-child(4)::text').extract_first()
+                item['content'] = response.css('.TRS_UEDITOR').extract_first()
+                item['appendix'] = ''
+                item['source'] = response.css(".vvx-time-author.lf::text").extract_first().split('作者：')[0].split('来源：')[1].strip()
+                item['time'] = response.css(".vvx-time-author.lf::text").extract_first().split('时间：')[1].split('来源：')[0].strip()
+                item['province'] = ''
+                item['city'] = ''
+                item['area'] = ''
+                item['website'] = '西藏自治区人民政府'
+                item['link'] = response.request.url
+                item['txt'] = "".join(response.css('.TRS_UEDITOR *::text').extract())
+                item['appendix_name'] = ''
+                item['module_name'] = '西藏自治区人民政府'
+                item['spider_name'] = 'xizang'
+                print("===========================>crawled one item" + response.request.url)
+            else:
+                item = rmzfzcItem()
+                item['title'] = response.css('.inptit::text').extract_first()
+                item['article_num'] = ''
+                item['content'] = response.css('.TRS_UEDITOR').extract_first()
+                item['appendix'] = ''
+                item['source'] = ''
+                item['time'] = response.css(".vvx-time-author.lf::text").extract_first().split('时间：')[1].split('来源：')[0].strip()
+                item['province'] = ''
+                item['city'] = ''
+                item['area'] = ''
+                item['website'] = '西藏自治区人民政府'
+                item['link'] = response.request.url
+                item['txt'] = "".join(response.css('.TRS_UEDITOR *::text').extract())
+                item['appendix_name'] = ''
+                item['module_name'] = '西藏自治区人民政府'
+                item['spider_name'] = 'xizang'
+                print("===========================>crawled one item" + response.request.url)
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())
             logging.exception(e)
