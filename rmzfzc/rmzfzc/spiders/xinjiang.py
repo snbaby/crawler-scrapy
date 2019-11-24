@@ -82,7 +82,8 @@ class XinjiangSpider(scrapy.Spider):
     def parse(self, response):
         for href in response.css('#sub1 div.list  ul  a::attr(href)').extract():
             try:
-                yield scrapy.Request("http://www.xinjiang.gov.cn" + href,
+                url = response.urljoin(href)
+                yield scrapy.Request(url,
                                      callback=self.parse_item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())

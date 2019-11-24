@@ -81,11 +81,7 @@ class XizangSpider(scrapy.Spider):
     def parse(self, response):
         for href in response.css('div.zwyw_con.lf ul li a::attr(href)').extract():
             try:
-                if response.request.url.find('fgwj') > 0:
-                    url = 'http://www.xizang.gov.cn/zwgk/xxfb/fgwj/'+href.replace('./','')
-                else:
-                    url = 'http://www.xizang.gov.cn/zwgk/xxfb/zcjd_435/'+href.replace('./','')
-
+                url = response.urljoin(href)
                 yield scrapy.Request(url,
                                      callback=self.parse_item, dont_filter=True)
             except Exception as e:

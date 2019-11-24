@@ -94,11 +94,7 @@ class JiangsuSpider(scrapy.Spider):
     def parse(self, response, **kwargs):
         for href in response.css('.main_list a::attr(href)').extract():
             try:
-                if href.startswith('http'):
-                    url = href
-                else:
-                    url = 'http://www.jiangsu.gov.cn' + href
-
+                url = response.urljoin(href)
                 if kwargs['topic'] == 'szfjbgtwj':
                     yield scrapy.Request(url, callback=self.parse_szfjbgtwj, cb_kwargs={'url': url}, dont_filter=True)
                 elif kwargs['topic'] == 'zcjd':
