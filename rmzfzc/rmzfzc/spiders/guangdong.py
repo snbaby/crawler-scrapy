@@ -50,10 +50,10 @@ class GuangdongSpider(scrapy.Spider):
                     'topic': 'wjk',  # 文件库
                     'url': 'http://www.gd.gov.cn/zwgk/wjk/qbwj/index.html'
                 },
-                # {
-                #     'topic': 'zcjd',  # 政策解读
-                #     'url': 'http://www.gd.gov.cn/zwgk/zcjd/snzcsd/index.html'
-                # }
+                {
+                    'topic': 'zcjd',  # 政策解读
+                    'url': 'http://www.gd.gov.cn/zwgk/zcjd/snzcsd/index.html'
+                }
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
