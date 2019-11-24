@@ -6,6 +6,7 @@ from .BloomFilter import PyBloomFilter
 class DuplicatesPipeline(object):
 
     def __init__(self):
+        return
         host = '47.106.239.73'
         port = 6379
         pool = redis.ConnectionPool(host=host, port=port, db=1)
@@ -13,6 +14,7 @@ class DuplicatesPipeline(object):
         self.bf =PyBloomFilter(conn=conn)
 
     def process_item(self, item, spider):
+        return item
         bf2 = self.bf.is_exist(item['link'])
         if bf2 :
             raise DropItem("Duplicate item found:%s" % item['link'])
