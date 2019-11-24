@@ -49,16 +49,16 @@ class JiangsuSpider(scrapy.Spider):
                 'http://www.jiangsu.gov.cn/col/col66109/index.html'
             ]
             for url in urls:
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page, cb_kwargs={'url': url})
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page, cb_kwargs={'url':url})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response):
+    def parse_page(self, response, **kwargs):
+        print(kwargs)
         page_count = int(self.parse_pagenum(response))
         uid = response.css('.bt-rig-cen-01 div::attr(id)').extract_first()
         print('-------------')
-        print(response.cb_kwargs['url'])
         print(page_count)
         print(uid)
         print('-------------')
