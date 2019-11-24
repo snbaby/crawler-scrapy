@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 import scrapy
-from scrapy.http import Request, FormRequest
-from scrapy.selector import Selector
-from scrapy_splash.request import SplashRequest, SplashFormRequest
+import logging
+from scrapy_splash import SplashRequest
 
+script ="""
+function main(splash, args)
+  assert(splash:go(args.url))
+  assert(splash:wait(2))
+  return {
+    html = splash:html(),
+  }
+end
+"""
 
-class JdSpider(scrapy.Spider):
-    name = "jd"
+class QuanguoZuixinSpider(scrapy.Spider):
+    name = 'jd'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -15,7 +23,7 @@ class JdSpider(scrapy.Spider):
             'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
             'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
             'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
-            'scrapy_splash.SplashCookiesMiddleware':140,
+            'scrapy_splash.SplashCookiesMiddleware': 140,
             'scrapy_splash.SplashMiddleware': 725,
             'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
         },
@@ -27,19 +35,34 @@ class JdSpider(scrapy.Spider):
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL': "http://47.106.239.73:8050/"
     }
+    def __init__(self, pagenum=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_pagenum = pagenum
 
     def start_requests(self):
-        splash_args = {"lua_source": """
-                    --splash.response_body_enabled = true
-                    splash.private_mode_enabled = false
-                    splash:set_user_agent("Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36")
-                    assert(splash:go("http://www.jiangsu.gov.cn/col/col32646/index.html"))
-                    splash:wait(3)
-                    return {html = splash:html()}
-                    """}
-        yield SplashRequest("http://www.jiangsu.gov.cn/col/col32646/index.html", endpoint='run', args=splash_args, callback=self.onSave)
+        try:
+            url = "http://www.jiangsu.gov.cn/col/col32646/index.html"
+            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
-    def onSave(self, response):
-        value = response.css('.default_pgTotalPage').extract()
-        print('------------------')
-        print(value)
+    def parse_page(self, response):
+        try:
+            page_count = int(self.parse_pagenum(response))
+            logging.info("page count====={}".format(page_count))
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
+
+    def parse_pagenum(self, response):
+        try:
+            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
+            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
+            if not self.add_pagenum:
+                self.add_pagenum = response.css('.default_pgTotalPage::text').extract_first()
+                logging.info("self.add_pagenum={}".format(self.add_pagenum))
+            return self.add_pagenum
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
