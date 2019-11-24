@@ -80,7 +80,7 @@ class BeijingZfwjSpider(scrapy.Spider):
                 # 加密记录不处理
                 if href.startswith('./'):
                     yield scrapy.Request("http://www.ln.gov.cn/zfxx/zcjd" + href[1:],
-                                         callback=self.parse_item, meta=item, dont_filter=True)
+                                         callback=self.parse_item,dont_filter=True,cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -88,20 +88,19 @@ class BeijingZfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response):
-        meta = response.request.meta
+    def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
-            item['title'] = meta['title']
+            item['title'] = kwargs['title']
             item['article_num'] = ''
-            item['time'] = meta['time']
+            item['time'] = kwargs['time']
             item['content'] = "".join(response.xpath('//div[@class="TRS_Editor"]').extract())
             item['source'] = ''
-            item['province'] = '辽宁市'
+            item['province'] = '辽宁省'
             item['city'] = ''
             item['area'] = ''
-            item['website'] = '辽宁市人民政府'
-            item['module_name'] = '辽宁市人民政府-政策解读'
+            item['website'] = '辽宁省人民政府'
+            item['module_name'] = '辽宁省人民政府-政策解读'
             item['spider_name'] = 'liaoning_zcjd'
             item['txt'] = "".join(response.xpath('//div[@class="TRS_Editor"]//text()').extract())
             item['appendix_name'] = ''

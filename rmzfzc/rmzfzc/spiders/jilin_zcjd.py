@@ -17,7 +17,7 @@ end
 
 
 class BeijingZfwjSpider(scrapy.Spider):
-    name = 'beijing_zfwj'
+    name = 'jilin_zcjd'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -41,7 +41,7 @@ class BeijingZfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://www.beijing.gov.cn/zhengce/zhengcefagui/index.html"
+            url = "http://xxgk.jl.gov.cn/szf/zcjd/index.html"
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -50,9 +50,10 @@ class BeijingZfwjSpider(scrapy.Spider):
     def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
+            # 在解析翻页数之前，首先解析首页内容
             for pagenum in range(page_count):
-                url = "http://www.beijing.gov.cn/zhengce/zhengcefagui/index_" + \
-                      str(pagenum) + ".html" if pagenum > 0 else "http://www.beijing.gov.cn/zhengce/zhengcefagui/index.html"
+                url = "http://xxgk.jl.gov.cn/szf/zcjd/index_" + \
+                    str(pagenum) + ".html" if pagenum > 0 else "http://xxgk.jl.gov.cn/szf/zcjd/index.html"
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -63,54 +64,50 @@ class BeijingZfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                self.add_pagenum = int(
-                    response.xpath('//div[@class="changepage"]').re(r'([1-9]\d*\.?\d*)')[0])
+                self.add_pagenum = int(response.xpath('//*[@class="lv_menu_fanye"]').re(r'([1-9]\d*\.?\d*)')[0])
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.xpath('//ul[@class="list"]/li/a/@href'):
+        for selector in response.xpath('////*[@class="zlyjq"]/ul/li'):
             try:
-                yield scrapy.Request("http://www.beijing.gov.cn/zhengce/zhengcefagui" + href.extract()[1:],
-                                     callback=self.parse_item, dont_filter=True)
+                item = {}
+                item['title'] = selector.xpath('./a/text()').extract_first().strip()
+                item['time'] = selector.xpath('./a/span/text()').extract_first().strip().replace('[','').replace(']','')
+                href = selector.xpath('./a/@href').extract_first()
+                if href.startswith('./'):
+                    yield scrapy.Request("http://xxgk.jl.gov.cn/szf/zcjd" + href[1:],
+                                         callback=self.parse_item,dont_filter=True,cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
-        # 处理翻页
-        # 1. 获取翻页链接
-        # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response):
+    def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
-            item['title'] = response.xpath(
-                '//div[@class="header"]/p/text()').extract_first().strip()
-            article_num = response.xpath('//*[@id="mainText"]/p[1]//text()').extract()[0] if response.xpath(
-                '//*[@id="mainText"]/p[1]//text()').extract() else \
-                response.xpath('//*[@id="mainText"]/div/p[1]//text()').extract()[0]
-            item['article_num'] = article_num if len(article_num) < 20 else ''
-            item['content'] = "".join(
-                response.xpath('//div[@id="mainText"]').extract())
+            item['title'] = kwargs['title']
+            item['article_num'] =  response.xpath('//td[@class="zly_xxgk_20170120l2"]/text()').extract()[0]
+            item['time'] = kwargs['time']
+            item['content'] = "".join(response.xpath('//div[@id="xx_conter1023"]').extract())
             item['source'] = ''
-            item['time'] = response.xpath(
-                '/html/body/div[3]/div/ol/li[8]/span/text()').extract_first()
-            item['province'] = '北京市'
+            item['province'] = '吉林省'
             item['city'] = ''
             item['area'] = ''
-            item['website'] = '北京市人民政府'
-            item['module_name'] = '北京市人民政府-政府文件'
-            item['spider_name'] = 'beijing_zfwj'
-            item['txt'] = "".join(response.xpath(
-                '//div[@id="mainText"]//text()').extract())
+            item['website'] = '吉林省人民政府'
+            item['module_name'] = '吉林省人民政府-政策解读'
+            item['spider_name'] = 'jilin_zcjd'
+            item['txt'] = "".join(response.xpath('//div[@id="xx_conter1023"]//text()').extract())
             item['appendix_name'] = ''
             item['link'] = response.request.url
             appendix = []
             # for href in response.xpath('.relevantdoc.xgjd a::href'):
             #    appendix.append(href.extract())
             item['appendix'] = ''
-            logging.info("===========================>crawled one item" + response.request.url)
+            print(
+                "===========================>crawled one item" +
+                response.request.url)
         except Exception as e:
             logging.error(
                 self.name +
