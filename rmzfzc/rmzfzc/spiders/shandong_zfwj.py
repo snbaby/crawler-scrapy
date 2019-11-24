@@ -16,7 +16,7 @@ end
 """
 
 class QuanguoZuixinSpider(scrapy.Spider):
-    name = 'quanguo_jd'
+    name = 'shandong_zfwj'
     custom_settings = {
         'SPIDER_MIDDLEWARES':{
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -39,10 +39,10 @@ class QuanguoZuixinSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        urlList = ['http://sousuo.gov.cn/column/30593/','http://sousuo.gov.cn/column/40048/','http://sousuo.gov.cn/column/30474/']
+        urlList = ['http://www.shandong.gov.cn/col/col2266/index.html?uid=6820&pageNum=','http://www.shandong.gov.cn/col/col2267/index.html?uid=6820&pageNum=','http://www.shandong.gov.cn/col/col2268/index.html?uid=6820&pageNum=']
         try:
             for urlTmp in urlList:
-                url = urlTmp+"/0.htm"
+                url = urlTmp+"1"
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page,cb_kwargs={'preUrl':urlTmp})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -53,7 +53,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
         try:
             preUrl = kwargs['preUrl']
             for pagenum in range(page_count):
-                url = preUrl + str(pagenum) +".htm"
+                url = preUrl + str(pagenum)
                 yield  SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -90,12 +90,12 @@ class QuanguoZuixinSpider(scrapy.Spider):
             item['appendix'] = ''
             item['source'] = response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract_first().replace('来源：','')
             item['time'] = response.xpath('//div[@class="pages-date"]/text()').extract_first()
-            item['province'] = ''
+            item['province'] = '山东省'
             item['city'] = ''
             item['area'] = ''
-            item['website'] = '中华人民共和国中央人民政府'
-            item['module_name'] = '中华人民共和国中央人民政府-政策解读'
-            item['spider_name'] = 'quanguo_jd'
+            item['website'] = '山东省人民政府'
+            item['module_name'] = '山东省人民政府-政府文件'
+            item['spider_name'] = 'shandong_zfwj'
             item['txt'] = "".join(response.xpath('//div[@id="UCAP-CONTENT"]//text()').extract())
             item['appendix_name'] = ''
             item['link'] = response.request.url
