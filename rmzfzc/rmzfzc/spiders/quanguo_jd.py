@@ -16,7 +16,7 @@ end
 """
 
 class QuanguoZuixinSpider(scrapy.Spider):
-    name = 'QuanguoZuixin'
+    name = 'uanguo_jd'
     custom_settings = {
         'SPIDER_MIDDLEWARES':{
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -39,18 +39,21 @@ class QuanguoZuixinSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
+        urlList = ['http://sousuo.gov.cn/column/30593/','http://sousuo.gov.cn/column/40048/','http://sousuo.gov.cn/column/30474/']
         try:
-            url = "http://sousuo.gov.cn/column/30469/0.htm"
-            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
+            for urlTmp in urlList:
+                url = urlTmp+"/0.htm"
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page,cb_kwargs={'preUrl':urlTmp})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response):
+    def parse_page(self, response, **kwargs):
         page_count  = int(self.parse_pagenum(response))
         try:
+            preUrl = kwargs['preUrl']
             for pagenum in range(page_count):
-                url = "http://sousuo.gov.cn/column/30469/" + str(pagenum) +".htm"
+                url = preUrl + str(pagenum) +".htm"
                 yield  SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -63,14 +66,6 @@ class QuanguoZuixinSpider(scrapy.Spider):
             if not self.add_pagenum:
                 self.add_pagenum = response.css("#toPage li::text").extract_first()[1:-1]
             return self.add_pagenum
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_one_pagenum(self, response):
-        try:
-            url = 'http://sousuo.gov.cn/column/30469/1.htm'
-            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -89,18 +84,18 @@ class QuanguoZuixinSpider(scrapy.Spider):
     def parse_item(self, response):
         try:
             item = rmzfzcItem()
-            item['title'] = response.css('.bd1 td::text').extract()[4]
-            item['article_num'] = response.css('.bd1 td::text').extract()[5]
-            item['content'] = response.text
+            item['title'] = response.css('.oneColumn h1::text').extract_first().strip()
+            item['article_num'] = ''
+            item['content'] = "".join(response.xpath('//div[@id="UCAP-CONTENT"]').extract())
             item['appendix'] = ''
-            item['source'] = response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract()
-            item['time'] = response.css('.bd1 td::text').extract()[3]
+            item['source'] = response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract_first().replace('来源：','')
+            item['time'] = response.xpath('//div[@class="pages-date"]/text()').extract_first()
             item['province'] = ''
             item['city'] = ''
             item['area'] = ''
             item['website'] = '中华人民共和国中央人民政府'
-            item['module_name'] = '中华人民共和国中央人民政府-最新'
-            item['spider_name'] = 'quanguo_zuixin'
+            item['module_name'] = '中华人民共和国中央人民政府-政策解读'
+            item['spider_name'] = 'quanguo_jd'
             item['txt'] = "".join(response.xpath('//div[@id="UCAP-CONTENT"]//text()').extract())
             item['appendix_name'] = ''
             item['link'] = response.request.url
