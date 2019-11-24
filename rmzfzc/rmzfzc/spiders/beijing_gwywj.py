@@ -52,8 +52,8 @@ class BeijingZfwjSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 url = "http://www.beijing.gov.cn/zhengce/gwywj/index_" + \
-                    str(pagenum) + ".html"
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
+                      str(pagenum) + ".html" if pagenum > 0 else "http://www.beijing.gov.cn/zhengce/gwywj/index.html"
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)

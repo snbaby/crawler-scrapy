@@ -51,9 +51,11 @@ class TianJinZcjdSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = "http://www.tj.gov.cn/zw/zcjd/index_" + \
-                    str(pagenum) + ".html"
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
+                for pagenum in range(page_count):
+                    url = "http://www.tj.gov.cn/zw/zcjd/index_" + \
+                          str(pagenum) + ".html" if pagenum > 0 else "http://www.tj.gov.cn/zw/zcjd/index.html"
+                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse,
+                                        dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
