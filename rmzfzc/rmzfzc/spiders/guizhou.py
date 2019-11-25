@@ -16,6 +16,7 @@ function main(splash, args)
 end
 """
 
+
 class GuizhouSpider(scrapy.Spider):
     name = 'guizhou'
     custom_settings = {
@@ -55,7 +56,7 @@ class GuizhouSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
+                yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse_page,
                                     cb_kwargs=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -63,11 +64,6 @@ class GuizhouSpider(scrapy.Spider):
 
     def parse_page(self, response, **kwargs):
         page_count = int(self.parse_pagenum(response))
-        print('------------------------------')
-        print(page_count)
-        print('------------------------------')
-
-        return
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
@@ -75,7 +71,7 @@ class GuizhouSpider(scrapy.Spider):
                 else:
                     url = kwargs['url'].replace(
                         '.html', '_' + str(pagenum) + '.html')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs)
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse, cb_kwargs=kwargs)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -85,11 +81,113 @@ class GuizhouSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.css('.page a:nth-last-child(3)::text').extract_first())
+                return int(
+                    response.css('.page a:nth-last-child(3)::text').extract_first())
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response):
-        pass
+    def parse(self, response, **kwargs):
+        if kwargs['topic'] == 'szfl':
+            for href in response.css(
+                    '.right-list-box ul li a::attr(href)').extract():
+                try:
+                    url = response.urljoin(href)
+                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse_szfl, cb_kwargs={'url': url}, dont_filter=True)
+                except Exception as e:
+                    logging.error(self.name + ": " + e.__str__())
+                    logging.exception(e)
+        else:
+            for href in response.css(
+                    '.zcjd_list ul li h2 a::attr(href)').extract():
+                try:
+                    url = response.urljoin(href)
+                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse_wzjd, cb_kwargs={'url': url}, dont_filter=True)
+                except Exception as e:
+                    logging.error(self.name + ": " + e.__str__())
+                    logging.exception(e)
+
+    def parse_szfl(self, response, **kwargs):
+        try:
+            item = rmzfzcItem()
+            item['title'] = response.css(
+                '.Article_xx table tr:nth-child(4) td:nth-child(2)::text').extract_first().strip()
+            item['article_num'] = response.css(
+                '.Article_xx table tr:nth-child(3) td:nth-child(2)::text').extract_first().strip()
+            item['content'] = response.css('.zw-con').extract_first()
+            item['appendix'] = ''
+            item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
+            item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first().replace('发布时间：', '').strip()
+            item['province'] = ''
+            item['city'] = ''
+            item['area'] = ''
+            item['website'] = '贵州省人民政府'
+            item['link'] = kwargs['url']
+            item['txt'] = ''.join(response.css('.zw-con *::text').extract())
+            item['appendix_name'] = ''
+            item['module_name'] = '贵州省人民政府'
+            item['spider_name'] = 'guizhou'
+            print(
+                "===========================>crawled one item" +
+                response.request.url)
+        except Exception as e:
+            logging.error(
+                self.name +
+                " in parse_item: url=" +
+                response.request.url +
+                ", exception=" +
+                e.__str__())
+            logging.exception(e)
+        yield item
+
+    def parse_wzjd(self, response, **kwargs):
+        try:
+            item = rmzfzcItem()
+            if response.css('#Zoom div:nth-child(1)::attr(class)') == 'Article_xx':
+                item['title'] = response.css(
+                    '.Article_xx table tr:nth-child(4) td:nth-child(2)::text').extract_first().strip()
+                item['article_num'] = response.css(
+                    '.Article_xx table tr:nth-child(3) td:nth-child(2)::text').extract_first().strip()
+                item['content'] = response.css('.zw-con').extract_first()
+                item['appendix'] = ''
+                item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
+                item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first().replace('发布时间：', '').strip()
+                item['province'] = ''
+                item['city'] = ''
+                item['area'] = ''
+                item['website'] = '贵州省人民政府'
+                item['link'] = kwargs['url']
+                item['txt'] = ''.join(response.css('.zw-con *::text').extract())
+                item['appendix_name'] = ''
+                item['module_name'] = '贵州省人民政府'
+                item['spider_name'] = 'guizhou'
+            else:
+                item['title'] = response.css('.Article_bt h1::text').extract_first().strip()
+                item['article_num'] = ''
+                item['content'] = response.css('.zw-con').extract_first()
+                item['appendix'] = ''
+                item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
+                item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first().replace('发布时间：',
+                                                                                                           '').strip()
+                item['province'] = ''
+                item['city'] = ''
+                item['area'] = ''
+                item['website'] = '贵州省人民政府'
+                item['link'] = kwargs['url']
+                item['txt'] = ''.join(response.css('.zw-con *::text').extract())
+                item['appendix_name'] = ''
+                item['module_name'] = '贵州省人民政府'
+                item['spider_name'] = 'guizhou'
+            print(
+                "===========================>crawled one item" +
+                response.request.url)
+        except Exception as e:
+            logging.error(
+                self.name +
+                " in parse_item: url=" +
+                response.request.url +
+                ", exception=" +
+                e.__str__())
+            logging.exception(e)
+        yield item
