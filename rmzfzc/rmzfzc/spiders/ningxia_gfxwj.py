@@ -17,7 +17,7 @@ end
 
 
 class TianJinSzfwjSpider(scrapy.Spider):
-    name = 'qinghai_zfwj'
+    name = 'ningxia_gfxwj'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -40,23 +40,21 @@ class TianJinSzfwjSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        list = ['http://zwgk.qh.gov.cn/zdgk/zwgkzfxxgkml/8/9/index']
-        for urlTmp in list:
-            try:
-                url = urlTmp+ ".html"
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page,cb_kwargs={'urlTmp':urlTmp})
-            except Exception as e:
-                logging.error(self.name + ": " + e.__str__())
-                logging.exception(e)
+        try:
+            url = "http://www.nx.gov.cn/zwgk/gfxwj/list.html"
+            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             # 在解析翻页数之前，首先解析首页内容
             self.parse(response)
             for pagenum in range(page_count):
-                url = kwargs['urlTmp'] + '_' + \
-                      str(pagenum) + ".html" if pagenum > 0 else kwargs['urlTmp'] + ".html"
+                url = "http://www.nx.gov.cn/zwgk/gfxwj/list_" + \
+                      str(pagenum) + ".html" if pagenum > 0 else "http://www.nx.gov.cn/zwgk/gfxwj/list.html"
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -67,21 +65,23 @@ class TianJinSzfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                self.add_pagenum = int(response.xpath('//div[@class="zw-page mt-36"]').re(r'([1-9]\d*\.?\d*)')[65])
+                self.add_pagenum = int(response.xpath('//div[@class="pageing"]/span[1]').re(r'([1-9]\d*\.?\d*)')[0])
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for selector in response.xpath('//li[@class="clearfix"]'):
+        for selector in response.xpath('//ul[@class="nx-list clearfix"]/li'):
             try:
                 item = {}
-                item['title'] = selector.xpath('./p[1]/a/text()').extract_first()
+                item['title'] = selector.xpath('./a/text()').extract_first()
                 item['time'] = selector.xpath('./span/text()').extract_first()
-                item['article_num'] = selector.xpath('./p[2]/text()').extract_first()
-                href = selector.xpath('./p[1]/a/@href').extract_first()
-                yield scrapy.Request(href,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                item['source'] = selector.xpath('./div/p[3]/span[2]/text()').extract_first()
+                item['article_num'] = selector.xpath('./div/p[7]/span[2]/text()').extract_first()
+                href = selector.xpath('./a/@href').extract_first()
+                url = response.urljoin(href)
+                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -94,19 +94,22 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item = rmzfzcItem()
             item['title'] = kwargs['title']
             item['article_num'] = kwargs['article_num']
-            item['content'] = "".join(response.xpath('//div[@id="k-xxgk2"]').extract())
-            item['source'] = response.xpath('//li[@class="w712"]/span[not(contains(@class, "tit"))]/text()').extract()[1]
+            item['content'] = "".join(response.xpath('//div[@class="info_box"]').extract())
+            item['source'] = kwargs['source']
             item['time'] = kwargs['time']
-            item['province'] = '青海省'
+            item['province'] = '宁夏回族自治区'
             item['city'] = ''
             item['area'] = ''
-            item['website'] = '青海省人民政府'
-            item['module_name'] = '青海省人民政府-政府文件'
-            item['spider_name'] = 'qinghai_zfwj'
-            item['txt'] = "".join(response.xpath('//div[@id="k-xxgk2"]//text()').extract())
-            item['appendix_name'] = ";".join(response.xpath('//div[@id="k-xxgk2"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
+            item['website'] = '宁夏回族自治区人民政府'
+            item['module_name'] = '宁夏回族自治区人民政府-规范性文件'
+            item['spider_name'] = 'ningxia_gfxwj'
+            item['txt'] = "".join(response.xpath('//div[@class="info_box"]//text()').extract())
+            item['appendix_name'] = ";".join(response.xpath('//div[@class="info_box"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
             item['link'] = response.request.url
-            item['appendix'] = ";".join(response.xpath('//div[@id="k-xxgk2"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
+            appendix = []
+            # for href in response.xpath('.relevantdoc.xgjd a::href'):
+            #    appendix.append(href.extract())
+            item['appendix'] = ";".join(response.xpath('//div[@class="info_box"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
             print(
                 "===========================>crawled one item" +
                 response.request.url)
