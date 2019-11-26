@@ -17,7 +17,7 @@ end
 
 
 class BeijingZfwjSpider(scrapy.Spider):
-    name = 'shanxi_zfxxgkgd'
+    name = 'shanxi_zxjd'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -41,7 +41,7 @@ class BeijingZfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://www.shanxi.gov.cn/zw/zfgkzl/zfxxgkgd/index.shtml"
+            url = "http://www.shanxi.gov.cn/yw/zcjd/latest_1447.shtml"
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -54,8 +54,8 @@ class BeijingZfwjSpider(scrapy.Spider):
             # 在解析翻页数之前，首先解析首页内容
             for pagenum in range(page_count):
                 if pagenum<page_count:
-                    url = "http://www.shanxi.gov.cn/zw/zfgkzl/zfxxgkgd/index_" + \
-                        str(pagenum) + ".shtml" if pagenum > 0 else "http://www.shanxi.gov.cn/zw/zfgkzl/zfxxgkgd/index.shtml"
+                    url = "http://www.shanxi.gov.cn/yw/zcjd/latest_1447_" + \
+                        str(pagenum) + ".shtml" if pagenum > 0 else "http://www.shanxi.gov.cn/yw/zcjd/latest_1447.shtml"
                     print('url==='+url)
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
@@ -67,14 +67,14 @@ class BeijingZfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                self.add_pagenum = int(response.xpath('//div[@class="shanxi-gov-page-box mt20"]/p/script').re(r'([1-9]\d*\.?\d*)')[26])
+                self.add_pagenum = int(response.xpath('//div[@class="shanxi-gov-page-box"]/p/script').re(r'([1-9]\d*\.?\d*)')[27])
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.xpath('//td[@class="affaires-doc-title"]/a/@href'):
+        for href in response.xpath('//*[@class="tab-flag-construck"]/ul/li/a/@href'):
             try:
                 print('url===' + href.extract())
                 url = response.urljoin(href.extract())
@@ -88,36 +88,33 @@ class BeijingZfwjSpider(scrapy.Spider):
             item = rmzfzcItem()
             if response.xpath('//*[@class="detail-article-title oflow-hd"]/h5/text()').extract_first():
                 item['title'] = response.xpath('//*[@class="detail-article-title oflow-hd"]/h5/text()').extract_first()
-                item['article_num'] = response.xpath('//span[contains(text(),"〔")]/text()').extract_first()
+                item['article_num'] = ''
                 item['time'] = response.xpath('//*[@class="article-infos-source left"]/span[contains(@alt,"时间")]/text()').extract_first()
-                item['content'] = "".join(response.xpath('//div[@class="TRS_Editor"]').extract())
+                item['content'] = "".join(response.xpath('//div[@class="TRS_Editor"]').extract()) if response.xpath('//div[@class="TRS_Editor"]') else "".join(response.xpath('//div[@class="article-body oflow-hd"]').extract())
                 item['source'] = response.xpath('//*[@class="article-infos-source left"]/span[contains(@alt,"来源")]/@alt').extract_first().replace('来源：','')
                 item['province'] = '山西省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '山西省人民政府'
-                item['module_name'] = '山西省人民政府-政务公开法规政策'
-                item['spider_name'] = 'shanxi_zfxxgkgd'
-                item['txt'] = "".join(response.xpath('//div[@class="TRS_Editor"]//text()').extract())
+                item['module_name'] = '山西省人民政府-最新解读'
+                item['spider_name'] = 'shanxi_zxjd'
+                item['txt'] = "".join(response.xpath('//div[@class="TRS_Editor"]//text()').extract()) if response.xpath('//div[@class="TRS_Editor"]') else "".join(response.xpath('//div[@class="article-body oflow-hd"]//text()').extract())
                 item['appendix_name'] = ''
                 item['link'] = response.request.url
-                appendix = []
-                # for href in response.xpath('.relevantdoc.xgjd a::href'):
-                #    appendix.append(href.extract())
                 item['appendix'] = ''
             else:
-                item['title'] = response.xpath('//td[contains(@colspan,"3")]/text()').extract_first()
-                item['article_num'] = response.xpath('//td[@class="affairs-detail-head-cnt"]/text()').extract()[4] if response.xpath('//td[@class="affairs-detail-head-cnt"]/text()') else response.css('.bd1 td::text').extract()[5]
-                item['time'] = response.xpath('//td[@class="affairs-detail-head-cnt"]/text()').extract()[5] if response.xpath('//td[@class="affairs-detail-head-cnt"]/text()') else response.css('.bd1 td::text').extract()[6]
-                item['content'] = "".join(response.xpath('//*[@id="UCAP-CONTENT"]').extract())
-                item['source'] = response.xpath('//td[@class="affairs-detail-head-cnt"]/text()').extract()[2] if response.xpath('//td[@class="affairs-detail-head-cnt"]/text()') else response.css('.bd1 td::text').extract()[2]
+                item['title'] = response.xpath('//div[@class="detail-article-title oflow-hd"]/h2/text()').extract_first()
+                item['article_num'] = response.xpath('//div[@class="detail-article-title oflow-hd"]/h3/text()').extract_first()
+                item['time'] = response.xpath('//span[contains(@alt,"时间")]/text()').extract_first()
+                item['content'] = "".join(response.xpath('//*[@class="TRS_Editor"]').extract())
+                item['source'] = response.xpath('//span[contains(@alt,"来源")]/text()').extract_first()
                 item['province'] = '山西省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '山西省人民政府'
-                item['module_name'] = '山西省人民政府-政务公开法规政策'
-                item['spider_name'] = 'shanxi_zfxxgkgd'
-                item['txt'] = "".join(response.xpath('//*[@id="UCAP-CONTENT"]//text()').extract())
+                item['module_name'] = '山西省人民政府-最新解读'
+                item['spider_name'] = 'shanxi_zxjd'
+                item['txt'] = "".join(response.xpath('//*[@class="TRS_Editor"]//text()').extract())
                 item['appendix_name'] = ''
                 item['link'] = response.request.url
                 appendix = []
