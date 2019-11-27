@@ -17,7 +17,7 @@ end
 
 
 class TianJinSzfwjSpider(scrapy.Spider):
-    name = 'hebei_zfwj'
+    name = 'hebei_zcjd'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -41,7 +41,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://info.hebei.gov.cn/eportal/ui?pageId=6817552&currentPage=1&moduleId=3bb45f8814654e33ae014e740ccf771b&formKey=GOV_OPEN&columnName=EXT_STR7&relationId="
+            url = "http://info.hebei.gov.cn/hbszfxxgk/6806024/6807473/6806145/6807917/d7780dd1/index1.html"
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -51,10 +51,11 @@ class TianJinSzfwjSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response))
         try:
             # 在解析翻页数之前，首先解析首页内容
-            for pagenum in range(page_count):
+            for pagenum in range(page_count+1):
+                print(pagenum)
                 if pagenum>0:
-                    url = "http://info.hebei.gov.cn/eportal/ui?pageId=6817552&currentPage=" + \
-                      str(pagenum) + "&moduleId=3bb45f8814654e33ae014e740ccf771b&formKey=GOV_OPEN&columnName=EXT_STR7&relationId=" if pagenum > 1 else "http://info.hebei.gov.cn/eportal/ui?pageId=6817552&currentPage=1&moduleId=3bb45f8814654e33ae014e740ccf771b&formKey=GOV_OPEN&columnName=EXT_STR7&relationId="
+                    url = "http://info.hebei.gov.cn/hbszfxxgk/6806024/6807473/6806145/6807917/d7780dd1/index" + \
+                      str(pagenum) + ".html" if pagenum > 1 else "http://info.hebei.gov.cn/hbszfxxgk/6806024/6807473/6806145/6807917/d7780dd1/index1.html"
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -65,20 +66,19 @@ class TianJinSzfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                self.add_pagenum = int(response.xpath('//*[@id="3bb45f8814654e33ae014e740ccf771b"]/div[2]/table[2]/tbody/tr[2]/td/div[2]/span/b[3]').re(r'([1-9]\d*\.?\d*)')[0])
+                self.add_pagenum = int(response.xpath('//*[@id="xxgkzcjd"]/div[3]/div[3]/span/b[3]').re(r'([1-9]\d*\.?\d*)')[0])
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for selector in response.xpath('//table[@class="xxgkzclbtab3"]/tbody/tr'):
+        for selector in response.xpath('//div[@class="newslist_yw"]/ul/li'):
             try:
                 item = {}
-                item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
-                item['time'] = selector.xpath('./td[4]/text()').extract_first()
-                item['article_num'] = selector.xpath('./td[3]/text()').extract_first()
-                href = selector.xpath('./td[2]/a/@href').extract_first()
+                item['title'] = selector.xpath('./a/text()').extract_first()
+                item['time'] = selector.xpath('./span/text()').extract_first()
+                href = selector.xpath('./a/@href').extract_first()
                 url = response.urljoin(href)
                 yield SplashRequest(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
@@ -93,7 +93,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         try:
             item = rmzfzcItem()
             item['title'] = kwargs['title']
-            item['article_num'] = kwargs['article_num']
+            item['article_num'] = ''
             item['content'] = "".join(response.xpath('//div[@id="zoom"]').extract())
             item['source'] = ''
             item['time'] = kwargs['time']
@@ -102,7 +102,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['area'] = ''
             item['website'] = '河北省人民政府'
             item['module_name'] = '河北省人民政府-规范性文件'
-            item['spider_name'] = 'hebei_zfwj'
+            item['spider_name'] = 'hebei_zcjd'
             item['txt'] = "".join(response.xpath('//div[@id="zoom"]//text()').extract())
             item['appendix_name'] = ";".join(response.xpath('//div[@id="zoom"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
             item['link'] = response.request.url

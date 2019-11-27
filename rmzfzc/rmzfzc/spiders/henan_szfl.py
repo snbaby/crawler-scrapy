@@ -33,7 +33,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -81,7 +81,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 href = selector.xpath('./a[1]/@href').extract_first()
                 # 加密记录不处理
                 if href.startswith('./'):
-                    yield scrapy.Request("http://www.ln.gov.cn/zfxx/zcjd" + href[1:],
+                    yield SplashRequest("http://www.ln.gov.cn/zfxx/zcjd" + href[1:],
                                          callback=self.parse_item,dont_filter=True,cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
