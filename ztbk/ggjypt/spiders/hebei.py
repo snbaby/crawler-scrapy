@@ -17,7 +17,7 @@ end
 
 
 class TianJinSzfwjSpider(scrapy.Spider):
-    name = 'beijing_ggjypt'
+    name = 'hebei_ggjypt'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -40,46 +40,26 @@ class TianJinSzfwjSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        try:
-            url = "https://ggzyfw.beijing.gov.cn/jylcgcjs/index.html"
-            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_type)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_type(self, response):
-        for href in response.xpath('//ul[@class="panel-tab"]/li/@data-href'):
+        list = [
+            {
+                'url':'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002001/subNoticeGov.html',
+                'pageUrl':'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002001/001002001001/'
+            }
+        ]
+        for item in list:
             try:
-                url = response.urljoin(href.extract())
-                yield SplashRequest(url,callback=self.parse_more, dont_filter=True,cb_kwargs={'url':url})
-
-            except Exception as e:
-                logging.error(self.name + ": " + e.__str__())
-                logging.exception(e)
-
-    def parse_more(self, response,**kwargs):
-        if response.xpath('//ul[@class="panel-search2"]/li/a/@href'):
-            for href in response.xpath('//ul[@class="panel-search2"]/li/a/@href'):
-                try:
-                    url = response.urljoin(href.extract())
-                    yield SplashRequest(url,callback=self.parse_page, dont_filter=True,cb_kwargs={'url':url})
-                except Exception as e:
-                    logging.error(self.name + ": " + e.__str__())
-                    logging.exception(e)
-        else:
-            try:
-                yield SplashRequest(kwargs['url'], callback=self.parse_page, dont_filter=True,
-                                    cb_kwargs={'url': kwargs['url']})
+                yield SplashRequest(item['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_page(self, response,**kwargs):
+        print(response.text)
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                temUrl = kwargs['url'].replace('.html', '')+'_'
-                url = temUrl + \
+                temUrl = kwargs['pageUrl'].replace('.html', '')+'_'
+                url = kwargs['pageUrl'] + \
                       str(pagenum) + ".html" if pagenum > 0 else kwargs['url']
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
@@ -96,7 +76,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.xpath('//ul[@class="article-list2"]/li/a/@href'):
+        for href in response.xpath('//ul[@class="article-list2"]/li/div/a/@href'):
             try:
                 url = response.urljoin(href.extract())
                 yield SplashRequest(url,callback=self.parse_item, dont_filter=True)
@@ -111,8 +91,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
         if response.text:
             try:
                 category = '其他';
-                title = response.xpath('//div[@class="lc-title"]/text()').extract_first() if response.xpath('//div[@class="lc-title"]/text()') else response.xpath('//div[@class="div-title"]/text()').extract_first()
-                time = response.xpath('//div[@class="lc-title-s"]/text()').extract_first() if response.xpath('//div[@class="lc-title-s"]/text()') else response.xpath('//div[@class="div-title2"]/text()').extract_first()
+                title = response.xpath('//div[@class="content-title"]/text()').extract_first() if response.xpath('//div[@class="content-title"]/text()') else response.xpath('//div[@class="div-title"]/text()').extract_first()
+                time = response.xpath('//div[@id="time"]/text()').extract_first() if response.xpath('//div[@id="time"]/text()') else response.xpath('//div[@class="div-title2"]/text()').extract_first()
                 if title.find('招标') >= 0:
                     category = '招标'
                 elif title.find('中标') >= 0:
@@ -125,19 +105,19 @@ class TianJinSzfwjSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="newsCon"]').extract())
-                item['source'] = '北京市公共资源交易服务平台'
+                item['content'] = "".join(response.xpath('//div[@class="content-article"]').extract())
+                item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
-                item['region'] = '北京市'
-                item['time'] = time.replace('发布时间：','').replace('浏览次数','')
-                item['website'] = '北京市公共资源交易服务平台'
-                item['module_name'] = '北京市-公共交易平台'
-                item['spider_name'] = 'beijing_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="newsCon"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@class="newsCon"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
+                item['region'] = '天津市'
+                item['time'] = time
+                item['website'] = '天津市公共资源交易服务平台'
+                item['module_name'] = '天津市-公共交易平台'
+                item['spider_name'] = 'hebei_ggjypt'
+                item['txt'] = "".join(response.xpath('//div[@class="content-article"]//text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@class="content-article"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@class="newsCon"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//div[@class="content-article"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)
