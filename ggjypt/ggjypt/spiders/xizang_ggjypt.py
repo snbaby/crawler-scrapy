@@ -15,6 +15,7 @@ function main(splash, args)
 end
 """
 
+
 class XizangGgjyptSpider(scrapy.Spider):
     name = 'xizang_ggjypt'
     custom_settings = {
@@ -48,50 +49,50 @@ class XizangGgjyptSpider(scrapy.Spider):
                     'topic': 'zbzsgg',  # 招标资审报告
                     'url': 'http://www.xzggzy.gov.cn:9090/zbzsgg/index.jhtml'
                 },
-                # {
-                #     'topic': 'jyjggg',  # 交易结果公告
-                #     'url': 'http://www.xzggzy.gov.cn:9090/jyjggg/index.jhtml'
-                # },
-                # {
-                #     'topic': 'zbwjcq',  # 招标文件澄清
-                #     'url': 'http://www.xzggzy.gov.cn:9090/zbwjcq/index.jhtml'
-                # },
-                # {
-                #     'topic': 'zgysjg',  # 资格预审结果
-                #     'url': 'http://www.xzggzy.gov.cn:9090/zgysjg/index.jhtml'
-                # },
-                # {
-                #     'topic': 'td',  # 成交公示
-                #     'url': 'http://www.xzggzy.gov.cn:9090/td/index.jhtml'
-                # },
-                # {
-                #     'topic': 'cq',  # 挂牌结果
-                #     'url': 'http://www.xzggzy.gov.cn:9090/cq/index.jhtml'
-                # },
-                # {
-                #     'topic': 'jyjg',  # 交易结果
-                #     'url': 'http://www.xzggzy.gov.cn:9090/jyjg/index.jhtml'
-                # },
-                # {
-                #     'topic': 'zrbqyxx',  # 转让标企业信息
-                #     'url': 'http://www.xzggzy.gov.cn:9090/zrbqyxx/index.jhtml'
-                # },
-                # {
-                #     'topic': 'zrbgdxx',  # 转让标股东信息
-                #     'url': 'http://www.xzggzy.gov.cn:9090/zrbgdxx/index.jhtml'
-                # },
-                # {
-                #     'topic': '',  # 采购/资审公告
-                #     'url': 'http://www.xzggzy.gov.cn:9090/zfcg/index.jhtml'
-                # },
-                # {
-                #     'topic': 'zbgg',  # 中标公告
-                #     'url': 'http://www.xzggzy.gov.cn:9090/zbgg/index.jhtml'
-                # },
-                # {
-                #     'topic': 'gzsx',  # 更正事项
-                #     'url': 'http://www.xzggzy.gov.cn:9090/gzsx/index.jhtml'
-                # }
+                {
+                    'topic': 'jyjggg',  # 交易结果公告
+                    'url': 'http://www.xzggzy.gov.cn:9090/jyjggg/index.jhtml'
+                },
+                {
+                    'topic': 'zbwjcq',  # 招标文件澄清
+                    'url': 'http://www.xzggzy.gov.cn:9090/zbwjcq/index.jhtml'
+                },
+                {
+                    'topic': 'zgysjg',  # 资格预审结果
+                    'url': 'http://www.xzggzy.gov.cn:9090/zgysjg/index.jhtml'
+                },
+                {
+                    'topic': 'td',  # 成交公示
+                    'url': 'http://www.xzggzy.gov.cn:9090/td/index.jhtml'
+                },
+                {
+                    'topic': 'cq',  # 挂牌结果
+                    'url': 'http://www.xzggzy.gov.cn:9090/cq/index.jhtml'
+                },
+                {
+                    'topic': 'jyjg',  # 交易结果
+                    'url': 'http://www.xzggzy.gov.cn:9090/jyjg/index.jhtml'
+                },
+                {
+                    'topic': 'zrbqyxx',  # 转让标企业信息
+                    'url': 'http://www.xzggzy.gov.cn:9090/zrbqyxx/index.jhtml'
+                },
+                {
+                    'topic': 'zrbgdxx',  # 转让标股东信息
+                    'url': 'http://www.xzggzy.gov.cn:9090/zrbgdxx/index.jhtml'
+                },
+                {
+                    'topic': '',  # 采购/资审公告
+                    'url': 'http://www.xzggzy.gov.cn:9090/zfcg/index.jhtml'
+                },
+                {
+                    'topic': 'zbgg',  # 中标公告
+                    'url': 'http://www.xzggzy.gov.cn:9090/zbgg/index.jhtml'
+                },
+                {
+                    'topic': 'gzsx',  # 更正事项
+                    'url': 'http://www.xzggzy.gov.cn:9090/gzsx/index.jhtml'
+                }
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
@@ -101,7 +102,6 @@ class XizangGgjyptSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        print(1)
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
@@ -116,20 +116,19 @@ class XizangGgjyptSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_pagenum(self, response):
-        print(2)
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.css('.pages-list li:nth-child(1) a::text').extract_first().split('/')[1].replace('页','').strip())
+                return int(response.css(
+                    '.pages-list li:nth-child(1) a::text').extract_first().split('/')[1].replace('页', '').strip())
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        print(3)
-        for href in response.css('.article-list-old a').extract():
+        for href in response.css('.article-list-old a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
                 yield scrapy.Request(url, callback=self.pares_item, cb_kwargs={'url': url}, dont_filter=True)
@@ -141,7 +140,6 @@ class XizangGgjyptSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def pares_item(self, response, **kwargs):
-        print(4)
         try:
             title = response.css('.div-title::text').extract_first().strip()
             if title.find('招标') >= 0:
@@ -161,15 +159,17 @@ class XizangGgjyptSpider(scrapy.Spider):
             item['content'] = response.css('.div-article2').extract_first()
             item['appendix'] = ''
             item['category'] = category
-            item['time'] = response.css('.div-title2::text').extract_first().split('浏览')[0].replace('发布时间：','').strip()
+            item['time'] = response.css(
+                '.div-title2::text').extract_first().split('浏览')[0].replace('发布时间：', '').strip()
             item['source'] = ''
             item['website'] = '西藏自治区公共资源交易信息网'
             item['link'] = kwargs['url']
-            item['type'] = ''
+            item['type'] = '2'
             item['region'] = '西藏自治区'
             item['appendix_name'] = ''
             item['spider_name'] = 'xizang_ggjypt'
-            item['txt'] = ''
+            item['txt'] = ''.join(
+                response.css('.div-article2 *::text').extract())
             item['module_name'] = '西藏-公共交易平台'
 
             print(
