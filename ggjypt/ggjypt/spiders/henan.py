@@ -17,7 +17,7 @@ end
 
 
 class TianJinSzfwjSpider(scrapy.Spider):
-    name = 'zhejiang_ggjypt'
+    name = 'henan_ggjypt'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -41,14 +41,14 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://new.zmctc.com/zjgcjy/jyxx/"
+            url = "http://www.hnggzy.com/hnsggzy/jyxx/"
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_type)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_type(self, response):
-        for href in response.xpath('//font[@class="MoreinfoColor"]/../@href'):
+        for href in response.xpath('//td[@class="MoreinfoColor"]/a/@href'):
             try:
                 url = response.urljoin(href.extract())
                 yield SplashRequest(url,callback=self.parse_more, dont_filter=True,cb_kwargs={'url':url})
@@ -58,7 +58,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 logging.exception(e)
 
     def parse_more(self, response,**kwargs):
-        for href in response.xpath('//font[@class="MoreinfoColor"]/../@href'):
+        for href in response.xpath('//td[@class="MoreinfoColor"]/a/@href'):
             try:
                 url = response.urljoin(href.extract())
                 yield SplashRequest(url,callback=self.parse_page, dont_filter=True,cb_kwargs={'url':url})
@@ -95,11 +95,11 @@ class TianJinSzfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        for selector in response.xpath('//table[@class="border2 whitebg topd2 tab"]//table/tr[@height="30"]'):
+        for selector in response.xpath('//table[@class="divlxyz"]/tr'):
             try:
                 item = {}
                 item['title'] = selector.xpath('./td[2]/a/text()').extract_first().strip()
-                item['time'] = selector.xpath('./td[3]/text()').extract_first().strip().replace('[','').replace(']','')
+                item['time'] = selector.xpath('./td[3]//text()').extract_first().strip().replace('[','').replace(']','')
                 url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
@@ -126,19 +126,19 @@ class TianJinSzfwjSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//table[@class="Table_Special"]').extract())
-                item['source'] = '浙江省公共资源交易服务平台'
+                item['content'] = "".join(response.xpath('//table[@class="infodetail"]').extract())
+                item['source'] = '河南省公共资源交易服务平台'
                 item['category'] = category
                 item['type'] = ''
-                item['region'] = '浙江省'
+                item['region'] = '河南省'
                 item['time'] = kwargs['time']
-                item['website'] = '浙江省公共资源交易服务平台'
-                item['module_name'] = '浙江省-公共交易平台'
-                item['spider_name'] = 'zhejiang_ggjypt'
-                item['txt'] = "".join(response.xpath('//table[@class="Table_Special"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//table[@class="Table_Special"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
+                item['website'] = '河南省公共资源交易服务平台'
+                item['module_name'] = '河南省-公共交易平台'
+                item['spider_name'] = 'henan_ggjypt'
+                item['txt'] = "".join(response.xpath('//table[@class="infodetail"]//text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//table[@class="infodetail"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//table[@class="Table_Special"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//table[@class="infodetail"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

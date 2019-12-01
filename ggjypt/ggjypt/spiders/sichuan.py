@@ -17,7 +17,7 @@ end
 
 
 class TianJinSzfwjSpider(scrapy.Spider):
-    name = 'zhejiang_ggjypt'
+    name = 'sichuan_ggjypt'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -41,66 +41,44 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://new.zmctc.com/zjgcjy/jyxx/"
-            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_type)
+            url = "http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html?categoryNum=002&pageIndex=1"
+            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_type(self, response):
-        for href in response.xpath('//font[@class="MoreinfoColor"]/../@href'):
-            try:
-                url = response.urljoin(href.extract())
-                yield SplashRequest(url,callback=self.parse_more, dont_filter=True,cb_kwargs={'url':url})
-
-            except Exception as e:
-                logging.error(self.name + ": " + e.__str__())
-                logging.exception(e)
-
-    def parse_more(self, response,**kwargs):
-        for href in response.xpath('//font[@class="MoreinfoColor"]/../@href'):
-            try:
-                url = response.urljoin(href.extract())
-                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,cb_kwargs={'url':url})
-
-            except Exception as e:
-                logging.error(self.name + ": " + e.__str__())
-                logging.exception(e)
-
     def parse_page(self, response,**kwargs):
         page_count = int(self.parse_pagenum(response))
-        print('page_count=='+str(page_count))
-        if page_count > 0:
-            page_count = page_count + 1
-            try:
-                for pagenum in range(page_count):
-                    if pagenum > 0:
-                        temUrl = kwargs['url']+'?Paging='
-                        url = temUrl + str(pagenum)
-                        yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
-            except Exception as e:
-                logging.error(self.name + ": " + e.__str__())
-                logging.exception(e)
+        try:
+            for pagenum in range(page_count):
+                if pagenum > 0:
+                    temUrl = 'http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html?categoryNum=002&pageIndex='
+                    url = temUrl + str(pagenum)
+                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
     def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if response.xpath('//td[@class="huifont"]/text()').re(r'([1-9]\d*\.?\d*)'):
-                return int(response.xpath('//td[@class="huifont"]/text()').re(r'([1-9]\d*\.?\d*)')[1])
-            else:
-                return 0
+            details = response.xpath('//*[@id="pager"]/script').re(r'([1-9]\d*\.?\d*)')[4]
+            pageCount = response.xpath('//*[@id="pager"]/script').re(r'([1-9]\d*\.?\d*)')[3]
+            if not self.add_pagenum:
+                return int(details) / int(pageCount) + 1
+            return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for selector in response.xpath('//table[@class="border2 whitebg topd2 tab"]//table/tr[@height="30"]'):
+        for selector in response.xpath('//ul[@class="comm-list"]/li/p'):
             try:
                 item = {}
-                item['title'] = selector.xpath('./td[2]/a/text()').extract_first().strip()
-                item['time'] = selector.xpath('./td[3]/text()').extract_first().strip().replace('[','').replace(']','')
-                url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
+                item['title'] = selector.xpath('./a/text()').extract_first()
+                item['time'] = selector.xpath('./span/text()').extract_first()
+                url = response.urljoin(selector.xpath('./a/@href').extract_first())
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -109,7 +87,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response,**kwargs):
+    def parse_item(self, response, **kwargs):
         if response.text:
             try:
                 category = '其他';
@@ -126,19 +104,19 @@ class TianJinSzfwjSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//table[@class="Table_Special"]').extract())
-                item['source'] = '浙江省公共资源交易服务平台'
+                item['content'] = "".join(response.xpath('//div[@class="content"]').extract())
+                item['source'] = '四川省公共资源交易服务平台'
                 item['category'] = category
                 item['type'] = ''
-                item['region'] = '浙江省'
-                item['time'] = kwargs['time']
-                item['website'] = '浙江省公共资源交易服务平台'
-                item['module_name'] = '浙江省-公共交易平台'
-                item['spider_name'] = 'zhejiang_ggjypt'
-                item['txt'] = "".join(response.xpath('//table[@class="Table_Special"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//table[@class="Table_Special"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
+                item['region'] = '四川省'
+                item['time'] = kwargs['time'].strip()
+                item['website'] = '四川省公共资源交易服务平台'
+                item['module_name'] = '四川省-公共交易平台'
+                item['spider_name'] = 'sichuan_ggjypt'
+                item['txt'] = "".join(response.xpath('//div[@class="content"]//text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@class="content"]//a[contains(@href,"pdf") and contains(@href,"doc") and contains(@href,"docx") and contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//table[@class="Table_Special"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//div[@class="content"]//a[contains(@href,"pdf") and contains(@href,"doc") and contains(@href,"docx") and contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)
