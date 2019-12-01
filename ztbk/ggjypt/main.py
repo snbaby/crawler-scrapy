@@ -1,1 +1,1 @@
-# -*- coding: utf-8 -*-import sys,osfrom scrapy.cmdline import executesys.path.append(os.path.abspath(os.path.dirname(__file__)))execute("scrapy crawl beijing-ggjypt".split())
+# -*- coding: utf-8 -*-import sys,osfrom scrapy.cmdline import executesys.path.append(os.path.abspath(os.path.dirname(__file__)))execute("scrapy crawl beijing_ggjypt".split())execute("scrapy crawl tianjin_ggjypt".split())execute("scrapy crawl liaoning_ggjypt".split())execute("scrapy crawl jilin_ggjypt".split())
