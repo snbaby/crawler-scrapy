@@ -112,7 +112,6 @@ class JiangsuZfcgSpider(scrapy.Spider):
                     url = kwargs['url'] + 'index.html'
                 else:
                     url = kwargs['url'] + 'index_' + str(pagenum)+'.html'
-                print(url)
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs,dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
