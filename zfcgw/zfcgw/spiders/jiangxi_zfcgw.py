@@ -44,26 +44,26 @@ class JiangxiZfcgwSpider(scrapy.Spider):
     def start_requests(self):
         try:
             contents = [
-                # {
-                #     'topic': 'cggg',  #采购公告
-                #     'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006001/jyxx.html'
-                # },
-                # {
-                #     'topic': 'bggg',  #变更公告
-                #     'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006002/jyxx.html'
-                # },
-                # {
-                #     'topic': 'dycq',  #答疑澄清
-                #     'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006003/jyxx.html'
-                # },
-                # {
-                #     'topic': 'jggs',  #结果公示
-                #     'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006004/jyxx.html'
-                # },
-                # {
-                #     'topic': 'dylygs',  #单一来源公示
-                #     'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006005/jyxx.html'
-                # },
+                {
+                    'topic': 'cggg',  #采购公告
+                    'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006001/jyxx.html'
+                },
+                {
+                    'topic': 'bggg',  #变更公告
+                    'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006002/jyxx.html'
+                },
+                {
+                    'topic': 'dycq',  #答疑澄清
+                    'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006003/jyxx.html'
+                },
+                {
+                    'topic': 'jggs',  #结果公示
+                    'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006004/jyxx.html'
+                },
+                {
+                    'topic': 'dylygs',  #单一来源公示
+                    'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006005/jyxx.html'
+                },
                 {
                     'topic': 'htgs',  #合同公示
                     'url': 'http://www.ccgp-jiangxi.gov.cn/web/jyxx/002006/002006006/jyxx.html'
