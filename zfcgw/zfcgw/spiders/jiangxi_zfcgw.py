@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
+from utils.tools.attachment import get_attachments
 
 script = """
 function main(splash, args)
@@ -137,6 +138,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
 
     def pares_item(self, response, **kwargs):
         try:
+            appendix, appendix_name=get_attachments(response)
             title = kwargs['title']
             if title.find('招标') >= 0:
                 category = '招标'
@@ -153,7 +155,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             item = ztbkItem()
             item['title'] = title
             item['content'] = response.css('.article-info').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = kwargs['time']
             item['source'] = ''
@@ -161,14 +163,13 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             item['link'] = kwargs['url']
             item['type'] = '2'
             item['region'] = kwargs['region']
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'jiangxi_zfcgw'
             item['txt'] = ''.join(response.css('.article-info *::text').extract())
             item['module_name'] = '江西-政府采购网'
 
-            print(
-                "===========================>crawled one item" +
-                response.request.url)
+            print("===========================>crawled one item:url = {}, appendix={}, appendix_name={}"
+                  .format(response.request.url, appendix, appendix_name))
         except Exception as e:
             logging.error(
                 self.name +
@@ -181,6 +182,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
 
     def pares_htgs(self, response, **kwargs):
         try:
+            appendix, appendix_name=get_attachments(response)
             title = kwargs['title']
             if title.find('招标') >= 0:
                 category = '招标'
@@ -197,7 +199,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             item = ztbkItem()
             item['title'] = title
             item['content'] = response.css('.fui-accordions').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = kwargs['time']
             item['source'] = ''
@@ -205,14 +207,13 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             item['link'] = kwargs['url']
             item['type'] = '2'
             item['region'] = kwargs['region']
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'jiangxi_zfcgw'
             item['txt'] = ''.join(response.css('.fui-accordions *::text').extract())
             item['module_name'] = '江西-政府采购网'
 
-            print(
-                "===========================>crawled one item" +
-                response.request.url)
+            print("===========================>crawled one item:url = {}, appendix={}, appendix_name={}"
+                  .format(response.request.url, appendix, appendix_name))
         except Exception as e:
             logging.error(
                 self.name +
