@@ -7,7 +7,7 @@ from ggjypt.items import ztbkItem
 
 script = """
 function main(splash)
-    splash:go("www.baidu.com")
+    splash:go("https://www.baidu.com")
     splash:wait(1)
     return splash:html()
 end
@@ -60,7 +60,7 @@ class GansuSpider(scrapy.Spider):
                                     args={
                                         'lua_source': script,
                                         'wait': 1,
-                                        'url':"www.csdn.net",
+                                        'url':"https://www.csdn.net",
                                     },
                                     callback=self.parse,
                                     cb_kwargs=content)
