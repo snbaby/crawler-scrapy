@@ -105,9 +105,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['module_name'] = '黑龙江省人民政府-政府文件'
             item['spider_name'] = 'heilongjiang_zfwj'
             item['txt'] = "".join(response.xpath('//div[@id="zoom"]//text()').extract())
-            item['appendix_name'] = ";".join(response.xpath('//div[@id="zoom"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
+            item['appendix_name'] = ";".join(response.xpath('//div[@id="zoom"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/text()').extract())
             item['link'] = response.request.url
-            item['appendix'] = ";".join(response.xpath('//div[@id="zoom"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
+            item['appendix'] = ";".join(response.xpath('//div[@id="zoom"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/@href').extract())
             print(
                 "===========================>crawled one item" +
                 response.request.url)

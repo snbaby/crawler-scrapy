@@ -16,8 +16,8 @@ end
 """
 
 
-class shandongSzfwjSpider(scrapy.Spider):
-    name = 'shandong_ggjypt'
+class shorongSzfwjSpider(scrapy.Spider):
+    name = 'shorong_ggjypt'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -41,7 +41,7 @@ class shandongSzfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://ggzyjyzx.shandong.gov.cn/003/moreinfo.html"
+            url = "http://ggzyjyzx.shorong.gov.cn/003/moreinfo.html"
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_type)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -131,11 +131,11 @@ class shandongSzfwjSpider(scrapy.Spider):
                 item['time'] = kwargs['time']
                 item['website'] = '山东省公共资源交易服务平台'
                 item['module_name'] = '山东省-公共交易平台'
-                item['spider_name'] = 'shandong_ggjypt'
+                item['spider_name'] = 'shorong_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@id="infocont"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@id="infocont"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@id="infocont"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@id="infocont"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//div[@id="infocont"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

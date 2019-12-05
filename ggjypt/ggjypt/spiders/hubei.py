@@ -42,17 +42,25 @@ class hubeiSzfwjSpider(scrapy.Spider):
     def start_requests(self):
         try:
             contents = [
-                {
-                    'topic': 'dzzb',  # 湖北省电子招标投标交易平台
-                    'url': 'http://www.hbggzy.cn/jydt/003001/003001001/moreinfo_jyxx.html'
-                },
-                {
-                    'topic': 'jzcg',  # 湖北省药械集中采购服务平台
-                    'url': 'http://www.hbyxjzcg.cn/drug/0-1.html'
-                },
+                # {
+                #     'topic': 'dzzb',  # 湖北省电子招标投标交易平台
+                #     'url': 'http://www.hbggzy.cn/jydt/003001/003001001/moreinfo_jyxx.html'
+                # },
+                # {
+                #     'topic': 'jzcg',  # 湖北省药械集中采购服务平台
+                #     'url': 'http://www.hbyxjzcg.cn/drug/0-1.html'
+                # }
+                # {
+                #     'topic': 'pmjy',  # 湖北省公共资源拍卖交易网
+                #     'url': 'http://www.hbggzypm.com.cn/informController/informQuery'
+                # },
+                # {
+                #     'topic': 'pmjy',  # 湖北省公共资源拍卖交易网
+                #     'url': 'http://www.hbggzypm.com.cn/jynoticeController/tojynoticelist'
+                # },
                 {
                     'topic': 'pmjy',  # 湖北省公共资源拍卖交易网
-                    'url': 'http://www.hbggzypm.com.cn/'
+                    'url': 'http://www.hbggzypm.com.cn/jygsnoticeController/tojygsnoticelist'
                 }
             ]
             for content in contents:
@@ -100,6 +108,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
         print(response)
         page_count = int(self.parse_pagenum(response, '1'))
         print('page_count' + str(page_count))
+        page_count = page_count + 1
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
@@ -118,11 +127,12 @@ class hubeiSzfwjSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
-                    temUrl = kwargs['url'].replace('moreinfo_jyxx.html', '')
-                    url = temUrl + \
-                          str(pagenum) + ".html" if pagenum > 1 else kwargs['url']
-                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse2,
-                                        dont_filter=True)
+                    params = {
+                        'pageNumber': pagenum,
+                        'pageSize': 10
+                    }
+                    url = "http://www.hbggzypm.com.cn/jygsnoticeController/jygsnoticelist"
+                    yield SplashRequest(url, formdata=params,callback=self.parse2)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -133,8 +143,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if type == '0':
                 if response.xpath('//*[@class="ewb-page-li ewb-page-noborder ewb-page-num"]/span'):
-                    return int(response.xpath('//*[@class="ewb-page-li ewb-page-noborder ewb-page-num"]/span').re(
-                        r'([1-9]\d*\.?\d*)')[1])
+                    return int(response.xpath('//*[@class="ewb-page-li ewb-page-noborder ewb-page-num"]/span').re(r'([1-9]\d*\.?\d*)')[1])
                 else:
                     return '0'
             elif type == '1':
@@ -143,11 +152,9 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 else:
                     return '0'
             elif type == '2':
-                if response.xpath('//*[@class="ewb-page-li ewb-page-noborder ewb-page-num"]/span'):
-                    return int(response.xpath('//*[@class="ewb-page-li ewb-page-noborder ewb-page-num"]/span').re(
-                        r'([1-9]\d*\.?\d*)')[1])
-                else:
-                    return '0'
+                details = response.xpath('//script')[4].re(r'([1-9]\d*\.?\d*)')[2]
+                pageCount = response.xpath('//script')[4].re(r'([1-9]\d*\.?\d*)')[1]
+                return int(details) / int(pageCount) + 1
 
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -170,14 +177,15 @@ class hubeiSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse1(self, response):
-        for selector in response.xpath('//ul[@class="ewb-news-items"]/li'):
+        print(len(response.xpath('//div[@class="boxwrap"]//ul[@class="news_list"]/li')))
+        for selector in response.xpath('//div[@class="boxwrap"]//ul[@class="news_list"]/li'):
             try:
                 item = {}
                 item['title'] = "".join(selector.xpath('./a//text()').extract())
                 item['time'] = selector.xpath('./span/text()').extract_first().strip()
                 url = selector.xpath('./a/@href').extract_first()
                 print('url=============='+url)
-                yield scrapy.Request(response.urljoin(url),callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                yield scrapy.Request(response.urljoin(url),callback=self.parse_item1, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -186,6 +194,8 @@ class hubeiSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse2(self, response):
+        print(response.text)
+        return
         for selector in response.xpath('//ul[@class="ewb-news-items"]/li'):
             try:
                 item = {}
@@ -218,7 +228,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="news-article-para"]').extract())
+                item['content'] = "".join(response.xpath('//div[@class="entry"]').extract())
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
@@ -227,10 +237,53 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 item['website'] = '湖北省公共资源交易服务平台'
                 item['module_name'] = '湖北省-公共交易平台'
                 item['spider_name'] = 'hubei_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="news-article-para"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@class="news-article-para"]//a[contains(@href,"pdf") and contains(@href,"doc") and contains(@href,"docx") and contains(@href,"xls")]/text()').extract())
+                item['txt'] = "".join(response.xpath('//div[@class="entry"]//text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@class="entry"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@class="news-article-para"]//a[contains(@href,"pdf") and contains(@href,"doc") and contains(@href,"docx") and contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//div[@class="entry"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
+                print(
+                    "===========================>crawled one item" +
+                    response.request.url)
+            except Exception as e:
+                logging.error(
+                    self.name +
+                    " in parse_item: url=" +
+                    response.request.url +
+                    ", exception=" +
+                    e.__str__())
+                logging.exception(e)
+            yield item
+
+    def parse_item1(self, response, **kwargs):
+        if response.text:
+            try:
+                category = '其他';
+                title = kwargs['title']
+                if title.find('招标') >= 0:
+                    category = '招标'
+                elif title.find('中标') >= 0:
+                    category = '中标'
+                elif title.find('成交') >= 0:
+                    category = '成交'
+                elif title.find('结果') >= 0:
+                    category = '结果'
+                elif title.find('单一') >= 0:
+                    category = '单一'
+                item = ztbkItem()
+                item['title'] = title
+                item['content'] = "".join(response.xpath('//div[@class="entry"]').extract())
+                item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
+                item['category'] = category
+                item['type'] = ''
+                item['region'] = '湖北省'
+                item['time'] = kwargs['time']
+                item['website'] = '湖北省公共资源交易服务平台'
+                item['module_name'] = '湖北省-公共交易平台'
+                item['spider_name'] = 'hubei_ggjypt'
+                item['txt'] = "".join(response.xpath('//div[@class="entry"]//text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@class="entry"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
+                item['link'] = response.request.url
+                item['appendix'] = ";".join(response.xpath('//div[@class="entry"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

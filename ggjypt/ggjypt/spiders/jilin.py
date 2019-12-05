@@ -137,9 +137,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['module_name'] = '吉林省-公共交易平台'
                 item['spider_name'] = 'jilin_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@id="mainContent"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@id="mainContent"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@id="mainContent"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@id="mainContent"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//div[@id="mainContent"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

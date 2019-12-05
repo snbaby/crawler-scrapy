@@ -16,7 +16,7 @@ end
 """
 
 class QuanguoZuixinSpider(scrapy.Spider):
-    name = 'shandong_zfwj'
+    name = 'shorong_zfwj'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -38,7 +38,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        urlList = ['http://www.shandong.gov.cn/col/col2266/index.html?uid=6820&pageNum=','http://www.shandong.gov.cn/col/col2262/index.html?uid=5836&pageNum=']
+        urlList = ['http://www.shorong.gov.cn/col/col2266/index.html?uid=6820&pageNum=','http://www.shorong.gov.cn/col/col2262/index.html?uid=5836&pageNum=']
         try:
             for urlTmp in urlList:
                 url = urlTmp+"1"
@@ -95,7 +95,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
             item['area'] = ''
             item['website'] = '山东省人民政府'
             item['module_name'] = '山东省人民政府-政府文件'
-            item['spider_name'] = 'shandong_zfwj'
+            item['spider_name'] = 'shorong_zfwj'
             item['txt'] = "".join(response.xpath('//div[@id="UCAP-CONTENT"]//text()').extract())
             item['appendix_name'] = ''
             item['link'] = response.request.url

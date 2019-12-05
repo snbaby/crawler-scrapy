@@ -104,12 +104,12 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['module_name'] = '宁夏回族自治区人民政府-区政府文件'
             item['spider_name'] = 'ningxia_qzfwj'
             item['txt'] = "".join(response.xpath('//div[@class="info_box"]//text()').extract())
-            item['appendix_name'] = ";".join(response.xpath('//div[@class="info_box"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/text()').extract())
+            item['appendix_name'] = ";".join(response.xpath('//div[@class="info_box"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/text()').extract())
             item['link'] = response.request.url
             appendix = []
             # for href in response.xpath('.relevantdoc.xgjd a::href'):
             #    appendix.append(href.extract())
-            item['appendix'] = ";".join(response.xpath('//div[@class="info_box"]//a[contains(@href,"pdf") and contains(@href,"word") and contains(@href,"xls")]/@href').extract())
+            item['appendix'] = ";".join(response.xpath('//div[@class="info_box"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/@href').extract())
             print(
                 "===========================>crawled one item" +
                 response.request.url)

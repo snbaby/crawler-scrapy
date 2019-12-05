@@ -112,9 +112,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['module_name'] = '江西省-公共交易平台'
                 item['spider_name'] = 'jiangxi_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@class="con"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@class="con"]//a[contains(@href,"pdf") and contains(@href,"doc") and contains(@href,"docx") and contains(@href,"xls")]/text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@class="con"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@class="con"]//a[contains(@href,"pdf") and contains(@href,"doc") and contains(@href,"docx") and contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//div[@class="con"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)
