@@ -6,10 +6,41 @@ from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
 
 script = """
-function main(splash)
-    splash:go("https://www.baidu.com")
-    splash:wait(1)
-    return splash:html()
+function wait_for_element(splash, css, maxwait)
+  -- Wait until a selector matches an element
+  -- in the page. Return an error if waited more
+  -- than maxwait seconds.
+  if maxwait == nil then
+      maxwait = 10
+  end
+  return splash:wait_for_resume(string.format([[
+    function main(splash) {
+      var selector = '%s';
+      var maxwait = %s;
+      var end = Date.now() + maxwait*1000;
+
+      function check() {
+        if(document.querySelector(selector)) {
+          splash.resume('Element found');
+        } else if(Date.now() >= end) {
+          var err = 'Timeout waiting for element';
+          splash.error(err + " " + selector);
+        } else {
+          setTimeout(check, 200);
+        }
+      }
+      check();
+    }
+  ]], css, maxwait))
+end
+
+function main(splash, args)
+  splash:go("http://www.zj.gov.cn/col/col1545735/index.html")
+  assert(splash:wait(0.5))
+  wait_for_element(splash, ".btn_page")
+  splash:runjs("document.querySelector('.btn_page').click()")
+  wait_for_element(splash, ".btn_page")
+  return splash:html()
 end
 """
 
@@ -70,5 +101,5 @@ class GansuSpider(scrapy.Spider):
 
     def parse(self, response,**kwargs):
         print('---------')
-        print(response.text)
+        print(response.css('#div1545735 > table > tbody > tr > td > table:nth-child(3) > tbody > tr:nth-child(2) > td:nth-child(3) > a::text').extract_first())
         pass
