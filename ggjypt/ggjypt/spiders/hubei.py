@@ -42,25 +42,13 @@ class hubeiSzfwjSpider(scrapy.Spider):
     def start_requests(self):
         try:
             contents = [
-                # {
-                #     'topic': 'dzzb',  # 湖北省电子招标投标交易平台
-                #     'url': 'http://www.hbggzy.cn/jydt/003001/003001001/moreinfo_jyxx.html'
-                # },
-                # {
-                #     'topic': 'jzcg',  # 湖北省药械集中采购服务平台
-                #     'url': 'http://www.hbyxjzcg.cn/drug/0-1.html'
-                # }
-                # {
-                #     'topic': 'pmjy',  # 湖北省公共资源拍卖交易网
-                #     'url': 'http://www.hbggzypm.com.cn/informController/informQuery'
-                # },
-                # {
-                #     'topic': 'pmjy',  # 湖北省公共资源拍卖交易网
-                #     'url': 'http://www.hbggzypm.com.cn/jynoticeController/tojynoticelist'
-                # },
                 {
-                    'topic': 'pmjy',  # 湖北省公共资源拍卖交易网
-                    'url': 'http://www.hbggzypm.com.cn/jygsnoticeController/tojygsnoticelist'
+                    'topic': 'dzzb',  # 湖北省电子招标投标交易平台
+                    'url': 'http://www.hbggzy.cn/jydt/003001/003001001/moreinfo_jyxx.html'
+                },
+                {
+                    'topic': 'jzcg',  # 湖北省药械集中采购服务平台
+                    'url': 'http://www.hbyxjzcg.cn/drug/0-1.html'
                 }
             ]
             for content in contents:
@@ -132,7 +120,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                         'pageSize': 10
                     }
                     url = "http://www.hbggzypm.com.cn/jygsnoticeController/jygsnoticelist"
-                    yield SplashRequest(url, formdata=params,callback=self.parse2)
+                    yield SplashRequest(url, formdata=params, callback=self.parse2)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
