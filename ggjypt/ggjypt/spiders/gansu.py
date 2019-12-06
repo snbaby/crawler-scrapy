@@ -38,6 +38,8 @@ function main(splash, args)
   splash:go("http://www.zj.gov.cn/col/col1545735/index.html")
   assert(splash:wait(0.5))
   wait_for_element(splash, ".btn_page")
+  js = string.format("document.querySelector('#currpage').value =%d", args.page)
+  splash:evaljs(js)
   splash:runjs("document.querySelector('.btn_page').click()")
   wait_for_element(splash, ".btn_page")
   return splash:html()
@@ -91,7 +93,8 @@ class GansuSpider(scrapy.Spider):
                                     args={
                                         'lua_source': script,
                                         'wait': 1,
-                                        'url':"https://www.csdn.net",
+                                        'page': 40,
+                                        'url':"https://www.baidu.com",
                                     },
                                     callback=self.parse,
                                     cb_kwargs=content)
