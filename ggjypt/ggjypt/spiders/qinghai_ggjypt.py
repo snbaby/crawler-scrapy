@@ -200,7 +200,7 @@ class QinghaiGgjyptSpider(scrapy.Spider):
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def pares_item(self, response, **kwargs):
+    def parse_item(self, response, **kwargs):
         try:
             title = kwargs['title']
             if title.find('招标') >= 0:
@@ -217,12 +217,16 @@ class QinghaiGgjyptSpider(scrapy.Spider):
                 category = '其他'
             item = ztbkItem()
             item['title'] = title
-            if len(response.css('.ewb-info-content'))>1:
-                item['content'] = response.css('.ewb-info-content').extract_first()
-                item['txt'] = ''.join(response.css('.ewb-info-content *::text').extract())
-            elif len(response.css('.xiangxiyekuang'))>1:
-                item['content'] = response.css('.xiangxiyekuang').extract_first()
-                item['txt'] = ''.join(response.css('.xiangxiyekuang *::text').extract())
+            if len(response.css('.ewb-info-content')) > 1:
+                item['content'] = response.css(
+                    '.ewb-info-content').extract_first()
+                item['txt'] = ''.join(
+                    response.css('.ewb-info-content *::text').extract())
+            elif len(response.css('.xiangxiyekuang')) > 1:
+                item['content'] = response.css(
+                    '.xiangxiyekuang').extract_first()
+                item['txt'] = ''.join(
+                    response.css('.xiangxiyekuang *::text').extract())
             else:
                 item['content'] = ''
                 item['txt'] = ''
