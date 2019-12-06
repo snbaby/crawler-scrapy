@@ -16,6 +16,10 @@ class ZhejiangZfwjSpider(scrapy.Spider):
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
+        'ITEM_PIPELINES': {
+            'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
+            'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
+        },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL': "http://47.106.239.73:8050/"}
@@ -160,12 +164,19 @@ class ZhejiangZfwjSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
-            item['title'] =  ''.join(response.css('.title::text').extract()).strip()
+            item['title'] = ''.join(response.css('.title::text').extract()).strip()
             item['article_num'] = response.css('.wh_content::text').extract_first()
             item['content'] = response.css('.zjszflm').extract_first()
             item['appendix'] = ''
-            item['source'] = response.css('.xxgk_top tr:nth-child(2) td:nth-child(2)::text').extract_first()
-            item['time'] = response.css('.xxgk_top tr:nth-child(2) td:nth-child(4)::text').extract_first()
+            if len(response.css('.xxgk_top').extract()) > 0:
+                item['source'] = response.css('.xxgk_top tr:nth-child(2) td:nth-child(2)::text').extract_first()
+                item['time'] = response.css('.xxgk_top tr:nth-child(2) td:nth-child(4)::text').extract_first()
+            elif len(response.css('.fgwj_xxgk_head').extract()) > 0:
+                item['source'] = response.css('.fgwj_xxgk_head tr:nth-child(2) td:nth-child(2)::text').extract_first()
+                item['time'] = response.css('.fgwj_xxgk_head tr:nth-child(2) td:nth-child(4)::text').extract_first()
+            else:
+                item['source'] = ''
+                item['time'] = ''
             item['province'] = ''
             item['city'] = ''
             item['area'] = ''
