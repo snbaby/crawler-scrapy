@@ -119,6 +119,9 @@ class ZhejiangZfwjSpider(scrapy.Spider):
           splash:go(args.url)
           wait_for_element(splash, ".btn_page")
           js = string.format("document.querySelector('#currpage').value =%d", args.pagenum)
+          splash:evaljs(js)
+          splash:runjs("document.querySelector('.btn_page').click()")
+          wait_for_element(splash, ".btn_page")
           splash:wait(1)
           return splash:html()
         end
@@ -169,11 +172,11 @@ class ZhejiangZfwjSpider(scrapy.Spider):
             item['content'] = response.css('.zjszflm').extract_first()
             item['appendix'] = ''
             if len(response.css('.xxgk_top').extract()) > 0:
-                item['source'] = response.css('.xxgk_top tr:nth-child(2) td:nth-child(2)::text').extract_first()
-                item['time'] = response.css('.xxgk_top tr:nth-child(2) td:nth-child(4)::text').extract_first()
+                item['source'] = ''.join(response.css('.xxgk_top tr:nth-child(2) td:nth-child(2)::text').extract()).strip()
+                item['time'] = ''.join(response.css('.xxgk_top tr:nth-child(2) td:nth-child(4)::text').extract()).strip()
             elif len(response.css('.fgwj_xxgk_head').extract()) > 0:
-                item['source'] = response.css('.fgwj_xxgk_head tr:nth-child(2) td:nth-child(2)::text').extract_first()
-                item['time'] = response.css('.fgwj_xxgk_head tr:nth-child(2) td:nth-child(4)::text').extract_first()
+                item['source'] = ''.join(response.css('.fgwj_xxgk_head tr:nth-child(2) td:nth-child(2)::text').extract()).strip()
+                item['time'] = ''.join(response.css('.fgwj_xxgk_head tr:nth-child(2) td:nth-child(4)::text').extract()).strip()
             else:
                 item['source'] = ''
                 item['time'] = ''
