@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+import time
 
 script = """
 function wait_for_element(splash, css, maxwait)
@@ -43,8 +44,9 @@ function main(splash, args)
   wait_for_element(splash, ".btn")
   js = string.format("document.querySelector('#gotopage').value =%d", args.page)
   splash:evaljs(js)
+  splash:runjs("document.querySelector('#toview').innerHTML=''")
   splash:runjs("document.querySelector('.btn').click()")
-  wait_for_element(splash, ".btn")
+  wait_for_element(splash, "#toview > div")
   return splash:html()
 end
 """
@@ -101,6 +103,7 @@ class GansuSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
+                    time.sleep(0.5)
                     yield SplashRequest(kwargs['url'],
                                         endpoint='execute',
                                         args={

@@ -40,8 +40,10 @@ function main(splash, args)
   wait_for_element(splash, ".layui-laypage-btn")
   js = string.format("document.querySelector('.layui-input').value =%d", args.page)
   splash:evaljs(js)
+  splash:runjs("document.querySelector('.list_table').innerHTML=''")
+  assert(splash:wait(0.1))
   splash:runjs("document.querySelector('.layui-laypage-btn').click()")
-  wait_for_element(splash, ".layui-laypage-btn")
+  wait_for_element(splash, ".list_table > tbody > tr")
   return splash:html()
 end
 """

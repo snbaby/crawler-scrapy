@@ -42,6 +42,7 @@ function main(splash, args)
   splash:evaljs(js)
   js1 = string.format("document.querySelector('%s > div > div > button').click()", args.id)
   splash:evaljs(js1)
+  splash:runjs("document.querySelector('#iframe1 > ul').innerHTML=''")
   wait_for_element(splash, ".ewb-com-item")
   return splash:html()
 end
