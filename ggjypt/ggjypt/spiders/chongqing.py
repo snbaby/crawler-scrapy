@@ -96,7 +96,6 @@ class GansuSpider(scrapy.Spider):
 
     def parse_page(self, response, **kwargs):
         page_count = int(response.xpath('//*[@id="index"]').re(r'([1-9]\d*\.?\d*)')[1]) + 1
-        print('page_count' + str(page_count))
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
