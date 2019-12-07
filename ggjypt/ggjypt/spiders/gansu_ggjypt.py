@@ -30,38 +30,38 @@ class GansuGgjyptSpider(scrapy.Spider):
 
     def start_requests(self):
         script = """
-                    function wait_for_element(splash, css, maxwait)
-                      -- Wait until a selector matches an element
-                      -- in the page. Return an error if waited more
-                      -- than maxwait seconds.
-                      if maxwait == nil then
-                          maxwait = 10
-                      end
-                      return splash:wait_for_resume(string.format([[
-                        function main(splash) {
-                          var selector = '%s';
-                          var maxwait = %s;
-                          var end = Date.now() + maxwait*1000;
+        function wait_for_element(splash, css, maxwait)
+          -- Wait until a selector matches an element
+          -- in the page. Return an error if waited more
+          -- than maxwait seconds.
+          if maxwait == nil then
+              maxwait = 10
+          end
+          return splash:wait_for_resume(string.format([[
+            function main(splash) {
+              var selector = '%s';
+              var maxwait = %s;
+              var end = Date.now() + maxwait*1000;
 
-                          function check() {
-                            if(document.querySelector(selector)) {
-                              splash.resume('Element found');
-                            } else if(Date.now() >= end) {
-                              var err = 'Timeout waiting for element';
-                              splash.error(err + " " + selector);
-                            } else {
-                              setTimeout(check, 200);
-                            }
-                          }
-                          check();
-                        }
-                      ]], css, maxwait))
-                    end
-                    function main(splash, args)
-                      splash:go(args.url)
-                      return splash:html()
-                    end
-                    """
+              function check() {
+                if(document.querySelector(selector)) {
+                  splash.resume('Element found');
+                } else if(Date.now() >= end) {
+                  var err = 'Timeout waiting for element';
+                  splash.error(err + " " + selector);
+                } else {
+                  setTimeout(check, 200);
+                }
+              }
+              check();
+            }
+          ]], css, maxwait))
+        end
+        function main(splash, args)
+          splash:go(args.url)
+          return splash:html()
+        end
+        """
         try:
             contents = [
                 {
@@ -156,6 +156,40 @@ class GansuGgjyptSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
+        script = """
+        function wait_for_element(splash, css, maxwait)
+          -- Wait until a selector matches an element
+          -- in the page. Return an error if waited more
+          -- than maxwait seconds.
+          if maxwait == nil then
+              maxwait = 10
+          end
+          return splash:wait_for_resume(string.format([[
+            function main(splash) {
+              var selector = '%s';
+              var maxwait = %s;
+              var end = Date.now() + maxwait*1000;
+
+              function check() {
+                if(document.querySelector(selector)) {
+                  splash.resume('Element found');
+                } else if(Date.now() >= end) {
+                  var err = 'Timeout waiting for element';
+                  splash.error(err + " " + selector);
+                } else {
+                  setTimeout(check, 200);
+                }
+              }
+              check();
+            }
+          ]], css, maxwait))
+        end
+        function main(splash, args)
+          splash:go(args.url)
+          splash:wait(5)
+          return splash:html()
+        end
+        """
         for detail in response.css('.sTradingInformationSelectedBtoList .sDisclosurLeftConDetailList'):
             try:
                 title = detail.css('a::attr(title)').extract_first()
@@ -167,7 +201,16 @@ class GansuGgjyptSpider(scrapy.Spider):
                     'time': time
 
                 }
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                yield SplashRequest(url,
+                                    endpoint='execute',
+                                    args={
+                                        'lua_source': script,
+                                        'wait': 1,
+                                        'url': url,
+                                    },
+                                    callback=self.parse_item,
+                                    cb_kwargs=result,
+                                    dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
