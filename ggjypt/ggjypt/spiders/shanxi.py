@@ -37,18 +37,17 @@ end
 function main(splash, args)
   splash:go(args.url)
   assert(splash:wait(0.5))
-  wait_for_element(splash, ".ewb-com-item")
-  js = string.format("document.querySelector('%s > div > div > input[type=text]').value =%d", args.id,args.page)
+  wait_for_element(splash, ".layui-laypage-btn")
+  js = string.format("document.querySelector('.layui-input').value =%d", args.page)
   splash:evaljs(js)
-  js1 = string.format("document.querySelector('%s > div > div > button').click()", args.id)
-  splash:evaljs(js1)
-  wait_for_element(splash, ".ewb-com-item")
+  splash:runjs("document.querySelector('.layui-laypage-btn').click()")
+  wait_for_element(splash, ".layui-laypage-btn")
   return splash:html()
 end
 """
 
 class GansuSpider(scrapy.Spider):
-    name = 'hebei_ggjypt'
+    name = 'shanxi_ggjypt'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES' : {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -84,32 +83,16 @@ class GansuSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002001/subNoticeGov.html',
-                    'id': '#page_001002001001'
+                    'topic': 'pmjy',  # 山西省公共资源拍卖交易网
+                    'url': 'http://www.hbggzypm.com.cn/informController/informQuery'
                 },
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002002/subNoticeGov.html',
-                    'id': '#page_001002002001'
-                },
-                # {
-                #     'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002003/subNoticeGov.html',
-                #     'id': '#page_001002003001'
-                # },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002004/subNoticeGov.html',
-                    'id': '#page_001002004001'
+                    'topic': 'pmjy',  # 山西省公共资源拍卖交易网
+                    'url': 'http://www.hbggzypm.com.cn/jynoticeController/tojynoticelist'
                 },
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002005/001002005001/subNoticeGovGJzb.html',
-                    'id': '#page_001002005001001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002005/001002005002/subNoticeGovGJzb.html',
-                    'id': '#page_001002005002001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002006/subNoticeGov.html',
-                    'id': '#page_001002006001'
+                    'topic': 'pmjy',  # 山西省公共资源拍卖交易网
+                    'url': 'http://www.hbggzypm.com.cn/jygsnoticeController/tojygsnoticelist'
                 }
             ]
             for content in contents:
@@ -117,8 +100,8 @@ class GansuSpider(scrapy.Spider):
                                     endpoint = 'execute',
                                     args={
                                         'lua_source': script,
-                                        'id': content['id'],
-                                        'page': 1,
+                                        'wait': 1,
+                                        'page': 40,
                                         'url': content['url'],
                                     },
                                     callback=self.parse_page,
@@ -128,7 +111,7 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        page_count = int(response.xpath('//*[@class="m-pagination-page"]/li[last()]/a/text()').extract()[0]) + 1
+        page_count = int(int(response.xpath('//*[@class="layui-laypage-count"]').re(r'([1-9]\d*\.?\d*)')[0])/10 + 1) + 1
         print('page_count' + str(page_count))
         try:
             for pagenum in range(page_count):
@@ -137,7 +120,7 @@ class GansuSpider(scrapy.Spider):
                                         endpoint='execute',
                                         args={
                                             'lua_source': script,
-                                            'id': kwargs['id'],
+                                            'wait': 1,
                                             'page': pagenum,
                                             'url': kwargs['url'],
                                         },
@@ -148,13 +131,16 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        id = kwargs['id'].replace('#page','content')
-        for selector in response.xpath('//*[@id="'+id+'"]/li'):
+        for selector in response.xpath('//*[@class="list_table"]/tbody/tr'):
             try:
                 item = {}
-                item['title'] = selector.xpath('./div/a/text()').extract_first()
-                item['time'] = selector.xpath('./span/text()').extract_first().strip()
-                url = response.urljoin(selector.xpath('./div/a/@href').extract_first())
+                item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
+                item['time'] = selector.xpath('./td[3]//text()').extract_first()
+                if selector.xpath('./td[2]/a/@onclick'):
+                    id = selector.xpath('./td[2]/a/@onclick').extract_first().replace('javascript:informDetail(\'','').replace('\');','')
+                    url = 'http://www.hbggzypm.com.cn:80/informController/informDetail?id=' + id
+                else:
+                    url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -178,19 +164,19 @@ class GansuSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="content_scroll"]').extract())
+                item['content'] = "".join(response.xpath('//div[@class="zwbf"]').extract())
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
-                item['region'] = '河北省'
+                item['region'] = '山西省'
                 item['time'] = kwargs['time']
-                item['website'] = '河北省公共资源交易服务平台'
-                item['module_name'] = '河北省-公共交易平台'
-                item['spider_name'] = 'hebei_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="content_scroll"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@class="content_scroll"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
+                item['website'] = '山西省公共资源交易服务平台'
+                item['module_name'] = '山西省-公共交易平台'
+                item['spider_name'] = 'shanxi_ggjypt'
+                item['txt'] = "".join(response.xpath('//div[@class="zwbf"]//text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@class="zwbf"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@class="content_scroll"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//div[@class="zwbf"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)
