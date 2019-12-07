@@ -67,22 +67,22 @@ class QinghaiGgjyptSpider(scrapy.Spider):
                 """
         try:
             contents = [
-                # {
-                #     'topic': 'gcjs',  # 工程建设
-                #     'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001001/secondPage.html'
-                # },
-                # {
-                #     'topic': 'zfcg',  # 政府采购
-                #     'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001002/secondPage.html'
-                # },
-                # {
-                #     'topic': 'ypcq',  # 药品采购
-                #     'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001003/secondPage.html'
-                # },
-                # {
-                #     'topic': 'cqjy',  # 产权交易
-                #     'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001004/secondPage.html'
-                # },
+                {
+                    'topic': 'gcjs',  # 工程建设
+                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001001/secondPage.html'
+                },
+                {
+                    'topic': 'zfcg',  # 政府采购
+                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001002/secondPage.html'
+                },
+                {
+                    'topic': 'ypcq',  # 药品采购
+                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001003/secondPage.html'
+                },
+                {
+                    'topic': 'cqjy',  # 产权交易
+                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001004/secondPage.html'
+                },
                 {
                     'topic': 'kqjtd',  # 矿权及土地
                     'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001005/secondPage.html'
@@ -148,7 +148,6 @@ class QinghaiGgjyptSpider(scrapy.Spider):
         end
         """
         page_count = int(self.parse_pagenum(response, kwargs))
-        page_count = 3
         try:
             for pagenum in range(page_count):
                 url = kwargs['url']
@@ -217,12 +216,12 @@ class QinghaiGgjyptSpider(scrapy.Spider):
                 category = '其他'
             item = ztbkItem()
             item['title'] = title
-            if len(response.css('.ewb-info-content')) > 1:
+            if len(response.css('.ewb-info-content')) > 0:
                 item['content'] = response.css(
                     '.ewb-info-content').extract_first()
                 item['txt'] = ''.join(
                     response.css('.ewb-info-content *::text').extract())
-            elif len(response.css('.xiangxiyekuang')) > 1:
+            elif len(response.css('.xiangxiyekuang')) > 0:
                 item['content'] = response.css(
                     '.xiangxiyekuang').extract_first()
                 item['txt'] = ''.join(
