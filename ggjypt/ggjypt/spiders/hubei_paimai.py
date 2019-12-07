@@ -67,10 +67,10 @@ class GansuSpider(scrapy.Spider):
         #     'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
         #     'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
         # },
-        # 'ITEM_PIPELINES': {
-        #     'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
-        #     'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
-        # },
+        'ITEM_PIPELINES': {
+            'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
+            'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
+        },
         # 'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL': "http://47.106.239.73:8050/"}
@@ -131,21 +131,24 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        print(response.xpath('//*[@class="list_table"]/tbody/tr/td[2]/a/text()').extract())
         for selector in response.xpath('//*[@class="list_table"]/tbody/tr'):
             try:
                 item = {}
                 item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
-                item['time'] = selector.xpath('./td[3]/span/text()').extract_first()
-                url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
-                print('url===' + url)
+                item['time'] = selector.xpath('./td[3]//text()').extract_first()
+                if selector.xpath('./td[2]/a/@onclick'):
+                    id = selector.xpath('./td[2]/a/@onclick').extract_first().replace('javascript:informDetail(\'','').replace('\');','')
+                    url = 'http://www.hbggzypm.com.cn:80/informController/informDetail?id=' + id
+                else:
+                    url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
-        if response.text:
+        print('kwargs====' + str(kwargs))
+        if kwargs['title']:
             try:
                 category = '其他';
                 title = kwargs['title']
