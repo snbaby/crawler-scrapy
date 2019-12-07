@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-
+import time
 script = """
 function wait_for_element(splash, css, maxwait)
   -- Wait until a selector matches an element
@@ -37,19 +37,18 @@ end
 function main(splash, args)
   splash:go(args.url)
   assert(splash:wait(0.5))
-  wait_for_element(splash, ".ewb-com-item")
-  js = string.format("document.querySelector('%s > div > div > input[type=text]').value =%d", args.id,args.page)
+  wait_for_element(splash, "#data_tab")
+  splash:runjs("document.querySelector('#data_tab').innerHTML = ''")
+  js = string.format("pagination(%d)", args.page)
   splash:evaljs(js)
-  js1 = string.format("document.querySelector('%s > div > div > button').click()", args.id)
-  splash:evaljs(js1)
-  splash:runjs("document.querySelector('#iframe1 > ul').innerHTML=''")
-  wait_for_element(splash, ".ewb-com-item")
+  assert(splash:wait(0.5))
+  wait_for_element(splash, "#data_tab")
   return splash:html()
 end
 """
 
 class GansuSpider(scrapy.Spider):
-    name = 'hebei_ggjypt'
+    name = 'yunnan_ggjypt'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES' : {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -85,36 +84,65 @@ class GansuSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002001/subNoticeGov.html',
-                    'id': '#page_001002001001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002002/subNoticeGov.html',
-                    'id': '#page_001002002001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002004/subNoticeGov.html',
-                    'id': '#page_001002004001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002005/001002005001/subNoticeGovGJzb.html',
-                    'id': '#page_001002005001001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002005/001002005002/subNoticeGovGJzb.html',
-                    'id': '#page_001002005002001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002006/subNoticeGov.html',
-                    'id': '#page_001002006001'
+                    'url': 'https://www.ynggzy.com/jyxx/jsgcZbgg?area=000&secondArea='
                 }
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/jsgcBgtz'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/jsgcpbjggs?area=000&secondArea='
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/jsgcZbjggs?area=000&secondArea='
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/jsgcZbyc?area=000'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/zfcg/cggg?area=000&secondArea='
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/zfcg/gzsx?area=000&secondArea='
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/zfcg/zbjggs?area=000&secondArea='
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/zfcg/zfcgYcgg?area=000&secondArea='
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/kyqcr/zpgCrgg?'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/kyqcr/bytz?'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/kyqcr/zpgCrjggs?'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/cqjy/crgg?'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/cqjy/bytz?'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/cqjy/cjqr?'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/qtjy/crgg?'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/qtjy/bgtz?'
+                # },
+                # {
+                #     'url': 'https://www.ynggzy.com/jyxx/qtjy/cjqr?'
+                # }
             ]
             for content in contents:
                 yield SplashRequest(content['url'],
-                                    endpoint = 'execute',
+                                    endpoint='execute',
                                     args={
                                         'lua_source': script,
-                                        'id': content['id'],
                                         'page': 1,
                                         'url': content['url'],
                                     },
@@ -125,16 +153,16 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        page_count = int(response.xpath('//*[@class="m-pagination-page"]/li[last()]/a/text()').extract()[0]) + 1
+        page_count = int(response.xpath('//*[@class="mmggxlh"]/a[last()-1]/text()').extract()[0]) + 1
         print('page_count' + str(page_count))
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
+                    time.sleep(0.5)
                     yield SplashRequest(kwargs['url'],
                                         endpoint='execute',
                                         args={
                                             'lua_source': script,
-                                            'id': kwargs['id'],
                                             'page': pagenum,
                                             'url': kwargs['url'],
                                         },
@@ -145,13 +173,13 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        id = kwargs['id'].replace('#page','content')
-        for selector in response.xpath('//*[@id="'+id+'"]/li'):
+        for selector in response.xpath('//*[@id="data_tab"]/tbody/tr'):
             try:
                 item = {}
-                item['title'] = selector.xpath('./div/a/text()').extract_first()
-                item['time'] = selector.xpath('./span/text()').extract_first().strip()
-                url = response.urljoin(selector.xpath('./div/a/@href').extract_first())
+                item['title'] = selector.xpath('./td[3]/a/text()').extract_first()
+                item['time'] = selector.xpath('./td[4]/text()').extract_first()
+                url = response.urljoin(selector.xpath('./td[3]/a/@href').extract_first())
+                print('url===='+url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -162,7 +190,7 @@ class GansuSpider(scrapy.Spider):
         if kwargs['title']:
             try:
                 category = '其他';
-                title = kwargs['title']
+                title = kwargs['title'].strip()
                 if title.find('招标') >= 0:
                     category = '招标'
                 elif title.find('中标') >= 0:
@@ -175,19 +203,19 @@ class GansuSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="content_scroll"]').extract())
+                item['content'] = "".join(response.xpath('//div[@class="detail_contect"]').extract())
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
-                item['region'] = '河北省'
-                item['time'] = kwargs['time']
-                item['website'] = '河北省公共资源交易服务平台'
-                item['module_name'] = '河北省-公共交易平台'
-                item['spider_name'] = 'hebei_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="content_scroll"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@class="content_scroll"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
+                item['region'] = '云南省'
+                item['time'] = kwargs['time'].strip()
+                item['website'] = '云南省公共资源交易服务平台'
+                item['module_name'] = '云南省-公共交易平台'
+                item['spider_name'] = 'yunnan_ggjypt'
+                item['txt'] = "".join(response.xpath('//div[@class="detail_contect"]//text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@class="detail_contect"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@class="content_scroll"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//div[@class="detail_contect"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

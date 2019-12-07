@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+import time
 
 script = """
 function wait_for_element(splash, css, maxwait)
@@ -37,19 +38,18 @@ end
 function main(splash, args)
   splash:go(args.url)
   assert(splash:wait(0.5))
-  wait_for_element(splash, ".ewb-com-item")
-  js = string.format("document.querySelector('%s > div > div > input[type=text]').value =%d", args.id,args.page)
+  wait_for_element(splash, ".pg_num_input")
+  js = string.format("document.querySelector('#target').value =%d", args.page)
   splash:evaljs(js)
-  js1 = string.format("document.querySelector('%s > div > div > button').click()", args.id)
-  splash:evaljs(js1)
-  splash:runjs("document.querySelector('#iframe1 > ul').innerHTML=''")
-  wait_for_element(splash, ".ewb-com-item")
+  splash:runjs("document.querySelector('#toview').innerHTML=''")
+  splash:runjs("document.querySelector('#moreinfo').click()")
+  wait_for_element(splash, ".list-tbnew")
   return splash:html()
 end
 """
 
 class GansuSpider(scrapy.Spider):
-    name = 'hebei_ggjypt'
+    name = 'chongqing_ggjypt'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES' : {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -61,20 +61,10 @@ class GansuSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE' : 'scrapy_splash.SplashAwareFSCacheStorage',
-        # 'SPIDER_MIDDLEWARES': {
-        #     'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        # },
-        # 'DOWNLOADER_MIDDLEWARES': {
-        #     'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
-        #     'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
-        #     'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
-        # },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        # 'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
@@ -85,28 +75,8 @@ class GansuSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002001/subNoticeGov.html',
-                    'id': '#page_001002001001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002002/subNoticeGov.html',
-                    'id': '#page_001002002001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002004/subNoticeGov.html',
-                    'id': '#page_001002004001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002005/001002005001/subNoticeGovGJzb.html',
-                    'id': '#page_001002005001001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002005/001002005002/subNoticeGovGJzb.html',
-                    'id': '#page_001002005002001'
-                },
-                {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002006/subNoticeGov.html',
-                    'id': '#page_001002006001'
+                    'topic': 'quanguo',  # 重庆市公共资源拍卖交易网
+                    'url': 'https://www.cqggzy.com/jyxx/jyxx-page.html'
                 }
             ]
             for content in contents:
@@ -114,7 +84,7 @@ class GansuSpider(scrapy.Spider):
                                     endpoint = 'execute',
                                     args={
                                         'lua_source': script,
-                                        'id': content['id'],
+                                        'wait': 1,
                                         'page': 1,
                                         'url': content['url'],
                                     },
@@ -125,16 +95,17 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        page_count = int(response.xpath('//*[@class="m-pagination-page"]/li[last()]/a/text()').extract()[0]) + 1
+        page_count = int(response.xpath('//*[@id="index"]').re(r'([1-9]\d*\.?\d*)')[1]) + 1
         print('page_count' + str(page_count))
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
+                    time.sleep(0.5)
                     yield SplashRequest(kwargs['url'],
                                         endpoint='execute',
                                         args={
                                             'lua_source': script,
-                                            'id': kwargs['id'],
+                                            'wait': 1,
                                             'page': pagenum,
                                             'url': kwargs['url'],
                                         },
@@ -145,13 +116,13 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        id = kwargs['id'].replace('#page','content')
-        for selector in response.xpath('//*[@id="'+id+'"]/li'):
+        for selector in response.xpath('//*[@class="list-tbnew"]/tbody/tr'):
             try:
                 item = {}
-                item['title'] = selector.xpath('./div/a/text()').extract_first()
-                item['time'] = selector.xpath('./span/text()').extract_first().strip()
-                url = response.urljoin(selector.xpath('./div/a/@href').extract_first())
+                item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
+                item['time'] = selector.xpath('./td[4]/text()').extract_first()
+                url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
+                print(url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -175,19 +146,19 @@ class GansuSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="content_scroll"]').extract())
+                item['content'] = "".join(response.xpath('//div[@class="epoint-article-content"]').extract())
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
-                item['region'] = '河北省'
+                item['region'] = '重庆市'
                 item['time'] = kwargs['time']
-                item['website'] = '河北省公共资源交易服务平台'
-                item['module_name'] = '河北省-公共交易平台'
-                item['spider_name'] = 'hebei_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="content_scroll"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@class="content_scroll"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
+                item['website'] = '重庆市公共资源交易服务平台'
+                item['module_name'] = '重庆市-公共交易平台'
+                item['spider_name'] = 'chongqing_ggjypt'
+                item['txt'] = "".join(response.xpath('//div[@class="epoint-article-content"]//text()').extract())
+                item['appendix_name'] = ";".join(response.xpath('//div[@class="epoint-article-content"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@class="content_scroll"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
+                item['appendix'] = ";".join(response.xpath('//div[@class="epoint-article-content"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

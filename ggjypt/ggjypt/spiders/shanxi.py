@@ -113,6 +113,7 @@ class GansuSpider(scrapy.Spider):
             for pagenum in range(page_count):
                 if pagenum > 1:
                     time.sleep(0.5)
+                    print('pagenum' + str(pagenum))
                     yield SplashRequest(kwargs['url'],
                                         endpoint='execute',
                                         args={
@@ -128,6 +129,7 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
+        print(response.xpath('//*[@id="content"]/tr/td[2]/a/text()').extract())
         for selector in response.xpath('//*[@id="content"]/tr'):
             try:
                 item = {}
@@ -140,7 +142,6 @@ class GansuSpider(scrapy.Spider):
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
-        print('kwargs====' + str(kwargs))
         if kwargs['title']:
             try:
                 category = '其他';
