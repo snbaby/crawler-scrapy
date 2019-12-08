@@ -38,17 +38,19 @@ end
 
 function main(splash, args)
   splash:go(args.url)
-  assert(splash:wait(1))
-  js = string.format("document.getElementsByTagName('iframe')[0].contentWindow.__doPostBack('MoreInfoList1$Pager','%d')", args.page)
+  assert(splash:wait(0.5))
+  wait_for_element(splash, "#packTablePg")
+  splash:runjs("document.querySelector('#packTable').innerHTML=''")
+  js = string.format("TabAjaxQuery.gotoPage(%d,'packTable')", args.page)
   splash:evaljs(js)
   assert(splash:wait(1))
-  splash:runjs("document.querySelector('body').innerHTML = document.getElementsByTagName('iframe')[0].contentWindow.document.body.querySelector('form').innerHTML")
+  wait_for_element(splash, "#packTable > tbody > tr")
   return splash:html()
 end
 """
 
 class GansuSpider(scrapy.Spider):
-    name = 'guangxi_ggjypt'
+    name = 'anhui_ggjypt'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -72,39 +74,43 @@ class GansuSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://gxggzy.gxzf.gov.cn/gxzbw/showinfo/jyxx.aspx?QuYu=450001&categoryNum=001010001"
-            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_type)
+            contents = [
+                {
+                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=1&hySort=&bulletinclass=jy&num=undefined'
+                },
+                {
+                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=2&hySort=&bulletinclass=jy&num=undefined'
+                },
+                {
+                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=3&hySort=&bulletinclass=jy&num=undefined'
+                },
+                {
+                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=4&hySort=&bulletinclass=jy&num=undefined'
+                },
+                {
+                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=7&hySort=&bulletinclass=jy&num=undefined'
+                },
+                {
+                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=12&hySort=&bulletinclass=jy&num=undefined'
+                }
+            ]
+            for content in contents:
+                yield SplashRequest(content['url'],
+                    endpoint = 'execute',
+                    args={
+                        'lua_source': script,
+                        'wait': 1,
+                        'page': 1,
+                        'url': content['url'],
+                    },
+                    callback=self.parse_page,
+                    cb_kwargs=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_type(self, response):
-        num = 1
-        for href in response.xpath('//*[@class="LeftMenuSub"]/a/@onclick'):
-            for id in response.xpath('//*[@class="hubs"]/ul/li/@id'):
-                try:
-                    type = href.extract().replace('Openinfo(\'','').replace('\')','')
-                    url = 'http://gxggzy.gxzf.gov.cn/gxzbw/showinfo/jyxx.aspx?QuYu=' + id.extract() + '&categoryNum=' + type
-                    content = {
-                        'url': url
-                    }
-                    yield SplashRequest(url,
-                        endpoint='execute',
-                        args={
-                            'lua_source': script,
-                            'wait': 1,
-                            'page': 2,
-                            'url': url,
-                        },
-                        callback=self.parse_page,
-                        cb_kwargs=content)
-
-                except Exception as e:
-                    logging.error(self.name + ": " + e.__str__())
-                    logging.exception(e)
-
     def parse_page(self, response, **kwargs):
-        page_count = int(response.xpath('//*[@id="MoreInfoList1_Pager"]//b/text()').extract()[1])
+        page_count = int(response.xpath('//*[@id="packTablePageCount"]/text()').re(r'([1-9]\d*\.?\d*)')[0])
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
@@ -123,14 +129,15 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for selector in response.xpath('//*[@class="DataGrid"]/tbody/tr'):
+        for selector in response.xpath('//*[@id="packTable"]/tbody/tr'):
             try:
-                if selector.xpath('./td[2]/a/text()'):
+                if selector.xpath('./td[1]/a/text()'):
                     item = {}
-                    item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
-                    item['time'] = selector.xpath('./td[3]/text()').extract_first()
-                    url = 'http://gxggzy.gxzf.gov.cn' + selector.xpath('./td[2]/a/@href').extract_first()
+                    item['title'] = selector.xpath('./td[1]/a/text()').extract_first()
+                    item['time'] = selector.xpath('./td[2]/font/text()').extract_first()
+                    url = 'http://ggzy.ah.gov.cn/bulletin.do?method=showHomepage&bulletin_id=' + selector.xpath('./td[1]/a/@value').extract_first()
                     item['url'] = url
+                    print(url)
                     yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -154,16 +161,16 @@ class GansuSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="infodetail"]').extract())
+                item['content'] = "".join(response.xpath('//div[@class="content886"]').extract())
                 item['source'] = ''
                 item['category'] = category
                 item['type'] = ''
-                item['region'] = '广西壮族自治区'
+                item['region'] = '安徽省'
                 item['time'] = kwargs['time']
-                item['website'] = '广西壮族自治区公共资源交易服务平台'
-                item['module_name'] = '广西壮族自治区-公共交易平台'
-                item['spider_name'] = 'shanxi_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="infodetail"]//text()').extract())
+                item['website'] = '安徽省公共资源交易服务平台'
+                item['module_name'] = '安徽省-公共交易平台'
+                item['spider_name'] = 'anhui_ggjypt'
+                item['txt'] = "".join(response.xpath('//div[@class="content886"]//text()').extract())
                 item['appendix_name'] = appendix_name
                 item['link'] = kwargs['url']
                 item['appendix'] = appendix
