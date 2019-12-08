@@ -15,8 +15,8 @@ function main(splash, args)
 end
 """
 
-class JiangsuZfcgSpider(scrapy.Spider):
-    name = 'jiangsu_zfcg'
+class JiangsuZfcgwSpider(scrapy.Spider):
+    name = 'jiangsu_zfcgw'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
