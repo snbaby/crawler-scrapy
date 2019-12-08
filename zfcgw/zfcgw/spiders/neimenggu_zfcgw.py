@@ -152,7 +152,6 @@ class NeimengguZfcgwSpider(scrapy.Spider):
         end
         """
         page_count = int(self.parse_pagenum(response, kwargs))
-        page_count = 1
         try:
             for pagenum in range(page_count):
                 url = kwargs['url']
