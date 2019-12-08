@@ -38,10 +38,11 @@ function main(splash, args)
   splash:go(args.url)
   assert(splash:wait(0.5))
   wait_for_element(splash, ".one")
-  splash:runjs("document.querySelector('body > div.container.layout.clearfloat > div.right > div > div:nth-child(4) > table > tbody').innerHTML = ''")
+  splash:runjs("document.querySelector('document.querySelector('.content_right.fr > div:nth-child(4)').innerHTML = ''")
   js = string.format("pagination(%d)", args.page)
   splash:evaljs(js)
-  wait_for_element(splash, ".one")
+  assert(splash:wait(0.5))
+  wait_for_element(splash, ".content_right.fr > div:nth-child(4) > table > tbody")
   return splash:html()
 end
 """
@@ -144,7 +145,7 @@ class GansuSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
-                    time.sleep(0.5)
+                    time.sleep(1)
                     yield SplashRequest(kwargs['url'],
                                         endpoint='execute',
                                         args={
@@ -159,20 +160,18 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for selector in response.xpath('//*[@class="content_right fr"]/div[4]//table/tr'):
+        for selector in response.xpath('//*[@class="content_right fr"]/div[4]/table/tbody/tr'):
             try:
                 item = {}
                 item['title'] = selector.xpath('./td[3]/a/text()').extract_first()
-                item['time'] = selector.xpath('./td[4]/text()').extract_first().strip()
+                item['time'] = selector.xpath('./td[4]/text()').extract_first()
                 url = response.urljoin(selector.xpath('./td[3]/a/@href').extract_first())
-                print('url===='+url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
-        print('kwargs====' + str(kwargs))
         if kwargs['title']:
             try:
                 category = '其他';
@@ -188,13 +187,13 @@ class GansuSpider(scrapy.Spider):
                 elif title.find('单一') >= 0:
                     category = '单一'
                 item = ztbkItem()
-                item['title'] = title
+                item['title'] = title.strip()
                 item['content'] = "".join(response.xpath('//div[@class="detail_contect"]').extract())
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '内蒙古自治区'
-                item['time'] = kwargs['time']
+                item['time'] = kwargs['time'].strip()
                 item['website'] = '内蒙古自治区公共资源交易服务平台'
                 item['module_name'] = '内蒙古自治区-公共交易平台'
                 item['spider_name'] = 'neimenggu_ggjypt'
