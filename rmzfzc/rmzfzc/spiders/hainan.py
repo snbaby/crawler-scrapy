@@ -5,7 +5,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -90,19 +90,21 @@ class HainanSpider(scrapy.Spider):
         for href in response.css('.list-right_title a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url': url}, dont_filter=True)
+                kwargs['url'] = url
+                yield scrapy.Request(url, callback=self.parse_item, dont_filter=True,cb_kwargs=kwargs)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
         try:
+            appendix, appendix_name = get_attachments(response)
             if len(response.css('ucaptitle::text').extract()) == 1:
                 item = rmzfzcItem()
                 item['title'] = response.css('ucaptitle::text').extract_first().strip()
                 item['article_num'] = ''
                 item['content'] = response.css('ucapcontent').extract_first()
-                item['appendix'] = ''
+                item['appendix'] = appendix
                 item['source'] = response.css('#ly::text').extract_first()
                 item['time'] = response.css('publishtime::text').extract_first().strip()
                 item['province'] = ''
@@ -111,26 +113,27 @@ class HainanSpider(scrapy.Spider):
                 item['website'] = '海南省人民政府'
                 item['link'] = kwargs['url']
                 item['txt'] = ''.join(response.css('ucapcontent *::text').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['module_name'] = '海南省人民政府'
-                item['spider_name'] = 'hainan'
+                item['spider_name'] = 'hainan_'+kwargs['topic']
             else:
                 item = rmzfzcItem()
-                item['title'] = response.css('table tr:nth-child(3) td:nth-child(2)::text').extract_first()
+                source = response.xpath('//*[@class="pages-date"]/span/text()').extract_first()
+                item['title'] = response.css('table tr:nth-child(3) td:nth-child(2)::text').extract_first() if response.css('table tr:nth-child(3) td:nth-child(2)::text') else response.xpath('//*[@class="article oneColumn pub_border"]/h1/text()').extract_first()
                 item['article_num'] = response.css('table tr:nth-child(4) td:nth-child(2)::text').extract_first()
                 item['content'] = response.css('#UCAP-CONTENT').extract_first()
-                item['appendix'] = ''
-                item['source'] = ''
-                item['time'] = response.css('table tr:nth-child(4) td:nth-child(4)::text').extract_first()
+                item['appendix'] = appendix
+                item['source'] = source.replace('来源：','') if source else ''
+                item['time'] = response.css('table tr:nth-child(4) td:nth-child(4)::text').extract_first() if response.css('table tr:nth-child(4) td:nth-child(4)::text') else response.xpath('//*[@class="pages-date"]/text()').extract_first()
                 item['province'] = ''
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '海南省人民政府'
                 item['link'] = kwargs['url']
                 item['txt'] = ''.join(response.css('#UCAP-CONTENT *::text').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['module_name'] = '海南省人民政府'
-                item['spider_name'] = 'hainan'
+                item['spider_name'] = 'hainan_'+kwargs['topic']
             print(
                 "===========================>crawled one item" +
                 response.request.url)
