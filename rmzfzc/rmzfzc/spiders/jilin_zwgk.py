@@ -89,7 +89,6 @@ class GansuSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'pmjy',
                     'url': 'http://xxgk.jl.gov.cn/'
                 }
             ]
@@ -130,8 +129,8 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        print(response.xpath('////*[@class="zly_xxmu_20170104ulbg2"]/td[2]/div/a/text()').extract())
-        for selector in response.xpath('////*[@class="zly_xxmu_20170104ulbg2"]'):
+        print(response.xpath('//*[@class="zly_xxmu_20170104ulbg2"]/td[2]/div/a/text()').extract())
+        for selector in response.xpath('//*[@class="zly_xxmu_20170104ulbg2"]'):
             try:
                 item = {}
                 item['title'] = selector.xpath('./td[2]/div/a/text()').extract_first().strip()
