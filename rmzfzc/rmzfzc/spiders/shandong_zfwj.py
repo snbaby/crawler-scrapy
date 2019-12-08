@@ -38,7 +38,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        urlList = ['http://www.shorong.gov.cn/col/col2266/index.html?uid=6820&pageNum=','http://www.shorong.gov.cn/col/col2262/index.html?uid=5836&pageNum=']
+        urlList = ['http://www.shandong.gov.cn/col/col2262/index.html?uid=6820&pageNum=','http://www.shandong.gov.cn/col/col2262/index.html?uid=5836&pageNum=']
         try:
             for urlTmp in urlList:
                 url = urlTmp+"1"
@@ -48,6 +48,8 @@ class QuanguoZuixinSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
+        logging.error(response.text)
+        return
         page_count  = int(self.parse_pagenum(response))
         try:
             preUrl = kwargs['preUrl']
@@ -59,7 +61,6 @@ class QuanguoZuixinSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_pagenum(self, response):
-        print(response.text)
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
