@@ -5,6 +5,7 @@ import logging
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 import time
+from utils.tools.attachment import get_attachments
 
 class shandongZfwjSpider(scrapy.Spider):
     name = 'gansu'
@@ -60,8 +61,15 @@ class shandongZfwjSpider(scrapy.Spider):
         end
         function main(splash, args)
           splash:go(args.url)
-          wait_for_element(splash, ".default_pgContainer")
-          splash:wait(1)
+          wait_for_element(splash, ".default_pgCurrentPage")
+          js = string.format("document.querySelector('.default_pgCurrentPage').value =%s", args.page)
+          splash:evaljs(js)
+          assert(splash:wait(0.1))
+          splash:runjs("document.querySelector('.default_pgContainer').innerHTML = ''")
+          assert(splash:wait(0.1))
+          splash:evaljs("var e = jQuery.Event('keydown');e.keyCode = 13;$('input.default_pgCurrentPage').trigger(e);")
+          assert(splash:wait(0.1))
+          wait_for_element(splash, ".default_pgContainer > table > tbody > tr")
           return splash:html()
         end
         """
@@ -82,6 +90,7 @@ class shandongZfwjSpider(scrapy.Spider):
                                     args={
                                         'lua_source': script,
                                         'wait': 1,
+                                        'page': 1,
                                         'url': content['url'],
                                     },
                                     callback=self.parse_page,
@@ -121,33 +130,33 @@ class shandongZfwjSpider(scrapy.Spider):
         end
         function main(splash, args)
           splash:go(args.url)
-          wait_for_element(splash, "#pages")
+          wait_for_element(splash, ".default_pgCurrentPage")
           js = string.format("document.querySelector('.default_pgCurrentPage').value =%s", args.page)
           splash:evaljs(js)
           assert(splash:wait(0.1))
           splash:runjs("document.querySelector('.default_pgContainer').innerHTML = ''")
           assert(splash:wait(0.1))
-          splash:runjs("document.querySelector('.go-button').click()")
+          splash:evaljs("var e = jQuery.Event('keydown');e.keyCode = 13;$('input.default_pgCurrentPage').trigger(e);")
           assert(splash:wait(0.1))
+          wait_for_element(splash, ".default_pgContainer > table > tbody > tr")
           return splash:html()
         end
         """
         page_count = int(self.parse_pagenum(response)) + 1
-        print('page_count' + str(page_count))
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
-                    time.sleep(0.5)
                     url = kwargs['url']
                     yield SplashRequest(url,
-                                        endpoint='execute',
-                                        args={
-                                            'lua_source': script,
-                                            'wait': 1,
-                                            'url': url,
-                                        },
-                                        callback=self.parse,
-                                        cb_kwargs=kwargs)
+                        endpoint='execute',
+                        args={
+                            'lua_source': script,
+                            'wait': 1,
+                            'page': pagenum,
+                            'url': url,
+                        },
+                        callback=self.parse,
+                        cb_kwargs=kwargs)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -162,16 +171,17 @@ class shandongZfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for selector in response.xpath('//*[@id="_fill"]/tbody/tr'):
+        for selector in response.xpath('//*[@class="default_pgContainer"]/table/tbody/tr'):
             try:
                 item = {}
                 item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
-                item['time'] = selector.xpath('./td[4]/text()').extract_first()
-                item['article_num'] = selector.xpath('./td[2]/div/ul/li[6]/text()').extract_first()
-                item['source'] = selector.xpath('./td[3]/text()').extract_first()
+                item['time'] = selector.xpath('./td[3]/span/text()').extract_first()
                 url = selector.xpath('./td[2]/a/@href').extract_first()
+                if url.startswith('/'):
+                    url = 'http://www.gansu.gov.cn' + url
                 if url:
-                    print('url==='+url)
+                    item['url'] = url
+                    item['topic'] = kwargs['topic']
                     yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -180,22 +190,23 @@ class shandongZfwjSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             if kwargs['title']:
+                appendix, appendix_name = get_attachments(response)
                 item = rmzfzcItem()
                 item['title'] = kwargs['title']
                 item['article_num'] = kwargs['article_num']
-                item['content'] = "".join(response.xpath('//*[@class="zwnr"]').extract())
-                item['appendix'] = ''
+                item['content'] = "".join(response.xpath('//*[@class="bt_content"]').extract())
                 item['source'] = kwargs['source']
                 item['time'] = kwargs['time']
                 item['province'] = ''
                 item['city'] = ''
                 item['area'] = ''
-                item['website'] = '山东省人民政府'
-                item['module_name'] = '山东省人民政府-政策解读'
-                item['spider_name'] = 'shandong_zfwj'
-                item['txt'] = "".join(response.xpath('//*[@class="zwnr"]//text()').extract())
-                item['appendix_name'] = ''
-                item['link'] = response.request.url
+                item['website'] = '甘肃省人民政府'
+                item['module_name'] = '甘肃省人民政府-政策解读'
+                item['spider_name'] = 'shandong_' + kwargs['topic']
+                item['txt'] = "".join(response.xpath('//*[@class="bt_content"]//text()').extract())
+                item['appendix_name'] = appendix_name
+                item['appendix'] = appendix
+                item['link'] = kwargs['url']
                 print("===========================>crawled one item" +
                     response.request.url)
         except Exception as e:

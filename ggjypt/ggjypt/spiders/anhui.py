@@ -4,7 +4,6 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-import time
 from utils.tools.attachment import get_attachments
 
 script = """
