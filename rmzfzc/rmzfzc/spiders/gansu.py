@@ -193,9 +193,9 @@ class shandongZfwjSpider(scrapy.Spider):
                 appendix, appendix_name = get_attachments(response)
                 item = rmzfzcItem()
                 item['title'] = kwargs['title']
-                item['article_num'] = kwargs['article_num']
+                item['article_num'] = ''
                 item['content'] = "".join(response.xpath('//*[@class="bt_content"]').extract())
-                item['source'] = kwargs['source']
+                item['source'] = '省政府办公厅'
                 item['time'] = kwargs['time']
                 item['province'] = ''
                 item['city'] = ''
