@@ -177,9 +177,9 @@ class shandongZfwjSpider(scrapy.Spider):
                 item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
                 item['time'] = selector.xpath('./td[3]/span/text()').extract_first()
                 url = selector.xpath('./td[2]/a/@href').extract_first()
-                if url.startswith('/'):
-                    url = 'http://www.gansu.gov.cn' + url
                 if url:
+                    if url.startswith('/'):
+                        url = 'http://www.gansu.gov.cn' + url
                     item['url'] = url
                     item['topic'] = kwargs['topic']
                     yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
@@ -202,7 +202,7 @@ class shandongZfwjSpider(scrapy.Spider):
                 item['area'] = ''
                 item['website'] = '甘肃省人民政府'
                 item['module_name'] = '甘肃省人民政府-政策解读'
-                item['spider_name'] = 'shandong_' + kwargs['topic']
+                item['spider_name'] = 'gansu_' + kwargs['topic']
                 item['txt'] = "".join(response.xpath('//*[@class="bt_content"]//text()').extract())
                 item['appendix_name'] = appendix_name
                 item['appendix'] = appendix
