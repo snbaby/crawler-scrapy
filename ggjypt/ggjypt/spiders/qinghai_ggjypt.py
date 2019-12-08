@@ -22,7 +22,7 @@ class QinghaiGgjyptSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
+        #'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
@@ -138,7 +138,6 @@ class QinghaiGgjyptSpider(scrapy.Spider):
           splash:runjs("document.querySelector('#record').innerHTML = ''")
           splash:runjs("document.querySelector('.active').classList.add('test')")
           splash:runjs("document.querySelector('.active').classList.remove('active')")
-          splash:runjs("document.querySelector('.test').setAttribute('data-page-index',100)")
           js = string.format("document.querySelector('.test').setAttribute('data-page-index',%d)", args.pagenum)
           splash:evaljs(js)
           splash:runjs("document.querySelector('.test').click()")
@@ -170,8 +169,11 @@ class QinghaiGgjyptSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.css(
-                    '.m-pagination-info::text').extract_first().split('of')[1].replace('entires', '').strip())
+                total = int(response.css('.m-pagination-info::text').extract_first().split('of')[1].replace('entires', '').strip())
+                if total/10 == int(total/10):
+                    return int(total/10)
+                else:
+                    return int(total/10) + 1
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
