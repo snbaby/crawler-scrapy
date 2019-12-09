@@ -48,9 +48,10 @@ class QuanguoZuixinSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        logging.error(response.text)
-        return
-        page_count  = int(self.parse_pagenum(response))
+        text = response.text.replace('<![CDATA[', '').replace(']]>', '')
+        logging.error(text)
+        sel = scrapy.Selector(text=text)
+        page_count  = int(self.parse_pagenum(sel))
         try:
             preUrl = kwargs['preUrl']
             for pagenum in range(page_count):
