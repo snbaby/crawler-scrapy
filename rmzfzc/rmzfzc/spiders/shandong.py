@@ -104,7 +104,7 @@ class AnhuiSpider(scrapy.Spider):
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '山东省人民政府'
-                item['link'] = kwargs['link']
+                item['link'] = response.request.url
                 item['txt'] = "".join(response.xpath('//div[@class="article"]//text()').extract())
                 item['appendix_name'] = appendix_name
                 item['module_name'] = '山东省人民政府'
@@ -124,7 +124,7 @@ class AnhuiSpider(scrapy.Spider):
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '山东省人民政府'
-                item['link'] = kwargs['link']
+                item['link'] = response.request.url
                 item['txt'] = "".join(response.xpath('//div[@class="article"]//text()').extract())
                 item['appendix_name'] = appendix_name
                 item['module_name'] = '山东省人民政府'
