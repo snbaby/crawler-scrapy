@@ -96,9 +96,11 @@ class AnhuiSpider(scrapy.Spider):
                 item['title'] = response.xpath(
                     '//*[@class="xq-tit"]/text()').extract_first()
                 item['article_num'] = ''
-                item['source'] = response.xpath('//*[@class="pl42"]/text()').extract_first().replace('来源：', '')
-                item['time'] = response.xpath(
-                    '//*[@class="R-tit"]/text()').extract_first().replace(' 时间：', '')
+                source = response.xpath('//*[@class="pl42"]/text()').extract_first()
+                item['source'] = source.replace('来源：', '') if source else ''
+                timeStr = response.xpath('//*[@class="R-tit"]/text()').extract_first() if response.xpath(
+                    '//*[@class="R-tit"]/text()') else response.xpath('//*[@class="R-tit"]/span/text()').extract_first()
+                item['time'] = timeStr.replace('时间：', '')
                 item['content'] = "".join(response.xpath('//div[@class="article"]').extract())
                 item['appendix'] = appendix
                 item['province'] = '山东省'
@@ -125,9 +127,10 @@ class AnhuiSpider(scrapy.Spider):
                     item['title'] = response.xpath(
                         '//*[@class="xq-tit"]/text()').extract_first()
                     item['article_num'] = ''
-                    item['source'] = response.xpath('//*[@class="pl42"]/text()').extract_first().replace('来源：','')
-                    item['time'] = response.xpath(
-                        '//*[@class="R-tit"]/text()').extract_first().replace(' 时间：','')
+                    source = response.xpath('//*[@class="pl42"]/text()').extract_first()
+                    item['source'] = source.replace('来源：','') if source else ''
+                    timeStr = response.xpath('//*[@class="R-tit"]/text()').extract_first() if response.xpath('//*[@class="R-tit"]/text()') else response.xpath('//*[@class="R-tit"]/span/text()').extract_first()
+                    item['time'] = timeStr.replace('时间：','')
                 item['appendix'] = appendix
                 item['content'] = "".join(response.xpath('//div[@class="article"]').extract())
                 item['province'] = '山东省'
