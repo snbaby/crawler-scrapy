@@ -93,13 +93,14 @@ class AnhuiSpider(scrapy.Spider):
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
             if kwargs['topic'] == 'zcjd':
-                article_num = response.xpath('//*[@class="people-desc"]/table/tbody/tr[3]/td[1]/text()').extract_first()
-                item['title'] = response.xpath('//*[@class="people-desc"]/table/tbody/tr[2]/td[1]/text()').extract_first()
-                item['article_num'] = article_num.strip() if article_num else ''
+                item['title'] = response.xpath(
+                    '//*[@class="xq-tit"]/text()').extract_first()
+                item['article_num'] = ''
+                item['source'] = response.xpath('//*[@class="pl42"]/text()').extract_first().replace('来源：', '')
+                item['time'] = response.xpath(
+                    '//*[@class="R-tit"]/text()').extract_first().replace(' 时间：', '')
                 item['content'] = "".join(response.xpath('//div[@class="article"]').extract())
                 item['appendix'] = appendix
-                item['source'] = response.xpath('//*[@class="people-desc"]/table/tbody/tr[1]/td[1]/text()').extract_first()
-                item['time'] = response.xpath('//*[@class="people-desc"]/table/tbody/tr[3]/td[2]/text()').extract_first()
                 item['province'] = '山东省'
                 item['city'] = ''
                 item['area'] = ''
@@ -110,16 +111,25 @@ class AnhuiSpider(scrapy.Spider):
                 item['module_name'] = '山东省人民政府'
                 item['spider_name'] = 'shandong_zcjd'
             else:
-                article_num = response.xpath('//*[@class="people-desc"]/table/tbody/tr[3]/td[1]/text()').extract_first()
-                item['title'] = response.xpath(
-                    '//*[@class="people-desc"]/table/tbody/tr[2]/td[1]/text()').extract_first()
-                item['article_num'] = article_num.strip() if article_num else ''
-                item['content'] = "".join(response.xpath('//div[@class="article"]').extract())
+                if response.xpath('//div[@class="people-desc"]'):
+                    article_num = response.xpath(
+                        '//*[@class="people-desc"]/table/tbody/tr[3]/td[1]/text()').extract_first()
+                    item['title'] = response.xpath(
+                        '//*[@class="people-desc"]/table/tbody/tr[2]/td[1]/text()').extract_first()
+                    item['article_num'] = article_num.strip() if article_num else ''
+                    item['source'] = response.xpath(
+                        '//*[@class="people-desc"]/table/tbody/tr[1]/td[1]/text()').extract_first()
+                    item['time'] = response.xpath(
+                        '//*[@class="people-desc"]/table/tbody/tr[3]/td[2]/text()').extract_first()
+                else:
+                    item['title'] = response.xpath(
+                        '//*[@class="xq-tit"]/text()').extract_first()
+                    item['article_num'] = ''
+                    item['source'] = response.xpath('//*[@class="pl42"]/text()').extract_first().replace('来源：','')
+                    item['time'] = response.xpath(
+                        '//*[@class="R-tit"]/text()').extract_first().replace(' 时间：','')
                 item['appendix'] = appendix
-                item['source'] = response.xpath(
-                    '//*[@class="people-desc"]/table/tbody/tr[1]/td[1]/text()').extract_first()
-                item['time'] = response.xpath(
-                    '//*[@class="people-desc"]/table/tbody/tr[3]/td[2]/text()').extract_first()
+                item['content'] = "".join(response.xpath('//div[@class="article"]').extract())
                 item['province'] = '山东省'
                 item['city'] = ''
                 item['area'] = ''
