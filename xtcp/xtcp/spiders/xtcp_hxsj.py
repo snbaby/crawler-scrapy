@@ -100,9 +100,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse_item(self, response,**kwargs):
-        if response.text:
+        if kwargs['name']:
             try:
-
                 item = xtcpItem()
                 pro_address = response.xpath('//table[@class="jibenxinxi"]/tr[13]/td[4]/text()').extract_first()
                 deadline_type = response.xpath('//table[@class="jibenxinxi"]/tr[6]/td[4]/text()').extract_first()
