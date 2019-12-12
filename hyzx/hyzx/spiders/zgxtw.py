@@ -4,8 +4,8 @@ import logging
 
 from hyzx.items import hyzxItem
 
-class JrjSpider(scrapy.Spider):
-    name = 'jrj'
+class ZgxtwSpider(scrapy.Spider):
+    name = 'zgxtw'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -31,8 +31,8 @@ class JrjSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'jrj',  # 金融界
-                    'url': 'http://trust.jrj.com.cn/list/hydt.shtml'
+                    'topic': 'zgxtw',  # 中国信托网
+                    'url': 'http://xt.zhongguoxintuo.com/xinwen/p1/'
                 }
             ]
             for content in contents:
@@ -46,11 +46,8 @@ class JrjSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 url = kwargs['url']
-                if pagenum == 0:
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
-                else:
-                    url = url.replace('.shtml', '-'+str(pagenum + 1) + '.shtml')
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                url = url.replace('p1', 'p' + str(pagenum + 1))
+                yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -60,14 +57,14 @@ class JrjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return 10
+                return 594
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for href in response.css('.ls3 a::attr(href)').extract():
+        for href in response.css('.col > a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
                 yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url': url}, dont_filter=True)
@@ -78,15 +75,15 @@ class JrjSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = hyzxItem()
-            item['title'] = ''.join(response.css('.titmain h1::text').extract()).strip()
-            item['date'] = ''.join(response.css('.inftop span::text').extract()).split('来源：')[0].strip()
-            item['resource'] = ''.join(response.css('.inftop span::text').extract()).split('来源：')[1].strip()
-            item['content'] = response.css('.texttit_m1').extract_first()
-            item['website'] = '金融界'
+            item['title'] = response.css('.zd-title::text').extract_first()
+            item['date'] = response.css('.zd-author >span:nth-child(3)::text').extract()
+            item['resource'] = response.css('.source::text').extract().replace('来源：','').strip()
+            item['content'] = response.css('.zd-content').extract_first()
+            item['website'] = '中国信托网'
             item['link'] = kwargs['url']
-            item['spider_name'] = 'jrj'
-            item['txt'] = ''.join(response.css('.texttit_m1 *::text').extract())
-            item['module_name'] = '信托融资一行业资讯-金融界'
+            item['spider_name'] = 'zgxtw'
+            item['txt'] = ''.join(response.css('.zd-content *::text').extract())
+            item['module_name'] = '信托融资一行业资讯-中国信托网'
 
             print(
                 "===========================>crawled one item" +
