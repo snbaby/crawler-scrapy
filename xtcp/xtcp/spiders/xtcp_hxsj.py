@@ -72,7 +72,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            return int(response.xpath('//*[@id="pageInfo"]/b/text()').re(r'([1-9]\d*\.?\d*)')[1]) + 1
+            if not self.add_pagenum:
+                return int(response.xpath('//*[@id="pageInfo"]/b/text()').re(r'([1-9]\d*\.?\d*)')[1]) + 1
+            return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -114,7 +116,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 income_type = response.xpath('//table[@class="jibenxinxi"]/tr[11]/td[4]/text()').extract_first()
 
                 item['name'] = kwargs['name']
-                item['issure'] = kwargs['name']
+                item['issure'] = kwargs['issure']
                 item['issue_date'] = kwargs['issue_date']
                 item['pro_address'] = pro_address.replace('\xa0','') if pro_address else ''
                 item['pre_scale'] = ''
