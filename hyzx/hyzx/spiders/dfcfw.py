@@ -4,8 +4,8 @@ import logging
 
 from hyzx.items import hyzxItem
 
-class ZgxtwSpider(scrapy.Spider):
-    name = 'zgxtw'
+class DfcfwSpider(scrapy.Spider):
+    name = 'dfcfw'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -31,8 +31,8 @@ class ZgxtwSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'zgxtw',  # 中国信托网
-                    'url': 'http://xt.zhongguoxintuo.com/xinwen/p1/'
+                    'topic': 'dfcfw',  # 东方财富网
+                    'url': 'http://trust.eastmoney.com/news/cxtjd_1.html'
                 }
             ]
             for content in contents:
@@ -46,7 +46,7 @@ class ZgxtwSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 url = kwargs['url']
-                url = url.replace('p1', 'p' + str(pagenum + 1))
+                url = url.replace('1.html', str(pagenum + 1) + '.html')
                 yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -57,14 +57,14 @@ class ZgxtwSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return 594
+                return int(response.css('#pagerNoDiv > a:nth-last-child(2)::text').extract_first())
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for href in response.css('.news-list  > a::attr(href)').extract():
+        for href in response.css('#newsListContent .image a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
                 yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url': url}, dont_filter=True)
@@ -75,15 +75,15 @@ class ZgxtwSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = hyzxItem()
-            item['title'] = response.css('.zd-title::text').extract_first()
-            item['date'] = response.css('.zd-author >span:nth-child(3)::text').extract_first()
-            item['resource'] = response.css('.source::text').extract_first().replace('来源：','').strip()
-            item['content'] = response.css('.zd-content').extract_first()
-            item['website'] = '中国信托网'
+            item['title'] = response.css('h1::text').extract_first()
+            item['date'] = response.css('.time::text').extract_first()
+            item['resource'] = response.css('.data-source::attr(data-source)').extract_first()
+            item['content'] = response.css('#ContentBody').extract_first()
+            item['website'] = '东方财富网'
             item['link'] = kwargs['url']
-            item['spider_name'] = 'zgxtw'
-            item['txt'] = ''.join(response.css('.zd-content *::text').extract())
-            item['module_name'] = '信托融资一行业资讯-中国信托网'
+            item['spider_name'] = 'dfcfw'
+            item['txt'] = ''.join(response.css('#ContentBody *::text').extract())
+            item['module_name'] = '信托融资一行业资讯-东方财富网'
 
             print(
                 "===========================>crawled one item" +
