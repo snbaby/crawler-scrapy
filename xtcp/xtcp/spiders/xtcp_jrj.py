@@ -81,7 +81,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for obj in data['trustProductList']:
             try:
                 time.sleep(0.1)
-                print(obj['innerCode'])
                 url = 'http://trust.jrj.com/json/d.jspa?innercode='+str(obj['innerCode']+'&_=1576256634483')
                 yield SplashRequest(url,callback=self.parse_item, dont_filter=True)
             except Exception as e:
@@ -92,27 +91,29 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse_item(self, response):
+        dataStr = response.text.replace('var content=', '')
+        detail = json.loads(dataStr)['trustProductDetail']
         try:
             item = xtcpItem()
-            name = response.xpath('//span[@id="trustSName"]/text()').extract_first()
-            issure = response.xpath('//*[@id="orgName"]/text()').extract_first()
-            issue_date =  response.xpath('//*[@id="buildDate"]/text()').extract_first()
-            establish_date =  response.xpath('//*[@id="buildDate"]/text()').extract_first()
-            pro_address =  response.xpath('//*[@id="provName"]/text()').extract_first()
-            real_scale =  response.xpath('//*[@id="issSize"]/text()').extract_first()
-            pro_deadline =  response.xpath('//*[@id="trustPeri"]/text()').extract_first()
-            deadline_date =  response.xpath('//*[@id="endDate"]/text()').extract_first()
-            invest_still =  response.xpath('//*[@id="minCap"]/text()').extract_first()
-            tj_start_time =  response.xpath('//*[@id="promStartDate"]/text()').extract_first()
-            tj_end_time =  response.xpath('//*[@id="promEndDate"]/text()').extract_first()
-            pro_state =  response.xpath('//*[@id="prdStatus"]/text()').extract_first()
-            pro_type =  response.xpath('//*[@id="trustType"]/text()').extract_first()
-            money_invest =  response.xpath('//*[@id="invFld"]/text()').extract_first()
-            money_use =  response.xpath('//*[@id="investRemark"]/text()').extract_first()
-            pre_year_income =  response.xpath('//*[@id="expYld"]/text()').extract_first()
-            income_type =  response.xpath('//*[@id="incomeType"]/text()').extract_first()
-            income_explane =  response.xpath('//*[@id="expYldRemark"]/text()').extract_first()
-            risk_method =  response.xpath('//*[@id="credEnhaMode"]/text()').extract_first()
+            name = detail['trustSName']
+            issure = detail['orgName']
+            issue_date = detail['buildDate']
+            establish_date = detail['buildDate']
+            pro_address = detail['provName']
+            real_scale = detail['issSize']
+            pro_deadline = detail['trustPeri']
+            deadline_date = detail['endDate']
+            invest_still = detail['minCap']
+            tj_start_time = detail['promStartDate']
+            tj_end_time = detail['promEndDate']
+            pro_state = detail['prdStatus']
+            pro_type = detail['trustType']
+            money_invest = detail['invFld']
+            money_use = detail['investRemark']
+            pre_year_income = detail['expYld']
+            income_type = detail['incomeType']
+            income_explane = detail['expYldRemark']
+            risk_method = detail['credEnhaMode']
 
 
             item['name'] = name  # 产品名称
