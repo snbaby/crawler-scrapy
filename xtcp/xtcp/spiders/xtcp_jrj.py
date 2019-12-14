@@ -6,6 +6,7 @@ import time
 
 from scrapy_splash import SplashRequest
 from xtcp.items import xtcpItem
+from utils.tools.attachment import get_times
 
 script = """
 function main(splash, args)
@@ -92,77 +93,81 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def parse_item(self, response):
         dataStr = response.text.replace('var content=', '')
-        detail = json.loads(dataStr)['trustProductDetail']
-        try:
-            item = xtcpItem()
-            name = detail['trustSName']
-            issure = detail['orgName']
-            issue_date = detail['buildDate']
-            establish_date = detail['buildDate']
-            pro_address = detail['provName']
-            real_scale = detail['issSize']
-            pro_deadline = detail['trustPeri']
-            deadline_date = detail['endDate']
-            invest_still = detail['minCap']
-            tj_start_time = detail['promStartDate']
-            tj_end_time = detail['promEndDate']
-            pro_state = detail['prdStatus']
-            pro_type = detail['trustType']
-            money_invest = detail['invFld']
-            money_use = detail['investRemark']
-            pre_year_income = detail['expYld']
-            income_type = detail['incomeType']
-            income_explane = detail['expYldRemark']
-            risk_method = detail['credEnhaMode']
+        jsonData = json.loads(dataStr)
+        if ('trustProductDetail' in jsonData) :
+            detail = json.loads(dataStr)['trustProductDetail']
+            try:
+                item = xtcpItem()
+                name = detail['trustSName']
+                issure = detail['orgName']
+                issue_date = detail['buildDate']
+                establish_date = detail['buildDate']
+                pro_address = detail['provName']
+                real_scale = detail['issSize']
+                pro_deadline = detail['trustPeri']
+                deadline_date = detail['endDate']
+                invest_still = detail['minCap']
+                tj_start_time = detail['promStartDate']
+                tj_end_time = detail['promEndDate']
+                pro_state = detail['prdStatus']
+                pro_type = detail['trustType']
+                money_invest = detail['invFld']
+                money_use = detail['investRemark']
+                pre_year_income = detail['expYld']
+                income_type = detail['incomeType']
+                income_explane = detail['expYldRemark']
+                risk_method = detail['credEnhaMode']
 
 
-            item['name'] = name  # 产品名称
-            item['issure'] = issure  # 发行机构
-            item['issue_date'] = issue_date  # 发行时间
-            item['pro_address'] = pro_address  # 项目所在地
-            item['pre_scale'] = ''  # 预期发行规模
-            item['real_scale'] = real_scale  # 实际发行规模
-            item['deadline_type'] = ''  # 期限类型
-            item['pro_deadline'] = pro_deadline  # 产品期限
-            item['tj_start_time'] = tj_start_time  # 推介起始日
-            item['tj_end_time'] =tj_end_time  # 推介截止日
-            item['establish_date'] = establish_date  # 成立日期
-            item['deadline_date'] =deadline_date  # 截止日期
-            item['invest_still'] = invest_still  # 投资门槛
-            item['income_deadline'] = ''  # 收益期限
-            item['pro_state'] = pro_state  # 产品状态
-            item['pro_type'] = pro_type.replace('\xa0', '') if pro_type else ''  # 产品类型
-            item['invest_method'] = ''  # 投资方式
-            item['money_invest'] = money_invest  # 资金投向
-            item['money_use'] = money_use.replace('\xa0', '') if money_use else ''  # 资金运用
-            item['pre_year_income'] = pre_year_income  # 预期年收益率
-            item['real_year_income'] = ''  # 实际年收益率
-            item['income_type'] = income_type  # 收益类型
-            item['income_explane'] = income_explane  # 收益说明
-            item['pay_method'] = ''  # 付息方式
-            item['finance_peo'] = ''  # 融资方
-            item['risk_method'] = risk_method  # 风险控制
-            item['payment'] = ''  # 还款来源
-            item['pro_highlight'] = ''  # 项目亮点
-            item['pro_plan'] = ''  # 项目进度
-            item['raise_account'] = ''  # 募集账号
-            item['money_host_bank'] = ''  # 资金托管行
-            item['asset_manager'] = ''  # 资产管理人
-            item['host_people'] = ''  # 托管人
-            item['website'] = '金融界'  # 数据来源网站
-            item['link'] = response.request.url  # 数据源链接
-            item['spider_name'] = 'xtcp_jrj'  # 名称
-            item['module_name'] = '信托产品_金融界'  # 模块名称
-            print(
-                "===========================>crawled one item" +
-                response.request.url)
-        except Exception as e:
-            logging.error(
-                self.name +
-                " in parse_item: url=" +
-                response.request.url +
-                ", exception=" +
-                e.__str__())
-            logging.exception(e)
-        yield item
+                item['name'] = name  # 产品名称
+                item['issure'] = issure  # 发行机构
+                item['issue_date'] = get_times(issue_date)  # 发行时间
+                item['pro_address'] = pro_address  # 项目所在地
+                item['pre_scale'] = ''  # 预期发行规模
+                item['real_scale'] = real_scale  # 实际发行规模
+                item['deadline_type'] = ''  # 期限类型
+                item['pro_deadline'] = pro_deadline  # 产品期限
+                item['tj_start_time'] = get_times(tj_start_time)  # 推介起始日
+                item['tj_end_time'] = get_times(tj_end_time)  # 推介截止日
+                item['establish_date'] = get_times(establish_date)  # 成立日期
+                item['deadline_date'] =get_times(deadline_date)  # 截止日期
+                item['invest_still'] = invest_still  # 投资门槛
+                item['income_deadline'] = ''  # 收益期限
+                item['pro_state'] = pro_state  # 产品状态
+                item['pro_type'] = pro_type.replace('\xa0', '') if pro_type else ''  # 产品类型
+                item['invest_method'] = ''  # 投资方式
+                item['money_invest'] = money_invest  # 资金投向
+                item['money_use'] = money_use.replace('\xa0', '') if money_use else ''  # 资金运用
+                item['pre_year_income'] = pre_year_income  # 预期年收益率
+                item['real_year_income'] = ''  # 实际年收益率
+                item['income_type'] = income_type  # 收益类型
+                item['income_explane'] = income_explane  # 收益说明
+                item['pay_method'] = ''  # 付息方式
+                item['finance_peo'] = ''  # 融资方
+                item['risk_method'] = risk_method  # 风险控制
+                item['payment'] = ''  # 还款来源
+                item['pro_highlight'] = ''  # 项目亮点
+                item['pro_plan'] = ''  # 项目进度
+                item['raise_account'] = ''  # 募集账号
+                item['money_host_bank'] = ''  # 资金托管行
+                item['asset_manager'] = ''  # 资产管理人
+                item['host_people'] = ''  # 托管人
+                item['website'] = '金融界'  # 数据来源网站
+                item['link'] = response.request.url  # 数据源链接
+                item['spider_name'] = 'xtcp_jrj'  # 名称
+                item['module_name'] = '信托产品_金融界'  # 模块名称
+                print(
+                    "===========================>crawled one item" +
+                    response.request.url)
+            except Exception as e:
+                logging.error(
+                    self.name +
+                    " in parse_item: url=" +
+                    response.request.url +
+                    ", exception=" +
+                    e.__str__())
+                logging.exception(e)
+            yield item
+        else:
+            print('dataStr====' + dataStr)
 

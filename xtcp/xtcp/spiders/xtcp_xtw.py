@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from xtcp.items import xtcpItem
+from utils.tools.attachment import get_times
 
 script = """
 function main(splash, args)
@@ -110,7 +111,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
                 item['name'] = kwargs['name'] #产品名称
                 item['issure'] = issure #发行机构
-                item['issue_date'] = issue_date #发行时间
+                item['issue_date'] = get_times(issue_date) #发行时间
                 item['pro_address'] = pro_address.replace('\xa0','') if pro_address else '' #项目所在地
                 item['pre_scale'] = '' #预期发行规模
                 item['real_scale'] = real_scale #实际发行规模

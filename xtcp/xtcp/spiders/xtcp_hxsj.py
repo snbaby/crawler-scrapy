@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from xtcp.items import xtcpItem
+from utils.tools.attachment import get_times
 
 script = """
 function main(splash, args)
@@ -117,7 +118,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
                 item['name'] = kwargs['name']
                 item['issure'] = kwargs['issure']
-                item['issue_date'] = kwargs['issue_date']
+                item['issue_date'] = get_times(kwargs['issue_date'])
                 item['pro_address'] = pro_address.replace('\xa0','') if pro_address else ''
                 item['pre_scale'] = ''
                 item['real_scale'] = kwargs['real_scale']
@@ -125,8 +126,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['pro_deadline'] = kwargs['pro_deadline']
                 item['tj_start_time'] = ''
                 item['tj_end_time'] = ''
-                item['establish_date'] = establish_date.replace('\xa0','') if establish_date else ''
-                item['deadline_date'] = deadline_date.replace('\xa0','') if deadline_date else ''
+                item['establish_date'] = get_times(establish_date.replace('\xa0','') if establish_date else '')
+                item['deadline_date'] = get_times(deadline_date.replace('\xa0','') if deadline_date else '')
                 item['invest_still'] = kwargs['invest_still']
                 item['income_deadline'] = ''
                 item['pro_state'] = pro_state.replace('\xa0','') if pro_state else ''
