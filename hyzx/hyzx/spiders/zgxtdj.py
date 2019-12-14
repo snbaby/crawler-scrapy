@@ -77,16 +77,15 @@ class ZgxtdjSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = hyzxItem()
-            item['title'] = response.css('.h2::text').extract_first()
+            item['title'] = response.css('title::text').extract_first().replace(' - 中国信托登记有限责任公司','').strip()
             item['date'] = response.css('.news-detail-time::text').extract_first().split('时间：')[1].split('浏览')[0].strip()
-            item['resource'] = response.css('.news-detail-time::text').extract_first().split('时间：')[0].replace('来源：','').strip()
+            item['resource'] = response.css('.news-detail-time::text').extract_first().split('时间：')[0].split('来源：')[1].replace('来源：','').strip()
             item['content'] = response.css('.ueditor_content_parse').extract_first()
             item['website'] = '中国信托登记有限责任公司'
             item['link'] = kwargs['url']
             item['spider_name'] = 'zgxtdj'
             item['txt'] = ''.join(response.css('.ueditor_content_parse *::text').extract())
             item['module_name'] = '信托融资一行业资讯-中国信托登记有限责任公司'
-
             print(
                 "===========================>crawled one item" +
                 response.request.url)
