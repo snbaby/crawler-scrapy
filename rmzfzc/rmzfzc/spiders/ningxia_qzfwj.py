@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -92,6 +92,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = kwargs['title']
             item['article_num'] = kwargs['article_num']
             item['content'] = "".join(response.xpath('//div[@class="info_box"]').extract())
@@ -104,12 +105,10 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['module_name'] = '宁夏回族自治区人民政府-区政府文件'
             item['spider_name'] = 'ningxia_qzfwj'
             item['txt'] = "".join(response.xpath('//div[@class="info_box"]//text()').extract())
-            item['appendix_name'] = ";".join(response.xpath('//div[@class="info_box"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/text()').extract())
+            item['appendix_name'] = appendix_name
             item['link'] = response.request.url
-            appendix = []
-            # for href in response.xpath('.relevantdoc.xgjd a::href'):
-            #    appendix.append(href.extract())
-            item['appendix'] = ";".join(response.xpath('//div[@class="info_box"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/@href').extract())
+            item['appendix'] = appendix
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

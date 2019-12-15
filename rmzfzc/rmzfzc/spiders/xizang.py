@@ -2,7 +2,7 @@
 import scrapy
 
 import logging
-
+from utils.tools.attachment import get_attachments,get_times
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 
@@ -93,12 +93,13 @@ class XizangSpider(scrapy.Spider):
 
     def parse_item(self, response):
         try:
+            appendix, appendix_name = get_attachments(response)
             if response.request.url.find('fgwj') > 0:
                 item = rmzfzcItem()
                 item['title'] = response.css('table tr:nth-child(1) td:nth-child(2)::text').extract_first()
                 item['article_num'] = response.css('table tr:nth-child(2) td:nth-child(4)::text').extract_first()
                 item['content'] = response.css('.TRS_UEDITOR').extract_first()
-                item['appendix'] = ''
+                item['appendix'] = appendix
                 item['source'] = response.css(".vvx-time-author.lf::text").extract_first().split('作者：')[0].split('来源：')[1].strip()
                 item['time'] = response.css(".vvx-time-author.lf::text").extract_first().split('时间：')[1].split('来源：')[0].strip()
                 item['province'] = ''
@@ -107,16 +108,17 @@ class XizangSpider(scrapy.Spider):
                 item['website'] = '西藏自治区人民政府'
                 item['link'] = response.request.url
                 item['txt'] = "".join(response.css('.TRS_UEDITOR *::text').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['module_name'] = '西藏自治区人民政府'
                 item['spider_name'] = 'xizang'
+                item['time'] = get_times(item['time'])
                 print("===========================>crawled one item" + response.request.url)
             else:
                 item = rmzfzcItem()
                 item['title'] = response.css('.inptit::text').extract_first()
                 item['article_num'] = ''
                 item['content'] = response.css('.TRS_UEDITOR').extract_first()
-                item['appendix'] = ''
+                item['appendix'] = appendix
                 item['source'] = ''
                 item['time'] = response.css(".vvx-time-author.lf::text").extract_first().split('时间：')[1].split('来源：')[0].strip()
                 item['province'] = ''
@@ -125,9 +127,10 @@ class XizangSpider(scrapy.Spider):
                 item['website'] = '西藏自治区人民政府'
                 item['link'] = response.request.url
                 item['txt'] = "".join(response.css('.TRS_UEDITOR *::text').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['module_name'] = '西藏自治区人民政府'
                 item['spider_name'] = 'xizang'
+                item['time'] = get_times(item['time'])
                 print("===========================>crawled one item" + response.request.url)
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())

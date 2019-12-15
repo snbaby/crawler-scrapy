@@ -173,6 +173,7 @@ class GansuSpider(scrapy.Spider):
                 item['appendix_name'] = appendix_name
                 item['link'] = kwargs['url']
                 item['appendix'] = appendix
+                item['time'] = get_times(item['time'])
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

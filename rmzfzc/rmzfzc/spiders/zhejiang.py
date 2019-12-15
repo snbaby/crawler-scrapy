@@ -4,7 +4,7 @@ import scrapy
 import logging
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   splash:go("http://www.baidu.com")
@@ -97,10 +97,11 @@ class ZhejiangSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('meta[name="ArticleTitle"]::attr(content)').extract_first()
             item['article_num'] = ''
             item['content'] = response.css('#zoom').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = response.css('meta[name="contentSource"]::attr(content)').extract_first()
             item['time'] = response.css('meta[name="Maketime"]::attr(content)').extract_first()
             item['province'] = ''
@@ -109,9 +110,10 @@ class ZhejiangSpider(scrapy.Spider):
             item['website'] = '浙江省人民政府'
             item['link'] = kwargs['url']
             item['txt'] = "".join(response.css('#zoom *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '浙江省人民政府'
             item['spider_name'] = 'zhejiang'
+            item['time'] = get_times(item['time'])
             print("===========================>crawled one item" + response.request.url)
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())

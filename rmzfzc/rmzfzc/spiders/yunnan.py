@@ -2,7 +2,7 @@
 import scrapy
 
 import logging
-
+from utils.tools.attachment import get_attachments,get_times
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 
@@ -107,6 +107,7 @@ class YunnanSpider(scrapy.Spider):
     def parse_zxwj(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('.h3class::text').extract_first().strip()
             item['article_num'] = response.css('.referencebox dl:nth-child(2) dd::text').extract_first()
             if len(response.css('.TRS_UEDITOR').extract()) > 0:
@@ -115,7 +116,7 @@ class YunnanSpider(scrapy.Spider):
             else:
                 item['content'] = response.css('.TRS_Editor').extract_first()
                 item['txt'] = ''.join(response.css('.TRS_Editor *::text').extract())
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = response.css('.referencebox dl:nth-child(3) dd::text').extract_first()
             item['time'] = response.css('.referencebox dl:nth-child(4) dd::text').extract_first()
             item['province'] = ''
@@ -123,10 +124,10 @@ class YunnanSpider(scrapy.Spider):
             item['area'] = ''
             item['website'] = '云南省人民政府'
             item['link'] = kwargs['url']
-            #item['txt'] = ''.join(response.css('.TRS_UEDITOR *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '云南省人民政府'
             item['spider_name'] = 'yunnan'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)
@@ -164,6 +165,7 @@ class YunnanSpider(scrapy.Spider):
             item['appendix_name'] = ''
             item['module_name'] = '云南省人民政府'
             item['spider_name'] = 'yunnan'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

@@ -5,6 +5,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function main(splash, args)
@@ -115,10 +116,11 @@ class AnhuiSpider(scrapy.Spider):
     def parse_bmjd(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('.sy1::text').extract_first().strip()
             item['article_num'] = response.css('.nr_topcon ul li:nth-child(6)::text').extract_first().strip()
             item['content'] = response.css('#zoom').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = response.css(
                 '.wzbjxx p::text').extract_first().replace('信息来源：', '')
             item['time'] = response.css('.nr_topcon ul li:nth-child(4)::text').extract_first().strip()
@@ -128,9 +130,10 @@ class AnhuiSpider(scrapy.Spider):
             item['website'] = '安徽省人民政府'
             item['link'] = kwargs['url']
             item['txt'] = ''.join(response.css('#zoom *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '安徽省人民政府'
             item['spider_name'] = 'anhui'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)
@@ -146,11 +149,12 @@ class AnhuiSpider(scrapy.Spider):
 
     def parse_szfwj_xzgz(self, response, **kwargs):
         try:
+            appendix, appendix_name = get_attachments(response)
             item = rmzfzcItem()
             item['title'] = response.css('.sy1::text').extract_first().strip()
             item['article_num'] = response.css('.nr_topcon ul li:nth-child(8)::text').extract_first().strip()
             item['content'] = response.css('.wzcon').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = response.css('.wzbjxx p::text').extract_first().replace('信息来源：', '')
             item['time'] = response.css('.nr_topcon ul li:nth-child(4)::text').extract_first().strip()
             item['province'] = ''
@@ -159,9 +163,10 @@ class AnhuiSpider(scrapy.Spider):
             item['website'] = '安徽省人民政府'
             item['link'] = kwargs['url']
             item['txt'] = ''.join(response.css('.wzcon *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '安徽省人民政府'
             item['spider_name'] = 'anhui'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

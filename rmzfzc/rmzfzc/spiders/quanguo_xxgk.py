@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script ="""
 function main(splash, args)
   assert(splash:go(args.url))
@@ -88,10 +88,11 @@ class QuanguoZuixinSpider(scrapy.Spider):
         try:
             if kwargs['title']:
                 item = rmzfzcItem()
+                appendix, appendix_name = get_attachments(response)
                 item['title'] = kwargs['title']
                 item['article_num'] = kwargs['article_num']
                 item['content'] = "".join(response.xpath('//*[@class="b12c"]').extract())
-                item['appendix'] = ''
+                item['appendix'] = appendix
                 item['source'] = kwargs['source']
                 item['time'] = kwargs['time']
                 item['province'] = ''
@@ -101,8 +102,9 @@ class QuanguoZuixinSpider(scrapy.Spider):
                 item['module_name'] = '中华人民共和国中央人民政府-政策解读'
                 item['spider_name'] = 'quanguo_xxgk'
                 item['txt'] = "".join(response.xpath('//*[@class="b12c"]//text()').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
+                item['time'] = get_times(item['time'])
                 print("===========================>crawled one item" +
                     response.request.url)
         except Exception as e:

@@ -5,7 +5,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-from utils.tools.attachment import get_attachments
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -134,6 +134,7 @@ class HainanSpider(scrapy.Spider):
                 item['appendix_name'] = appendix_name
                 item['module_name'] = '海南省人民政府'
                 item['spider_name'] = 'hainan_'+kwargs['topic']
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

@@ -2,7 +2,7 @@
 import scrapy
 
 import logging
-
+from utils.tools.attachment import get_attachments,get_times
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 
@@ -95,10 +95,11 @@ class XinjiangSpider(scrapy.Spider):
     def parse_item(self, response):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('div.title h1::text').extract_first()
             item['article_num'] = ''
             item['content'] = response.css('#news_content').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = response.css('div.title div.t_left span:nth-child(2)::text').extract_first().replace('来源：','')
             item['time'] = response.css('div.title div.t_left span:nth-child(1)::text').extract_first().replace('时间：','')
             item['province'] = ''
@@ -107,9 +108,10 @@ class XinjiangSpider(scrapy.Spider):
             item['website'] = '新疆维吾尔自治区人民政府'
             item['link'] = response.request.url
             item['txt'] = ''.join(response.css('#news_content *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '新疆维吾尔自治区人民政府'
             item['spider_name'] = 'xinjiang'
+            item['time'] = get_times(item['time'])
             print("===========================>crawled one item" + response.request.url)
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
-
+from utils.tools.attachment import get_attachments,get_times
 import logging
 
 from scrapy_splash import SplashRequest
@@ -150,6 +150,7 @@ class AnhuiSpider(scrapy.Spider):
             item['appendix_name'] = appendix_name
             item['module_name'] = '重庆市人民政府'
             item['spider_name'] = 'chongqing'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

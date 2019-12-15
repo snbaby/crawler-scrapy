@@ -2,7 +2,7 @@
 import scrapy
 import logging
 from scrapy_splash import SplashRequest
-
+from utils.tools.attachment import get_attachments,get_times
 script ="""
 function main(splash, args)
   assert(splash:go(args.url))

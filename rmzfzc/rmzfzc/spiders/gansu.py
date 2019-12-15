@@ -5,7 +5,7 @@ import logging
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 import time
-from utils.tools.attachment import get_attachments
+from utils.tools.attachment import get_attachments,get_times
 
 class shandongZfwjSpider(scrapy.Spider):
     name = 'gansu'
@@ -207,6 +207,7 @@ class shandongZfwjSpider(scrapy.Spider):
                 item['appendix_name'] = appendix_name
                 item['appendix'] = appendix
                 item['link'] = kwargs['url']
+                item['time'] = get_times(item['time'])
                 print("===========================>crawled one item" +
                     response.request.url)
         except Exception as e:

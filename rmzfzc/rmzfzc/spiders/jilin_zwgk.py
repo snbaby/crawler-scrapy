@@ -4,9 +4,8 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-from utils.tools.attachment import get_attachments
 import time
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function wait_for_element(splash, css, maxwait)
   -- Wait until a selector matches an element
@@ -161,6 +160,7 @@ class GansuSpider(scrapy.Spider):
             item['appendix_name'] = appendix_name
             item['link'] = response.request.url
             item['appendix'] = appendix
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

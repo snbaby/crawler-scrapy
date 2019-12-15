@@ -5,7 +5,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -102,12 +102,13 @@ class GuangdongSpider(scrapy.Spider):
 
     def parse_wjk(self, response, **kwargs):
         try:
+            appendix, appendix_name = get_attachments(response)
             if kwargs['url'].startswith('http://www.gd.gov.cn/gkml'):
                 item = rmzfzcItem()
                 item['title'] = response.css('.classify > div:nth-child(3) span::text').extract_first()
                 item['article_num'] = response.css('.classify > div:nth-child(4) div:nth-child(1) span::text').extract_first()
                 item['content'] = response.css('.article-content').extract_first()
-                item['appendix'] = ''
+                item['appendix'] = appendix
                 item['source'] = ''
                 item['time'] = response.css('.classify > div:nth-child(2) div:nth-child(2) span::text').extract_first()
                 item['province'] = ''
@@ -116,7 +117,7 @@ class GuangdongSpider(scrapy.Spider):
                 item['website'] = '广东省人民政府'
                 item['link'] = kwargs['url']
                 item['txt'] = ''.join(response.css('.article-content *::text').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['module_name'] = '广东省人民政府'
                 item['spider_name'] = 'guangdong'
             else:
@@ -125,7 +126,7 @@ class GuangdongSpider(scrapy.Spider):
                 item['article_num'] = response.css(
                     '.introduce > div:nth-child(4) > div > span::text').extract_first()
                 item['content'] = response.css('.zw').extract_first()
-                item['appendix'] = ''
+                item['appendix'] = appendix
                 item['source'] = ''
                 item['time'] = response.css(
                     '.introduce > div:nth-child(2) > div:nth-child(2) > span::text').extract_first()
@@ -135,7 +136,7 @@ class GuangdongSpider(scrapy.Spider):
                 item['website'] = '广东省人民政府'
                 item['link'] = kwargs['url']
                 item['txt'] = ''.join(response.css('.zw *::text').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['module_name'] = '广东省人民政府'
                 item['spider_name'] = 'guangdong'
             print(
@@ -154,6 +155,7 @@ class GuangdongSpider(scrapy.Spider):
     def parse_zcjd(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('.zw-title::text').extract_first()
             item['article_num'] = ''
             item['content'] = response.css('.zw').extract_first()
@@ -171,6 +173,7 @@ class GuangdongSpider(scrapy.Spider):
             item['appendix_name'] = ''
             item['module_name'] = '广东省人民政府'
             item['spider_name'] = 'guangdong'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

@@ -5,7 +5,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 import json
 script = """
 function main(splash, args)
@@ -118,10 +118,11 @@ class FujianSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = kwargs['title']
             item['article_num'] = kwargs['article_num']
             item['content'] = response.css('.htmlcon').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = kwargs['source']
             item['time'] = kwargs['time']
             item['province'] = ''
@@ -130,9 +131,10 @@ class FujianSpider(scrapy.Spider):
             item['website'] = '福建省人民政府'
             item['link'] = kwargs['url']
             item['txt'] = "".join(response.css('.htmlcon *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '福建省人民政府'
             item['spider_name'] = 'fujian'
+            item['time'] = get_times(item['time'])
             print("===========================>crawled one item" + response.request.url)
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())

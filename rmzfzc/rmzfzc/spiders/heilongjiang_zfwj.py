@@ -5,7 +5,7 @@ import logging
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 import time
-
+from utils.tools.attachment import get_attachments,get_times
 class heilongjiangZfwjSpider(scrapy.Spider):
     name = 'heilongjiang_zfwj'
     custom_settings = {
@@ -172,11 +172,12 @@ class heilongjiangZfwjSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             if kwargs['title']:
+                appendix, appendix_name = get_attachments(response)
                 item = rmzfzcItem()
                 item['title'] = kwargs['title']
                 item['article_num'] = kwargs['article_num']
                 item['content'] = "".join(response.xpath('//*[@class="zwnr"]').extract())
-                item['appendix'] = ''
+                item['appendix'] = appendix
                 item['source'] = kwargs['source']
                 item['time'] = kwargs['time']
                 item['province'] = ''
@@ -186,8 +187,9 @@ class heilongjiangZfwjSpider(scrapy.Spider):
                 item['module_name'] = '黑龙江省人民政府-政策解读'
                 item['spider_name'] = 'heilongjiang_zfwj'
                 item['txt'] = "".join(response.xpath('//*[@class="zwnr"]//text()').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
+                item['time'] = get_times(item['time'])
                 print("===========================>crawled one item" +
                     response.request.url)
         except Exception as e:

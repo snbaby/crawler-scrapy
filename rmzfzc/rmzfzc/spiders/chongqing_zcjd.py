@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-from utils.tools.attachment import get_attachments
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -117,6 +117,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
                 item['appendix'] = appendix
+                item['time'] = get_times(item['time'])
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

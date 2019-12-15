@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script ="""
 function main(splash, args)
   assert(splash:go(args.url))
@@ -89,10 +89,11 @@ class QuanguoZuixinSpider(scrapy.Spider):
     def parse_item(self, response):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('.bd1 td::text').extract()[4]
             item['article_num'] = response.css('.bd1 td::text').extract()[5]
             item['content'] = response.text
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract()
             item['time'] = response.css('.bd1 td::text').extract()[3]
             item['province'] = ''
@@ -102,7 +103,8 @@ class QuanguoZuixinSpider(scrapy.Spider):
             item['module_name'] = '中华人民共和国中央人民政府-最新'
             item['spider_name'] = 'quanguo_zuixin'
             item['txt'] = "".join(response.xpath('//div[@id="UCAP-CONTENT"]//text()').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
+            item['time'] = get_times(item['time'])
             item['link'] = response.request.url
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())

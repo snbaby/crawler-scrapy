@@ -6,7 +6,7 @@ import logging
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 import time
-from utils.tools.attachment import get_attachments
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function main(splash, args)
@@ -112,6 +112,7 @@ class AnhuiSpider(scrapy.Spider):
                 item['appendix_name'] = appendix_name
                 item['module_name'] = '山东省人民政府'
                 item['spider_name'] = 'shandong_zcjd'
+                item['time'] = get_times(item['time'])
             else:
                 if response.xpath('//div[@class="people-desc"]'):
                     article_num = response.xpath(
@@ -142,6 +143,7 @@ class AnhuiSpider(scrapy.Spider):
                 item['appendix_name'] = appendix_name
                 item['module_name'] = '山东省人民政府'
                 item['spider_name'] = 'shandong_zfwj'
+                item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

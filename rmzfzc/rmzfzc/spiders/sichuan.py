@@ -2,7 +2,7 @@
 import scrapy
 
 import logging
-
+from utils.tools.attachment import get_attachments,get_times
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 
@@ -108,6 +108,7 @@ class SichuanSpider(scrapy.Spider):
     def parse_zxwj(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('title::text').extract_first().replace(' - 四川省政府信息公开','').strip()
             if len(response.css('ucapcontent p:nth-child(1) *::text').extract()) > 0:
                 item['article_num'] = response.css('ucapcontent p:nth-child(1) *::text').extract_first().strip()
@@ -126,7 +127,7 @@ class SichuanSpider(scrapy.Spider):
             else:
                 item['content'] = ''
                 item['txt'] = ''
-            item['appendix'] = ''
+            item['appendix'] = appendix
             if len(response.css('#articleattribute > li:nth-child(2) *::text').extract()) > 0:
                 item['source'] = response.css('#articleattribute > li:nth-child(2) *::text').extract_first().replace('来源:','').strip()
             else:
@@ -143,9 +144,10 @@ class SichuanSpider(scrapy.Spider):
             item['area'] = ''
             item['website'] = '四川省人民政府'
             item['link'] = kwargs['url']
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '四川省人民政府'
             item['spider_name'] = 'sichuan'
+            item['time'] = get_times(item['time'])
         except Exception as e:
             logging.error(
                 self.name +
@@ -159,6 +161,7 @@ class SichuanSpider(scrapy.Spider):
     def parse_zcjd(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('title::text').extract_first().replace(' - 四川省政府信息公开','').strip()
             item['article_num'] = ''
             if len(response.css('ucapcontent').extract()) > 0:
@@ -170,7 +173,7 @@ class SichuanSpider(scrapy.Spider):
             else:
                 item['content'] = ''
                 item['txt'] = ''
-            item['appendix'] = ''
+            item['appendix'] = appendix
             if len(response.css('#articleattribute > li:nth-child(2) *::text').extract()) > 0:
                 item['source'] = response.css('#articleattribute > li:nth-child(2) *::text').extract_first().replace('来源:','').strip()
             else:
@@ -187,9 +190,10 @@ class SichuanSpider(scrapy.Spider):
             item['area'] = ''
             item['website'] = '四川省人民政府'
             item['link'] = kwargs['url']
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '四川省人民政府'
             item['spider_name'] = 'sichuan'
+            item['time'] = get_times(item['time'])
         except Exception as e:
             logging.error(
                 self.name +

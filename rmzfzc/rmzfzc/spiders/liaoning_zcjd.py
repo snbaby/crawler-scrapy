@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
-
+from utils.tools.attachment import get_attachments,get_times
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
 
@@ -91,6 +91,7 @@ class BeijingZfwjSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = kwargs['title']
             item['article_num'] = ''
             item['time'] = kwargs['time']
@@ -103,12 +104,10 @@ class BeijingZfwjSpider(scrapy.Spider):
             item['module_name'] = '辽宁省人民政府-政策解读'
             item['spider_name'] = 'liaoning_zcjd'
             item['txt'] = "".join(response.xpath('//div[@class="TRS_Editor"]//text()').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['link'] = response.request.url
-            appendix = []
-            # for href in response.xpath('.relevantdoc.xgjd a::href'):
-            #    appendix.append(href.extract())
-            item['appendix'] = ''
+            item['appendix'] = appendix
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

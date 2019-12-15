@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -90,6 +90,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = kwargs['title']
             item['article_num'] = ''
             item['content'] = "".join(response.xpath('//div[@id="k-xxgk2"]').extract())
@@ -102,12 +103,10 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['module_name'] = '青海省人民政府-部门解读'
             item['spider_name'] = 'qinghai_bmjd'
             item['txt'] = "".join(response.xpath('//div[@id="k-xxgk2"]//text()').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['link'] = response.request.url
-            appendix = []
-            # for href in response.xpath('.relevantdoc.xgjd a::href'):
-            #    appendix.append(href.extract())
-            item['appendix'] = ''
+            item['appendix'] = appendix
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

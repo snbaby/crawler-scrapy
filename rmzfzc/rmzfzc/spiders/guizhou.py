@@ -5,7 +5,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -111,12 +111,13 @@ class GuizhouSpider(scrapy.Spider):
     def parse_szfl(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css(
                 '.Article_xx table tr:nth-child(4) td:nth-child(2)::text').extract_first().strip()
             item['article_num'] = response.css(
                 '.Article_xx table tr:nth-child(3) td:nth-child(2)::text').extract_first().strip()
             item['content'] = response.css('.zw-con').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
             item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first().replace('发布时间：', '').strip()
             item['province'] = ''
@@ -125,9 +126,10 @@ class GuizhouSpider(scrapy.Spider):
             item['website'] = '贵州省人民政府'
             item['link'] = kwargs['url']
             item['txt'] = ''.join(response.css('.zw-con *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '贵州省人民政府'
             item['spider_name'] = 'guizhou'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)
@@ -144,13 +146,14 @@ class GuizhouSpider(scrapy.Spider):
     def parse_wzjd(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             if response.css('#Zoom div:nth-child(1)::attr(class)') == 'Article_xx':
                 item['title'] = response.css(
                     '.Article_xx table tr:nth-child(4) td:nth-child(2)::text').extract_first().strip()
                 item['article_num'] = response.css(
                     '.Article_xx table tr:nth-child(3) td:nth-child(2)::text').extract_first().strip()
                 item['content'] = response.css('.zw-con').extract_first()
-                item['appendix'] = ''
+                item['appendix'] = appendix
                 item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
                 item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first().replace('发布时间：', '').strip()
                 item['province'] = ''
@@ -159,14 +162,14 @@ class GuizhouSpider(scrapy.Spider):
                 item['website'] = '贵州省人民政府'
                 item['link'] = kwargs['url']
                 item['txt'] = ''.join(response.css('.zw-con *::text').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['module_name'] = '贵州省人民政府'
                 item['spider_name'] = 'guizhou'
             else:
                 item['title'] = response.css('.Article_bt h1::text').extract_first().strip()
                 item['article_num'] = ''
                 item['content'] = response.css('.zw-con').extract_first()
-                item['appendix'] = ''
+                item['appendix'] = appendix
                 item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
                 item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first().replace('发布时间：',
                                                                                                            '').strip()
@@ -176,9 +179,10 @@ class GuizhouSpider(scrapy.Spider):
                 item['website'] = '贵州省人民政府'
                 item['link'] = kwargs['url']
                 item['txt'] = ''.join(response.css('.zw-con *::text').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['module_name'] = '贵州省人民政府'
                 item['spider_name'] = 'guizhou'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

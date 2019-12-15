@@ -4,7 +4,7 @@ import scrapy
 import logging
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 class ZhejiangZfwjSpider(scrapy.Spider):
     name = 'zhejiang_zfwj'
     custom_settings = {
@@ -167,10 +167,11 @@ class ZhejiangZfwjSpider(scrapy.Spider):
     def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = ''.join(response.css('.title::text').extract()).strip()
             item['article_num'] = response.css('.wh_content::text').extract_first()
             item['content'] = response.css('.zjszflm').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             if len(response.css('.xxgk_top').extract()) > 0:
                 item['source'] = ''.join(response.css('.xxgk_top tr:nth-child(2) td:nth-child(2)::text').extract()).strip()
                 item['time'] = ''.join(response.css('.xxgk_top tr:nth-child(2) td:nth-child(4)::text').extract()).strip()
@@ -186,9 +187,10 @@ class ZhejiangZfwjSpider(scrapy.Spider):
             item['website'] = '浙江省人民政府'
             item['link'] = kwargs['url']
             item['txt'] = "".join(response.css('.zjszflm *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '浙江省人民政府'
             item['spider_name'] = 'zhejiang_zfwj'
+            item['time'] = get_times(item['time'])
             print("===========================>crawled one item" + response.request.url)
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())

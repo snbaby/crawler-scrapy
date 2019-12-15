@@ -3,7 +3,7 @@ import scrapy
 import logging
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -113,12 +113,13 @@ class JiangsuSpider(scrapy.Spider):
     def parse_szfjbgtwj(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css(
                 '.xxgk_table tr:nth-child(3) td:nth-child(2)::text').extract_first()
             item['article_num'] = response.css(
                 '.xxgk_table tr:nth-child(4) td:nth-child(2)::text').extract_first()
             item['content'] = response.css('#zoom').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = ''
             item['time'] = response.css(
                 '.xxgk_table tr:nth-child(2) td:nth-child(4)::text').extract_first()
@@ -128,7 +129,7 @@ class JiangsuSpider(scrapy.Spider):
             item['website'] = '江苏省人民政府'
             item['link'] = kwargs['url']
             item['txt'] = ''.join(response.css('#zoom *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '江苏省人民政府'
             item['spider_name'] = 'jiangsu'
             print(
@@ -147,10 +148,11 @@ class JiangsuSpider(scrapy.Spider):
     def parse_zcjd(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('.sp_title::text').extract_first()
             item['article_num'] = ''
             item['content'] = response.css('#zoom').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = response.css(
                 '.sp_time font:nth-child(2)::text').extract_first().replace('来源：', '')
             item['time'] = response.css(
@@ -161,9 +163,10 @@ class JiangsuSpider(scrapy.Spider):
             item['website'] = '江苏省人民政府'
             item['link'] = kwargs['url']
             item['txt'] = ''.join(response.css('#zoom *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '江苏省人民政府'
             item['spider_name'] = 'jiangsu'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)
@@ -180,10 +183,11 @@ class JiangsuSpider(scrapy.Spider):
     def parse_sjfg(self, response, **kwargs):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.css('.sp_title::text').extract_first()
             item['article_num'] = ''
             item['content'] = response.css('#zoom').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['source'] = response.css(
                 '.sp_time font:nth-child(2)::text').extract_first().replace('来源：', '')
             item['time'] = response.css(
@@ -194,9 +198,10 @@ class JiangsuSpider(scrapy.Spider):
             item['website'] = '江苏省人民政府'
             item['link'] = kwargs['url']
             item['txt'] = ''.join(response.css('#zoom *::text').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['module_name'] = '江苏省人民政府'
             item['spider_name'] = 'jiangsu'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)
@@ -231,6 +236,7 @@ class JiangsuSpider(scrapy.Spider):
             item['appendix_name'] = ''
             item['module_name'] = '江苏省人民政府'
             item['spider_name'] = 'jiangsu'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -85,6 +85,7 @@ class BeijingZfwjSpider(scrapy.Spider):
     def parse_item(self, response):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = response.xpath(
                 '//div[@class="header"]/p/text()').extract_first().strip()
             article_num = response.xpath('//*[@id="mainText"]/p[1]//text()').extract()[0] if response.xpath(
@@ -104,12 +105,10 @@ class BeijingZfwjSpider(scrapy.Spider):
             item['spider_name'] = 'beijing_zfwj'
             item['txt'] = "".join(response.xpath(
                 '//div[@id="mainText"]//text()').extract())
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['link'] = response.request.url
-            appendix = []
-            # for href in response.xpath('.relevantdoc.xgjd a::href'):
-            #    appendix.append(href.extract())
-            item['appendix'] = ''
+            item['appendix'] = appendix
+            item['time'] = get_times(item['time'])
             logging.info("===========================>crawled one item" + response.request.url)
         except Exception as e:
             logging.error(

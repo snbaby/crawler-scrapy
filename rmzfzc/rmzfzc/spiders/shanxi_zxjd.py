@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -86,6 +86,7 @@ class BeijingZfwjSpider(scrapy.Spider):
     def parse_item(self, response):
         try:
             item = rmzfzcItem()
+            appendix, appendix_name = get_attachments(response)
             if response.xpath('//*[@class="detail-article-title oflow-hd"]/h5/text()').extract_first():
                 item['title'] = response.xpath('//*[@class="detail-article-title oflow-hd"]/h5/text()').extract_first()
                 item['article_num'] = ''
@@ -99,9 +100,10 @@ class BeijingZfwjSpider(scrapy.Spider):
                 item['module_name'] = '山西省人民政府-最新解读'
                 item['spider_name'] = 'shanxi_zxjd'
                 item['txt'] = "".join(response.xpath('//div[@class="TRS_Editor"]//text()').extract()) if response.xpath('//div[@class="TRS_Editor"]') else "".join(response.xpath('//div[@class="article-body oflow-hd"]//text()').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
-                item['appendix'] = ''
+                item['appendix'] = appendix
+                item['time'] = get_times(item['time'])
             else:
                 item['title'] = response.xpath('//div[@class="detail-article-title oflow-hd"]/h2/text()').extract_first()
                 item['article_num'] = response.xpath('//div[@class="detail-article-title oflow-hd"]/h3/text()').extract_first()
@@ -115,12 +117,10 @@ class BeijingZfwjSpider(scrapy.Spider):
                 item['module_name'] = '山西省人民政府-最新解读'
                 item['spider_name'] = 'shanxi_zxjd'
                 item['txt'] = "".join(response.xpath('//*[@class="TRS_Editor"]//text()').extract())
-                item['appendix_name'] = ''
+                item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
-                appendix = []
-                # for href in response.xpath('.relevantdoc.xgjd a::href'):
-                #    appendix.append(href.extract())
-                item['appendix'] = ''
+                item['appendix'] = appendix
+                item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)
