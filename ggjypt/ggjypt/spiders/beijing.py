@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function main(splash, args)
@@ -110,6 +111,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
     def parse_item(self, response):
         if response.text:
             try:
+                appendix, appendix_name = get_attachments(response)
                 category = '其他';
                 title = response.xpath('//div[@class="lc-title"]/text()').extract_first() if response.xpath('//div[@class="lc-title"]/text()') else response.xpath('//div[@class="div-title"]/text()').extract_first()
                 time = response.xpath('//div[@class="lc-title-s"]/text()').extract_first() if response.xpath('//div[@class="lc-title-s"]/text()') else response.xpath('//div[@class="div-title2"]/text()').extract_first()
@@ -130,14 +132,14 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '北京市'
-                item['time'] = time.replace('发布时间：','').replace('浏览次数','')
+                item['time'] = get_times(time)
                 item['website'] = '北京市公共资源交易服务平台'
                 item['module_name'] = '北京市-公共交易平台'
                 item['spider_name'] = 'beijing_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@class="newsCon"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@class="newsCon"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/text()').extract())
+                item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@class="newsCon"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/@href').extract())
+                item['appendix'] = appendix
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function main(splash, args)
@@ -17,7 +18,7 @@ end
 
 
 class shorongSzfwjSpider(scrapy.Spider):
-    name = 'shorong_ggjypt'
+    name = 'shandong_ggjypt'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -109,6 +110,7 @@ class shorongSzfwjSpider(scrapy.Spider):
     def parse_item(self, response,**kwargs):
         if response.xpath('//div[@id="infocont"]'):
             try:
+                appendix, appendix_name = get_attachments(response)
                 category = '其他';
                 title = kwargs['title']
                 if title.find('招标') >= 0:
@@ -131,11 +133,12 @@ class shorongSzfwjSpider(scrapy.Spider):
                 item['time'] = kwargs['time']
                 item['website'] = '山东省公共资源交易服务平台'
                 item['module_name'] = '山东省-公共交易平台'
-                item['spider_name'] = 'shorong_ggjypt'
+                item['spider_name'] = 'shandong_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@id="infocont"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@id="infocont"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/text()').extract())
+                item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@id="infocont"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/@href').extract())
+                item['appendix'] = appendix
+                item['time'] = get_times(item['time'])
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

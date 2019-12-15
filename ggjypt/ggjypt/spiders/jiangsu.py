@@ -4,7 +4,7 @@ import logging
 import json
 import time
 from ggjypt.items import ztbkItem
-from utils.tools.attachment import get_attachments
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function main(splash, args)
@@ -142,6 +142,7 @@ class GuangdongSpider(scrapy.Spider):
             item['appendix_name'] = appendix_name
             item['link'] = response.request.url
             item['appendix'] = appendix
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

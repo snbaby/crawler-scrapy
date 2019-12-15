@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+from utils.tools.attachment import get_attachments,get_times
 
 class GansuGgjyptSpider(scrapy.Spider):
     name = 'gansu_ggjypt'
@@ -217,6 +218,7 @@ class GansuGgjyptSpider(scrapy.Spider):
 
     def parse_item(self, response, **kwargs):
         try:
+            appendix, appendix_name = get_attachments(response)
             title = kwargs['title']
             if title.find('招标') >= 0:
                 category = '招标'
@@ -244,7 +246,7 @@ class GansuGgjyptSpider(scrapy.Spider):
             else:
                 item['content'] = ''
                 item['txt'] = ''
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = kwargs['time']
             item['source'] = ''
@@ -252,9 +254,10 @@ class GansuGgjyptSpider(scrapy.Spider):
             item['link'] = kwargs['url']
             item['type'] = '2'
             item['region'] = ''
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'gansu_ggjypt'
             item['module_name'] = '甘肃-公共交易平台'
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

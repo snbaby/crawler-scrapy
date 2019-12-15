@@ -5,6 +5,7 @@ import json
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function main(splash, args)
@@ -121,6 +122,7 @@ class NingxiaGgjyptSpider(scrapy.Spider):
 
     def pares_item(self, response, **kwargs):
         try:
+            appendix, appendix_name = get_attachments(response)
             if len(response.css('.article-title::text').extract()) > 0:
                 title = response.css('.article-title::text').extract_first().strip()
             elif len(response.css('#title::text').extract()) > 0:
@@ -155,7 +157,7 @@ class NingxiaGgjyptSpider(scrapy.Spider):
             item = ztbkItem()
             item['title'] = title
             item['content'] = content
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = time
             item['source'] = ''
@@ -163,11 +165,11 @@ class NingxiaGgjyptSpider(scrapy.Spider):
             item['link'] = kwargs['url']
             item['type'] = '2'
             item['region'] = '宁夏回族自治区'
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'ningxia_ggjypt'
             item['txt'] = txt
             item['module_name'] = '宁夏回族自治区-公共交易平台'
-
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

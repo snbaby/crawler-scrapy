@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function main(splash, args)
@@ -110,6 +111,7 @@ class XianGgjyptSpider(scrapy.Spider):
 
     def pares_item(self, response, **kwargs):
         try:
+            appendix, appendix_name = get_attachments(response)
             title = response.css('.article-title::text').extract_first()
             if title.find('招标') >= 0:
                 category = '招标'
@@ -126,7 +128,7 @@ class XianGgjyptSpider(scrapy.Spider):
             item = ztbkItem()
             item['title'] = title
             item['content'] = response.css('#mainContent').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = response.css(
                 '.info-source::text').extract_first().strip().split('】')[1].split('：')[1].strip()
@@ -136,12 +138,12 @@ class XianGgjyptSpider(scrapy.Spider):
             item['link'] = kwargs['url']
             item['type'] = '2'
             item['region'] = '陕西省西安市'
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'xian_ggjypt'
             item['txt'] = ''.join(
                 response.css('#mainContent *::text').extract())
             item['module_name'] = '陕西省西安市-公共交易平台'
-
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-from utils.tools.attachment import get_attachments
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function wait_for_element(splash, css, maxwait)

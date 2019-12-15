@@ -5,7 +5,7 @@ import logging
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
 import time
-from utils.tools.attachment import get_attachments
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function wait_for_element(splash, css, maxwait)
@@ -167,6 +167,7 @@ class GansuSpider(scrapy.Spider):
                 item['appendix_name'] = appendix_name
                 item['link'] = kwargs['url']
                 item['appendix'] = appendix
+                item['time'] = get_times(item['time'])
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

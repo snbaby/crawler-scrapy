@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function wait_for_element(splash, css, maxwait)
@@ -152,6 +153,7 @@ class GansuSpider(scrapy.Spider):
         print('kwargs====' + str(kwargs))
         if kwargs['title']:
             try:
+                appendix, appendix_name = get_attachments(response)
                 category = '其他';
                 title = kwargs['title']
                 if title.find('招标') >= 0:
@@ -176,9 +178,10 @@ class GansuSpider(scrapy.Spider):
                 item['module_name'] = '湖北省-公共交易平台'
                 item['spider_name'] = 'hubei_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@class="zwbf"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@class="zwbf"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
+                item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@class="zwbf"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
+                item['appendix'] = appendix
+                item['time'] = get_times(item['time'])
                 print(
                     "===========================>crawled one item" +
                     response.request.url)

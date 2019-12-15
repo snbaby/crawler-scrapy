@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function main(splash, args)
@@ -173,9 +174,10 @@ class HainanGgjyptSpider(scrapy.Spider):
             else:
                 category = '其他'
             item = ztbkItem()
+            appendix, appendix_name = get_attachments(response)
             item['title'] = title
             item['content'] = response.css('.newsCon').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = kwargs['time']
             item['source'] = response.css('.msgbar::text').extract_first().split('：')[2].replace('浏览次数','').strip()
@@ -183,11 +185,11 @@ class HainanGgjyptSpider(scrapy.Spider):
             item['link'] = kwargs['url']
             item['type'] = '2'
             item['region'] = '海南省'
-            item['appendix_name'] = ''
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'hainan_ggjypt'
             item['txt'] = ''.join(response.css('.newsCon *::text').extract())
             item['module_name'] = '海南省-公共交易平台'
-
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

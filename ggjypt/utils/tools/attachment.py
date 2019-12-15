@@ -31,6 +31,7 @@ def get_times(srcTime):
     elif len(list) > 2:
         result = list[0] + '-' + list[1].zfill(2) + '-' + list[2].zfill(2)
     else:
-        logging.error('时间格式化异常：' + srcTime)
+        if srcTime != '':
+            logging.error('时间格式化异常：' + srcTime)
         result = srcTime
     return result

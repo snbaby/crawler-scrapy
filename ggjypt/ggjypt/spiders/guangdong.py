@@ -4,6 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function main(splash, args)
@@ -109,6 +110,7 @@ class guangdongSzfwjSpider(scrapy.Spider):
     def parse_item(self, response,**kwargs):
         if response.xpath('//div[@class="xx-text"]'):
             try:
+                appendix, appendix_name = get_attachments(response)
                 category = '其他';
                 title = kwargs['title']
                 if title.find('招标') >= 0:
@@ -133,9 +135,10 @@ class guangdongSzfwjSpider(scrapy.Spider):
                 item['module_name'] = '广东省-公共交易平台'
                 item['spider_name'] = 'guangdong_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@class="xx-text"]//text()').extract())
-                item['appendix_name'] = ";".join(response.xpath('//div[@class="xx-text"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/text()').extract())
+                item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
-                item['appendix'] = ";".join(response.xpath('//div[@class="xx-text"]//a[contains(@href,"pdf") or contains(@href,"word") or contains(@href,"xls")]/@href').extract())
+                item['appendix'] = appendix
+                item['time'] = get_times(item['time'])
                 print(
                     "===========================>crawled one item" +
                     response.request.url)
