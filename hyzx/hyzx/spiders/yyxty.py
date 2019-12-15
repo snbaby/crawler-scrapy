@@ -2,8 +2,10 @@
 import scrapy
 import logging
 import json
+import time
 
 from hyzx.items import hyzxItem
+
 
 class YyxtySpider(scrapy.Spider):
     name = 'yyxty'
@@ -31,9 +33,18 @@ class YyxtySpider(scrapy.Spider):
     def start_requests(self):
         try:
             if not self.add_pagenum:
-                data = {'pageIndex': '1','pageSize': '100000','i': '0','OrderBy': 'C_ADDTIME DESC'}
+                data = {
+                    'pageIndex': '1',
+                    'pageSize': '50000',
+                    'i': '0',
+                    'OrderBy': 'C_ADDTIME DESC'}
             else:
-                data = {'pageIndex': '1','pageSize': str(self.add_pagenum*15),'i': '0','OrderBy': 'C_ADDTIME DESC'}
+                data = {
+                    'pageIndex': '1',
+                    'pageSize': str(
+                        self.add_pagenum * 15),
+                    'i': '0',
+                    'OrderBy': 'C_ADDTIME DESC'}
 
             contents = [
                 {
@@ -41,22 +52,50 @@ class YyxtySpider(scrapy.Spider):
                     'url': 'http://www.yanglee.com/Action/GetInformationList.ashx'
                 }
             ]
-            print(str(data))
             for content in contents:
-                yield scrapy.FormRequest(content['url'], formdata=data, method='POST',headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, callback=self.parse)
+                yield scrapy.FormRequest(content['url'], formdata=data, method='POST', headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        # print(response.text)
-        #jsonData = json.loads(response.text)
-        logging.error(response.text)
-        # num = int(int(jsonData['result']['totalcount']) / 20) + 1
-        # num = 100
-        # for n in range(num):
-        #     data['pn'] = n * 20
-        #     time.sleep(0.1)
-        #     print(n)
-        #     yield scrapy.Request(url, body=json.dumps(data), method='POST',
-        #                          headers={'Content-Type': 'application/json'}, callback=self.parse_page)
+        data = json.loads(response.text.replace('pageIndex', '"pageIndex"'))
+        for obj in data['result']:
+            try:
+                time.sleep(0.1)
+                url = 'http://www.yanglee.com/Information/Details.aspx?i=' + \
+                    str(obj['C_ID'])
+                result = {
+                    "url": url,
+                    "title": obj['C_TITLE'],
+                    "time": obj['C_ADDTIME']
+                }
+                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+            except Exception as e:
+                logging.error(self.name + ": " + e.__str__())
+                logging.exception(e)
+
+    def parse_item(self, response, **kwargs):
+        try:
+            item = hyzxItem()
+            item['title'] = kwargs['title']
+            item['date'] = kwargs['time']
+            item['resource'] = ''
+            item['content'] = response.css('.article-con').extract_first()
+            item['website'] = '用益信托易'
+            item['link'] = kwargs['url']
+            item['spider_name'] = 'yyxty'
+            item['txt'] = ''.join(response.css('.article-con *::text').extract())
+            item['module_name'] = '信托融资一行业资讯-用益信托易'
+            print(
+                "===========================>crawled one item" +
+                response.request.url)
+        except Exception as e:
+            logging.error(
+                self.name +
+                " in parse_item: url=" +
+                response.request.url +
+                ", exception=" +
+                e.__str__())
+            logging.exception(e)
+        yield item
