@@ -105,9 +105,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
             asset_manager = ''.join(response.xpath('//div[@class="biaoge"]/table/tr[15]/td[2]/text()').extract())
             finance_peo = response.xpath('//div[@class="biaoge"]/table/tr[11]/td[2]/text()').extract_first()
 
-
-
-
             item['name'] = name  # 产品名称
             item['issure'] = issure  # 发行机构
             item['issue_date'] = '' # 发行时间
