@@ -34,7 +34,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://47.106.239.73:8050/"}
+        'SPLASH_URL': 'http://localhost:8050/'}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,9 +52,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                temUrl = 'http://www.lnsggzy.com/003/secondpageDeal.html?categoryNum=003&pageIndex='
-                url = temUrl + \
-                      str(pagenum) if pagenum > 0 else "http://www.lnsggzy.com/003/secondpageDeal.html"
+                temUrl = 'http://www.lnsggzy.com/003/'
+                url = temUrl + str(pagenum) + '.html' if pagenum > 0 else "http://www.lnsggzy.com/003/secondpageDeal.html"
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
