@@ -84,6 +84,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse_item(self, response,**kwargs):
+        logging.error(response.text)
         try:
             item = xtcpItem()
             name = response.xpath('//div[@class="productgk"]/table/tr[1]/td[2]/text()').extract_first()
