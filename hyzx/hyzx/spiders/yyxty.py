@@ -35,7 +35,7 @@ class YyxtySpider(scrapy.Spider):
             if not self.add_pagenum:
                 data = {
                     'pageIndex': '1',
-                    'pageSize': '50000',
+                    'pageSize': '1000',
                     'i': '0',
                     'OrderBy': 'C_ADDTIME DESC'}
             else:
