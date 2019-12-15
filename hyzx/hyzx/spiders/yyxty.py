@@ -38,12 +38,12 @@ class YyxtySpider(scrapy.Spider):
             contents = [
                 {
                     'topic': 'yyxtw',  # 用益信托网
-                    'url': 'http://www.yanglee.com/Action/GetResearchList.ashx'
+                    'url': 'http://www.yanglee.com/Action/GetInformationList.ashx'
                 }
             ]
             print(str(data))
             for content in contents:
-                yield scrapy.FormRequest(content['url'], formdata=data, method='POST',headers={'Content-Type': 'application/json'}, callback=self.parse)
+                yield scrapy.FormRequest(content['url'], formdata=data, method='POST',headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
