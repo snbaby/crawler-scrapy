@@ -31,19 +31,9 @@ class YyxtySpider(scrapy.Spider):
     def start_requests(self):
         try:
             if not self.add_pagenum:
-                data = {
-                    'pageIndex': 1,
-                    'pageSize': 100000,
-                    'i': 0,
-                    'OrderBy': 'C_ADDTIME DESC'
-                }
+                data = {'pageIndex': '1','pageSize': '100000','i': '0','OrderBy': 'C_ADDTIME DESC'}
             else:
-                data = {
-                    'pageIndex': 1,
-                    'pageSize': self.add_pagenum*15,
-                    'i': 0,
-                    'OrderBy': 'C_ADDTIME DESC'
-                }
+                data = {'pageIndex': '1','pageSize': str(self.add_pagenum*15),'i': '0','OrderBy': 'C_ADDTIME DESC'}
 
             contents = [
                 {
@@ -51,9 +41,9 @@ class YyxtySpider(scrapy.Spider):
                     'url': 'http://www.yanglee.com/Action/GetResearchList.ashx'
                 }
             ]
+            print(str(data))
             for content in contents:
-                yield scrapy.FormRequest(content['url'], formdata=json.dumps(data), method='POST',
-                                     headers={'Content-Type': 'application/json'}, callback=self.parse)
+                yield scrapy.FormRequest(content['url'], formdata=data, method='POST',headers={'Content-Type': 'application/json'}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
