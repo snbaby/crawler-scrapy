@@ -2,8 +2,7 @@
 import scrapy
 import logging
 
-from hyzx.items import hyzxItem
-
+from hyyjbg.items import hyyjbgItem
 
 class XtwSpider(scrapy.Spider):
     name = 'xtw'
@@ -33,7 +32,7 @@ class XtwSpider(scrapy.Spider):
             contents = [
                 {
                     'topic': 'xtw',  # 信托网
-                    'url': 'http://www.suobuy.com/news/index.html'
+                    'url': 'http://www.suobuy.com/baijia/index.html'
                 }
             ]
             for content in contents:
@@ -71,23 +70,23 @@ class XtwSpider(scrapy.Spider):
         for href in response.css('.list-news li a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url':url}, dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
         try:
-            item = hyzxItem()
+            item = hyyjbgItem()
             item['title'] = response.css('h1::text').extract_first()
-            item['date'] = response.css('.article-info::text').extract_first().replace('时间：','')
-            item['resource'] = response.css('.comeform::text').extract_first().replace('来源：','')
-            item['content'] = response.css('.texttit_m1').extract_first()
+            item['date'] = response.css('.article-info::text').extract_first().replace('时间：', '')
+            item['resource'] = response.css('.comeform::text').extract_first().replace('来源：', '')
+            item['content'] = response.css('.article-box').extract_first()
             item['website'] = '信托网'
             item['link'] = kwargs['url']
             item['spider_name'] = 'xtw'
-            item['txt'] = ''.join(response.css('.texttit_m1 *::text').extract())
-            item['module_name'] = '信托融资一行业资讯-信托网'
+            item['txt'] = ''.join(response.css('.article-box *::text').extract())
+            item['module_name'] = '信托融资一行业研究报告-信托网'
 
             print(
                 "===========================>crawled one item" +

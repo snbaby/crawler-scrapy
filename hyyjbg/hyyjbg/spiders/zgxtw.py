@@ -2,11 +2,10 @@
 import scrapy
 import logging
 
-from hyzx.items import hyzxItem
+from hyyjbg.items import hyyjbgItem
 
-
-class XtwSpider(scrapy.Spider):
-    name = 'xtw'
+class ZgxtwSpider(scrapy.Spider):
+    name = 'zgxtw'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -32,8 +31,8 @@ class XtwSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'xtw',  # 信托网
-                    'url': 'http://www.suobuy.com/news/index.html'
+                    'topic': 'zgxtw',  # 中国信托网
+                    'url': 'http://xt.zhongguoxintuo.com/luntan/p1/'
                 }
             ]
             for content in contents:
@@ -47,11 +46,8 @@ class XtwSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 url = kwargs['url']
-                if pagenum == 0:
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
-                else:
-                    url = url.replace('index.html', str(pagenum + 1) + '.html')
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                url = url.replace('p1', 'p' + str(pagenum + 1))
+                yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -61,33 +57,33 @@ class XtwSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.css('.pages a:nth-last-child(2)::text').extract_first())
+                return 144
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for href in response.css('.list-news li a::attr(href)').extract():
+        for href in response.css('.news-list  > a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url':url}, dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
         try:
-            item = hyzxItem()
-            item['title'] = response.css('h1::text').extract_first()
-            item['date'] = response.css('.article-info::text').extract_first().replace('时间：','')
-            item['resource'] = response.css('.comeform::text').extract_first().replace('来源：','')
-            item['content'] = response.css('.texttit_m1').extract_first()
-            item['website'] = '信托网'
+            item = hyyjbgItem()
+            item['title'] = response.css('.zd-title::text').extract_first()
+            item['date'] = response.css('.zd-author >span:nth-child(3)::text').extract_first()
+            item['resource'] = response.css('.source::text').extract_first().replace('来源：', '').strip()
+            item['content'] = response.css('.zd-content').extract_first()
+            item['website'] = '中国信托网'
             item['link'] = kwargs['url']
-            item['spider_name'] = 'xtw'
-            item['txt'] = ''.join(response.css('.texttit_m1 *::text').extract())
-            item['module_name'] = '信托融资一行业资讯-信托网'
+            item['spider_name'] = 'zgxtw'
+            item['txt'] = ''.join(response.css('.zd-content *::text').extract())
+            item['module_name'] = '信托融资一行业基本报告-中国信托网'
 
             print(
                 "===========================>crawled one item" +
