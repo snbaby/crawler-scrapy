@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
-import json
-import time
 
 from hyzx.items import hyzxItem
 
 
-class YyxtySpider(scrapy.Spider):
-    name = 'yyxty'
+class HxtSpider(scrapy.Spider):
+    name = 'hxt'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -32,35 +30,28 @@ class YyxtySpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            data = {
-                'pageIndex': '1',
-                'pageSize': '1500',
-                'i': '0',
-                'OrderBy': 'C_ADDTIME DESC'}
-
             contents = [
                 {
-                    'topic': 'yyxtw',  # 用益信托网
-                    'url': 'http://www.yanglee.com/Action/GetInformationList.ashx'
+                    'topic': 'hxt',  # 好信坨
+                    'url': 'http://www2.haoxintuo.com/index.php?a=lists&catid=18'
                 }
             ]
             for content in contents:
-                yield scrapy.FormRequest(content['url'],cb_kwargs=content, formdata=data, method='POST', headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, callback=self.parse_page, dont_filter=True)
+                yield scrapy.Request(content['url'], callback=self.parse_page, cb_kwargs=content, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        page_count = self.parse_pagenum(response, kwargs)
+        page_count = int(self.parse_pagenum(response, kwargs))
         try:
             for pagenum in range(page_count):
-                print(pagenum)
-                time.sleep(1)
-                data = {
-                    'pageIndex': str(pagenum+1),
-                    'pageSize': '1500',
-                    'i': '0'}
-                yield scrapy.FormRequest(kwargs['url'], formdata=data, method='POST', headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, callback=self.parse, dont_filter=True)
+                url = kwargs['url']
+                if pagenum == 0:
+                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                else:
+                    url = url + '&page=' + str(pagenum + 1)
+                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -70,24 +61,26 @@ class YyxtySpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(json.loads(response.text.replace('pageIndex', '"pageIndex"'))['PageCount'])
+                return int(
+                    response.css('.pageindex::text').extract_first().replace(
+                        '1/', ''))
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        data = json.loads(response.text.replace('pageIndex', '"pageIndex"'))
-        for obj in data['result']:
+        for div in response.css('.innewsList li > div'):
             try:
-                url = 'http://www.yanglee.com/Information/Details.aspx?i=' + \
-                    str(obj['C_ID'])
+                url = response.urljoin(
+                    div.css('a::attr(href)').extract_first())
+                title = div.css('a::text').extract_first()
+                time = div.css('.time::text').extract_first()
                 result = {
-                    "url": url,
-                    "title": obj['C_TITLE'],
-                    "time": obj['C_ADDTIME']
+                    'url': url,
+                    'time': time,
+                    'title': title
                 }
-                time.sleep(0.5)
                 yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -99,12 +92,14 @@ class YyxtySpider(scrapy.Spider):
             item['title'] = kwargs['title']
             item['date'] = kwargs['time']
             item['resource'] = ''
-            item['content'] = response.css('.article-con').extract_first()
-            item['website'] = '用益信托易'
+            item['content'] = response.css('.newsCon').extract_first()
+            item['website'] = '好信托'
             item['link'] = kwargs['url']
-            item['spider_name'] = 'yyxty'
-            item['txt'] = ''.join(response.css('.article-con *::text').extract())
-            item['module_name'] = '信托融资一行业资讯-用益信托易'
+            item['spider_name'] = 'hxt'
+            item['txt'] = ''.join(
+                response.css('.newsCon *::text').extract())
+            item['module_name'] = '信托融资一行业资讯-金融界'
+
             print(
                 "===========================>crawled one item" +
                 response.request.url)
