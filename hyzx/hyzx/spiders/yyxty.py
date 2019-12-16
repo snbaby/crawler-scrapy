@@ -32,19 +32,11 @@ class YyxtySpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            if not self.add_pagenum:
-                data = {
-                    'pageIndex': '1',
-                    'pageSize': '1000',
-                    'i': '0',
-                    'OrderBy': 'C_ADDTIME DESC'}
-            else:
-                data = {
-                    'pageIndex': '1',
-                    'pageSize': str(
-                        self.add_pagenum * 15),
-                    'i': '0',
-                    'OrderBy': 'C_ADDTIME DESC'}
+            data = {
+                'pageIndex': '1',
+                'pageSize': '1500',
+                'i': '0',
+                'OrderBy': 'C_ADDTIME DESC'}
 
             contents = [
                 {
@@ -53,7 +45,33 @@ class YyxtySpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield scrapy.FormRequest(content['url'], formdata=data, method='POST', headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, callback=self.parse)
+                yield scrapy.FormRequest(content['url'],cb_kwargs=content, formdata=data, method='POST', headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, callback=self.parse_page, dont_filter=True)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
+
+    def parse_page(self, response, **kwargs):
+        page_count = self.parse_pagenum(response, kwargs)
+        try:
+            for pagenum in range(page_count):
+                print(pagenum)
+                time.sleep(1)
+                data = {
+                    'pageIndex': str(pagenum+1),
+                    'pageSize': '1500',
+                    'i': '0'}
+                yield scrapy.FormRequest(kwargs['url'], formdata=data, method='POST', headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, callback=self.parse, dont_filter=True)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
+
+    def parse_pagenum(self, response, kwargs):
+        try:
+            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
+            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
+            if not self.add_pagenum:
+                return int(json.loads(response.text.replace('pageIndex', '"pageIndex"'))['PageCount'])
+            return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -62,7 +80,6 @@ class YyxtySpider(scrapy.Spider):
         data = json.loads(response.text.replace('pageIndex', '"pageIndex"'))
         for obj in data['result']:
             try:
-                time.sleep(0.1)
                 url = 'http://www.yanglee.com/Information/Details.aspx?i=' + \
                     str(obj['C_ID'])
                 result = {
@@ -70,6 +87,7 @@ class YyxtySpider(scrapy.Spider):
                     "title": obj['C_TITLE'],
                     "time": obj['C_ADDTIME']
                 }
+                time.sleep(0.5)
                 yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())

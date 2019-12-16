@@ -99,6 +99,8 @@ class GuangxiSpider(scrapy.Spider):
         for href in response.css('.more-list a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
+                if url.endswith('.pdf'):
+                    return
                 if kwargs['topic'] == 'xxgk':
                     yield scrapy.Request(url, callback=self.parse_xxgk, cb_kwargs={'url': url}, dont_filter=True)
                 elif kwargs['topic'] == 'zcjd':
