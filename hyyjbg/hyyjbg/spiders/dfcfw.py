@@ -2,11 +2,10 @@
 import scrapy
 import logging
 
-from hyzx.items import hyzxItem
+from hyyjbg.items import hyyjbgItem
 
-
-class HxtSpider(scrapy.Spider):
-    name = 'hxt'
+class DfcfwSpider(scrapy.Spider):
+    name = 'dfcfw'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -32,8 +31,8 @@ class HxtSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'hxt',  # 好信坨
-                    'url': 'http://www2.haoxintuo.com/index.php?a=lists&catid=18'
+                    'topic': 'dfcfw',  # 东方财富网
+                    'url': 'http://trust.eastmoney.com/news/czjzl_1.html'
                 }
             ]
             for content in contents:
@@ -47,11 +46,8 @@ class HxtSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 url = kwargs['url']
-                if pagenum == 0:
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
-                else:
-                    url = url + '&page=' + str(pagenum + 1)
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                url = url.replace('1.html', str(pagenum + 1) + '.html')
+                yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -61,44 +57,33 @@ class HxtSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(
-                    response.css('.pageindex::text').extract_first().replace(
-                        '1/', ''))
+                return int(response.css('#pagerNoDiv > a:nth-last-child(2)::text').extract_first())
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for div in response.css('.innewsList li > div'):
+        for href in response.css('#newsListContent .image a::attr(href)').extract():
             try:
-                url = response.urljoin(
-                    div.css('a::attr(href)').extract_first())
-                title = div.css('a::text').extract_first()
-                time = div.css('.time::text').extract_first()
-                result = {
-                    'url': url,
-                    'time': time,
-                    'title': title
-                }
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                url = response.urljoin(href)
+                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
         try:
-            item = hyzxItem()
-            item['title'] = kwargs['title']
-            item['date'] = kwargs['time']
-            item['resource'] = ''
-            item['content'] = response.css('.newsCon').extract_first()
-            item['website'] = '好信托'
+            item = hyyjbgItem()
+            item['title'] = response.css('h1::text').extract_first()
+            item['date'] = response.css('.time::text').extract_first()
+            item['resource'] = response.css('.data-source::attr(data-source)').extract_first()
+            item['content'] = response.css('#ContentBody').extract_first()
+            item['website'] = '东方财富网'
             item['link'] = kwargs['url']
-            item['spider_name'] = 'hxt'
-            item['txt'] = ''.join(
-                response.css('.newsCon *::text').extract())
-            item['module_name'] = '信托融资一行业资讯-好信托'
+            item['spider_name'] = 'dfcfw'
+            item['txt'] = ''.join(response.css('#ContentBody *::text').extract())
+            item['module_name'] = '信托融资一行业基本报告-东方财富网'
 
             print(
                 "===========================>crawled one item" +

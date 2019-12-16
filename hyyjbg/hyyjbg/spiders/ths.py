@@ -2,11 +2,10 @@
 import scrapy
 import logging
 
-from hyzx.items import hyzxItem
+from hyyjbg.items import hyyjbgItem
 
-
-class HxtSpider(scrapy.Spider):
-    name = 'hxt'
+class ThsSpider(scrapy.Spider):
+    name = 'ths'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -32,8 +31,8 @@ class HxtSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'hxt',  # 好信坨
-                    'url': 'http://www2.haoxintuo.com/index.php?a=lists&catid=18'
+                    'topic': 'ths',  # 同花顺
+                    'url': 'http://trust.10jqka.com.cn/xtyj_list/index.shtml'
                 }
             ]
             for content in contents:
@@ -46,12 +45,11 @@ class HxtSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response, kwargs))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url']
                 if pagenum == 0:
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                    url = kwargs['url']
                 else:
-                    url = url + '&page=' + str(pagenum + 1)
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                    url = kwargs['url'].replace('.shtml', '_' + str(pagenum + 1) + '.shtml')
+                yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -61,45 +59,37 @@ class HxtSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(
-                    response.css('.pageindex::text').extract_first().replace(
-                        '1/', ''))
+                return int(response.css('.num-container a:nth-last-child(2)::text').extract_first())
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for div in response.css('.innewsList li > div'):
+        for href in response.css('.arc-cont::attr(href)').extract():
             try:
-                url = response.urljoin(
-                    div.css('a::attr(href)').extract_first())
-                title = div.css('a::text').extract_first()
-                time = div.css('.time::text').extract_first()
-                result = {
-                    'url': url,
-                    'time': time,
-                    'title': title
-                }
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                url = response.urljoin(href)
+                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
         try:
-            item = hyzxItem()
-            item['title'] = kwargs['title']
-            item['date'] = kwargs['time']
+            item = hyyjbgItem()
+            item['title'] = response.css('title::text').extract_first()
+            if not item['title']:
+                return
+            item['date'] = response.css('#pubtime_baidu::text').extract_first()
+            if not item['date']:
+                return
             item['resource'] = ''
-            item['content'] = response.css('.newsCon').extract_first()
-            item['website'] = '好信托'
+            item['content'] = response.css('.atc-content').extract_first()
+            item['website'] = '同花顺财经'
             item['link'] = kwargs['url']
-            item['spider_name'] = 'hxt'
-            item['txt'] = ''.join(
-                response.css('.newsCon *::text').extract())
-            item['module_name'] = '信托融资一行业资讯-好信托'
-
+            item['spider_name'] = 'ths'
+            item['txt'] = ''.join(response.css('.atc-content *::text').extract())
+            item['module_name'] = '信托融资一行业资讯-同花顺'
             print(
                 "===========================>crawled one item" +
                 response.request.url)

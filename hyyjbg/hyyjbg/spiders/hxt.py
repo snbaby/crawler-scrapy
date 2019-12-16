@@ -2,8 +2,7 @@
 import scrapy
 import logging
 
-from hyzx.items import hyzxItem
-
+from hyyjbg.items import hyyjbgItem
 
 class HxtSpider(scrapy.Spider):
     name = 'hxt'
@@ -33,7 +32,7 @@ class HxtSpider(scrapy.Spider):
             contents = [
                 {
                     'topic': 'hxt',  # 好信坨
-                    'url': 'http://www2.haoxintuo.com/index.php?a=lists&catid=18'
+                    'url': 'http://www2.haoxintuo.com/index.php?a=lists&catid=19'
                 }
             ]
             for content in contents:
@@ -70,15 +69,13 @@ class HxtSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for div in response.css('.innewsList li > div'):
+        for li in response.css('.schoolList li'):
             try:
                 url = response.urljoin(
-                    div.css('a::attr(href)').extract_first())
-                title = div.css('a::text').extract_first()
-                time = div.css('.time::text').extract_first()
+                    li.css('a::attr(href)').extract_first())
+                title = li.css('a::text').extract_first()
                 result = {
                     'url': url,
-                    'time': time,
                     'title': title
                 }
                 yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
@@ -88,9 +85,9 @@ class HxtSpider(scrapy.Spider):
 
     def parse_item(self, response, **kwargs):
         try:
-            item = hyzxItem()
+            item = hyyjbgItem()
             item['title'] = kwargs['title']
-            item['date'] = kwargs['time']
+            item['date'] = response.css('.newstl span::text').extract_first().split('浏览')[0].replace('发布时间：','').strip()
             item['resource'] = ''
             item['content'] = response.css('.newsCon').extract_first()
             item['website'] = '好信托'
@@ -98,7 +95,7 @@ class HxtSpider(scrapy.Spider):
             item['spider_name'] = 'hxt'
             item['txt'] = ''.join(
                 response.css('.newsCon *::text').extract())
-            item['module_name'] = '信托融资一行业资讯-好信托'
+            item['module_name'] = '信托融资一行业基本报告-好信托'
 
             print(
                 "===========================>crawled one item" +
@@ -112,3 +109,4 @@ class HxtSpider(scrapy.Spider):
                 e.__str__())
             logging.exception(e)
         yield item
+

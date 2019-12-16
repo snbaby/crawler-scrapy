@@ -2,11 +2,10 @@
 import scrapy
 import logging
 
-from hyzx.items import hyzxItem
+from hyyjbg.items import hyyjbgItem
 
-
-class HxtSpider(scrapy.Spider):
-    name = 'hxt'
+class ZgxtdjSpider(scrapy.Spider):
+    name = 'zgxtdj'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -32,12 +31,14 @@ class HxtSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'hxt',  # 好信坨
-                    'url': 'http://www2.haoxintuo.com/index.php?a=lists&catid=18'
+                    'topic': 'zgxtdj',  # 中国信托登记
+                    'url': 'http://www.chinatrc.com.cn/research/research/index.html'
                 }
             ]
             for content in contents:
-                yield scrapy.Request(content['url'], callback=self.parse_page, cb_kwargs=content, dont_filter=True)
+                yield scrapy.Request(content['url'], callback=self.parse_page, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'},
+                                     cb_kwargs=content, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -46,12 +47,13 @@ class HxtSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response, kwargs))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url']
                 if pagenum == 0:
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                    url = kwargs['url']
                 else:
-                    url = url + '&page=' + str(pagenum + 1)
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                    url = kwargs['url'].replace('.html', str(pagenum + 1) + '.html')
+                yield scrapy.Request(url, callback=self.parse, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'},
+                                     cb_kwargs=kwargs, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -61,45 +63,37 @@ class HxtSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(
-                    response.css('.pageindex::text').extract_first().replace(
-                        '1/', ''))
+                return int(response.css('.layui-laypage a:nth-last-child(2)::text').extract_first())
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for div in response.css('.innewsList li > div'):
+        for href in response.css('.news-main-list a::attr(href)').extract():
             try:
-                url = response.urljoin(
-                    div.css('a::attr(href)').extract_first())
-                title = div.css('a::text').extract_first()
-                time = div.css('.time::text').extract_first()
-                result = {
-                    'url': url,
-                    'time': time,
-                    'title': title
-                }
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                url = response.urljoin(href)
+                yield scrapy.Request(url, callback=self.parse_item, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'},
+                                     cb_kwargs={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
         try:
-            item = hyzxItem()
-            item['title'] = kwargs['title']
-            item['date'] = kwargs['time']
-            item['resource'] = ''
-            item['content'] = response.css('.newsCon').extract_first()
-            item['website'] = '好信托'
+            item = hyyjbgItem()
+            item['title'] = response.css('title::text').extract_first().replace(' - 中国信托登记有限责任公司', '').strip()
+            item['date'] = response.css('.news-detail-time::text').extract_first().split('时间：')[1].split('浏览')[
+                0].strip()
+            item['resource'] = response.css('.news-detail-time::text').extract_first().split('时间：')[0].split('来源：')[
+                1].replace('来源：', '').strip()
+            item['content'] = response.css('.ueditor_content_parse').extract_first()
+            item['website'] = '中国信托登记有限责任公司'
             item['link'] = kwargs['url']
-            item['spider_name'] = 'hxt'
-            item['txt'] = ''.join(
-                response.css('.newsCon *::text').extract())
-            item['module_name'] = '信托融资一行业资讯-好信托'
-
+            item['spider_name'] = 'zgxtdj'
+            item['txt'] = ''.join(response.css('.ueditor_content_parse *::text').extract())
+            item['module_name'] = '信托融资一行业基本报告-中国信托登记有限责任公司'
             print(
                 "===========================>crawled one item" +
                 response.request.url)
