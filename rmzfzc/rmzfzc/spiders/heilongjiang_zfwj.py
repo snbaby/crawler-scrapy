@@ -124,6 +124,7 @@ class heilongjiangZfwjSpider(scrapy.Spider):
         end
         """
         page_count = int(self.parse_pagenum(response)) + 1
+        print(page_count)
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:

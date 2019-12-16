@@ -51,6 +51,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def parse_page(self, response, **kwargs):
         page_count = int(self.parse_pagenum(response))
+        print(page_count)
         try:
             # 在解析翻页数之前，首先解析首页内容
             self.parse(response)
@@ -81,6 +82,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['time'] = selector.xpath('./span/text()').extract_first()
                 item['article_num'] = selector.xpath('./p[2]/text()').extract_first()
                 href = selector.xpath('./p[1]/a/@href').extract_first()
+                print(href)
                 yield scrapy.Request(href,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())

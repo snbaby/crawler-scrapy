@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
+import time
+import json
 from utils.tools.attachment import get_attachments,get_times
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
@@ -41,20 +43,22 @@ class BeijingZfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://www.jl.gov.cn/szfzt/zcfg/#page=1"
+            url = "http://was.jl.gov.cn/was5/response_szfzcfg_list.jsp?callback=result&pageIndex=1&pageSize=10&themeIds=&siteIds=&orderType=desc&_=" + str((int(round(time.time() * 1000))))
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_page(self, response):
-        page_count = int(self.parse_pagenum(response))
+        resultData = json.loads(response.text.replace('result(','').replace(')',''))
+        page_count = int(self.parse_pagenum(resultData))
         try:
             # 在解析翻页数之前，首先解析首页内容
             for pagenum in range(page_count):
-                url = "http://xxgk.jl.gov.cn/szf/zcjd/index_" + \
-                    str(pagenum) + ".html" if pagenum > 0 else "http://xxgk.jl.gov.cn/szf/zcjd/index.html"
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
+                if pagenum>0:
+                    time.sleep(1)
+                    url = "http://was.jl.gov.cn/was5/response_szfzcfg_list.jsp?callback=result&pageIndex="+ str(pagenum) +"&pageSize=10&themeIds=&siteIds=&orderType=desc&_=" + str((int(round(time.time() * 1000))))
+                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -64,22 +68,23 @@ class BeijingZfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                self.add_pagenum = int(response.xpath('//*[@class="lv_menu_fanye"]').re(r'([1-9]\d*\.?\d*)')[0])
+                print(response['totalCount'])
+                self.add_pagenum = int(response['totalCount']) / int(response['pageSize']) + 2
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for selector in response.xpath('////*[@class="zlyjq"]/ul/li'):
+        resultData = json.loads(response.text.replace('result(', '').replace(')', ''))
+        for selector in resultData['list']:
             try:
                 item = {}
-                item['title'] = selector.xpath('./a/text()').extract_first().strip()
-                item['time'] = selector.xpath('./a/span/text()').extract_first().strip().replace('[','').replace(']','')
-                href = selector.xpath('./a/@href').extract_first()
-                if href.startswith('./'):
-                    yield scrapy.Request("http://xxgk.jl.gov.cn/szf/zcjd" + href[1:],
-                                         callback=self.parse_item,dont_filter=True,cb_kwargs=item)
+                item['title'] = selector['TITLE']
+                item['time'] = selector['TIME']
+                href = selector['URL']
+                print(href)
+                yield scrapy.Request(href, callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -89,7 +94,7 @@ class BeijingZfwjSpider(scrapy.Spider):
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
             item['title'] = kwargs['title']
-            item['article_num'] =  response.xpath('//td[@class="zly_xxgk_20170120l2"]/text()').extract()[0]
+            item['article_num'] =  response.xpath('//td[@class="zly_xxgk_20170120l2"]/text()').extract_first()
             item['time'] = kwargs['time']
             item['content'] = "".join(response.xpath('//div[@id="xx_conter1023"]').extract())
             item['source'] = ''

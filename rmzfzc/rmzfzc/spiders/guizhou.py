@@ -64,6 +64,7 @@ class GuizhouSpider(scrapy.Spider):
 
     def parse_page(self, response, **kwargs):
         page_count = int(self.parse_pagenum(response))
+        print(page_count)
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
@@ -81,6 +82,7 @@ class GuizhouSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
+                print(response.css('.page a:nth-last-child(3)::text').extract_first())
                 return int(
                     response.css('.page a:nth-last-child(3)::text').extract_first())
             return self.add_pagenum

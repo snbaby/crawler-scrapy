@@ -64,6 +64,8 @@ class HubeiSpider(scrapy.Spider):
 
     def parse_page(self, response, **kwargs):
         page_count = int(self.parse_pagenum(response))
+        print(page_count)
+        page_count = 5
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:

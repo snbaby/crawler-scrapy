@@ -78,6 +78,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
     def parse(self, response):
         for href in response.xpath('//ul[@class="listTxt"]/li/h4/a/@href'):
             try:
+                print('>>>>>>>>>' + href.extract())
                 yield scrapy.Request(href.extract(), callback=self.parse_item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -90,12 +91,12 @@ class QuanguoZuixinSpider(scrapy.Spider):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = response.css('.bd1 td::text').extract()[4]
-            item['article_num'] = response.css('.bd1 td::text').extract()[5]
+            item['title'] = response.css('.bd1 td::text').extract()[4] if response.css('.bd1 td::text') else ''
+            item['article_num'] = response.css('.bd1 td::text').extract()[5]  if response.css('.bd1 td::text') else ''
             item['content'] = response.text
             item['appendix'] = appendix
-            item['source'] = response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract()
-            item['time'] = response.css('.bd1 td::text').extract()[3]
+            item['source'] = response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract_first()
+            item['time'] = response.css('.bd1 td::text').extract()[3]  if response.css('.bd1 td::text') else ''
             item['province'] = ''
             item['city'] = ''
             item['area'] = ''

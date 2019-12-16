@@ -88,7 +88,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['article_num'] = ''
                 item['content'] = "".join(response.xpath('//div[@id="ivs_content"]').extract())
                 item['source'] = '上海市人民政府'
-                item['time'] = response.xpath('//div[@id="ivs_date"]/text()').extract_first().replace(')','').replace('(','')
+                item['time'] = response.xpath('//div[@id="ivs_date"]/text()').extract_first()
                 item['province'] = '上海市'
                 item['city'] = ''
                 item['area'] = ''

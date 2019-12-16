@@ -111,24 +111,21 @@ class GansuSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 if pagenum > 1:
-                    time.sleep(3)
-                    print('pagenum' + str(pagenum))
+                    time.sleep(1)
                     yield SplashRequest(kwargs['url'],
-                                        endpoint='execute',
-                                        args={
-                                            'lua_source': script,
-                                            'wait': 1,
-                                            'page': pagenum,
-                                            'url': kwargs['url'],
-                                        },
-                                        callback=self.parse,
-                                        cb_kwargs=kwargs)
+                        endpoint='execute',
+                        args={
+                            'lua_source': script,
+                            'wait': 1,
+                            'page': pagenum,
+                            'url': kwargs['url']
+                        },
+                        callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        print(response.xpath('//*[@class="zly_xxmu_20170104ulbg2"]/td[2]/div/a/text()').extract())
         for selector in response.xpath('//*[@class="zly_xxmu_20170104ulbg2"]'):
             try:
                 item = {}

@@ -51,7 +51,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response))
         try:
             # 在解析翻页数之前，首先解析首页内容
-            self.parse(response)
             for pagenum in range(page_count):
                 url = "http://www.nx.gov.cn/zwxx_11337/zcjd/index_" + \
                       str(pagenum) + ".html" if pagenum > 0 else "http://www.nx.gov.cn/zwxx_11337/zcjd/index.html"

@@ -65,6 +65,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
+                print(response.xpath('//div[@id="pageDec"]').re(r'([1-9]\d*\.?\d*)'))
                 self.add_pagenum = int(response.xpath('//div[@id="pageDec"]').re(r'([1-9]\d*\.?\d*)')[1])//int(response.xpath('//div[@id="pageDec"]').re(r'([1-9]\d*\.?\d*)')[0]) +1
             return self.add_pagenum
         except Exception as e:
@@ -79,10 +80,10 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['article_num'] = selector.xpath('./p//text()').extract_first().strip()
                 item['time'] = selector.xpath('./span//text()').extract_first().strip()
                 href = selector.xpath('./a[1]/@href').extract_first()
+                print(href)
                 # 加密记录不处理
-                if href.startswith('./'):
-                    yield SplashRequest("http://www.ln.gov.cn/zfxx/zcjd" + href[1:],
-                                         callback=self.parse_item,dont_filter=True,cb_kwargs=item)
+                yield SplashRequest(href, callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
