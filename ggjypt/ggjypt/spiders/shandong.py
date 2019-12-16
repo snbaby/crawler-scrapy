@@ -42,7 +42,7 @@ class shorongSzfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://ggzyjyzx.shorong.gov.cn/003/moreinfo.html"
+            url = "http://ggzyjyzx.shandong.gov.cn/003/moreinfo.html"
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_type)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -59,8 +59,6 @@ class shorongSzfwjSpider(scrapy.Spider):
 
     def parse_page(self, response,**kwargs):
         page_count = int(self.parse_pagenum(response))
-        print('url====='+kwargs['url'])
-        print('page_count======'+str(page_count))
         if page_count > 0:
             page_count = page_count + 1
             try:

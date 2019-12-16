@@ -162,7 +162,7 @@ class GansuSpider(scrapy.Spider):
                 item['time'] = kwargs['time']
                 item['website'] = '广西壮族自治区公共资源交易服务平台'
                 item['module_name'] = '广西壮族自治区-公共交易平台'
-                item['spider_name'] = 'shanxi_ggjypt'
+                item['spider_name'] = 'guangxi_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@class="infodetail"]//text()').extract())
                 item['appendix_name'] = appendix_name
                 item['link'] = kwargs['url']

@@ -62,7 +62,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def parse_page(self, response,**kwargs):
         page_count = int(self.parse_pagenum(response))
-        print('page_count'+kwargs['url'])
         print('url'+str(page_count))
         try:
             for pagenum in range(page_count):
@@ -84,7 +83,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.xpath('//ul[@class="article-list2"]/li/div/a/@href'):
+        for href in response.xpath('//div[@class="article-list3-t"]/a/@url'):
             try:
                 url = response.urljoin(href.extract())
                 yield SplashRequest(url,callback=self.parse_item, dont_filter=True)

@@ -187,7 +187,6 @@ class GansuSpider(scrapy.Spider):
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
-        print('kwargs====' + str(kwargs))
         if kwargs['title']:
             try:
                 appendix, appendix_name = get_attachments(response)

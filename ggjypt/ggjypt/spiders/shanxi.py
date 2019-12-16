@@ -130,7 +130,6 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        print(response.xpath('//*[@id="content"]/tr/td[2]/a/text()').extract())
         for selector in response.xpath('//*[@id="content"]/tr'):
             try:
                 item = {}

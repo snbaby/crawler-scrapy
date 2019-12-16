@@ -102,15 +102,15 @@ class GansuSpider(scrapy.Spider):
                 if pagenum > 0:
                     time.sleep(0.5)
                     yield SplashRequest(kwargs['url'],
-                                        endpoint='execute',
-                                        args={
-                                            'lua_source': script,
-                                            'wait': 1,
-                                            'page': pagenum,
-                                            'url': kwargs['url'],
-                                        },
-                                        callback=self.parse,
-                                        cb_kwargs=kwargs)
+                        endpoint='execute',
+                        args={
+                            'lua_source': script,
+                            'wait': 1,
+                            'page': pagenum,
+                            'url': kwargs['url'],
+                        },
+                        callback=self.parse,
+                        cb_kwargs=kwargs)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -122,7 +122,6 @@ class GansuSpider(scrapy.Spider):
                 item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
                 item['time'] = selector.xpath('./td[4]/text()').extract_first()
                 url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
-                print(url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
