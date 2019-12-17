@@ -9,10 +9,10 @@
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'zpw'
+BOT_NAME = 'zpks'
 
-SPIDER_MODULES = ['zpw.spiders']
-NEWSPIDER_MODULE = 'zpw.spiders'
+SPIDER_MODULES = ['zpks.spiders']
+NEWSPIDER_MODULE = 'zpks.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'haiguanshuju (+http://www.yourdomain.com)'
@@ -96,7 +96,7 @@ AUTOTHROTTLE_ENABLED = True
 
 LOG_ENABLED = True
 LOG_FILE = "spiders.log"
-LOG_LEVEL = "INFO"
+LOG_LEVEL = "ERROR"
 
 # MYSQL_HOST = '10.8.32.125'
 MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'

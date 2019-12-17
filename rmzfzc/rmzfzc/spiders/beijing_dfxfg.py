@@ -89,7 +89,7 @@ class BeijingZfwjSpider(scrapy.Spider):
             appendix, appendix_name = get_attachments(response)
             item = rmzfzcItem()
             item['title'] = response.xpath(
-                '//div[@class="header"]/p/text()').extract_first().strip()
+                '//div[@class="header"]/p/text()').extract_first()
             article_num = response.xpath('//*[@id="mainText"]/p[2]/text()').extract()[0] if response.xpath(
                 '//*[@id="mainText"]/p[2]/text()').extract() else \
                 response.xpath('//*[@id="mainText"]/div/p[1]/text()').extract()[0]

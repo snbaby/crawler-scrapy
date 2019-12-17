@@ -11,7 +11,7 @@ import scrapy
 from scrapy.loader.processors import TakeFirst, MapCompose, Join
 
 
-class zpwItem(scrapy.Item):
+class zpksItem(scrapy.Item):
     job = scrapy.Field()
     company_name = scrapy.Field()
     industry = scrapy.Field()
