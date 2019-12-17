@@ -54,7 +54,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
         print(page_count)
         try:
             # 在解析翻页数之前，首先解析首页内容
-            self.parse(response)
             for pagenum in range(page_count):
                 url = kwargs['urlTmp'] + '_' + \
                       str(pagenum) + ".html" if pagenum > 0 else kwargs['urlTmp'] + ".html"
