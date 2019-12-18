@@ -122,7 +122,7 @@ class BgSpider(scrapy.Spider):
                         "hot_city": "",
                         "currency": [],
                         "keyword": ""}
-                    yield scrapy.FormRequest(content['url'], cb_kwargs={'topic':'hb'}, body=json.dumps(data), method='POST',
+                    yield scrapy.FormRequest(content['url'], cb_kwargs={'topic':'hb','authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data), method='POST',
                                              headers=header, callback=self.parse, dont_filter=True)
                     # yield scrapy.FormRequest(content['url'], cb_kwargs={'topic':'sg'}, body=json.dumps(data1), method='POST',
                     #                          headers=header, callback=self.parse, dont_filter=True)
@@ -135,7 +135,7 @@ class BgSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return 3
+                return 1
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -152,7 +152,7 @@ class BgSpider(scrapy.Spider):
                     industry = ''
                     for mergerRelInvst in investevent['merger_rel_invst']:
                         industry = industry+mergerRelInvst['cat_name']+'-'+mergerRelInvst['sub_cat_name']
-                    link = 'https://www.itjuzi.com/acquisition/'+str(investevent['id'])
+                    link = 'https://www.itjuzi.com/api/acquisition/'+str(investevent['id'])
                     result = {
                         'acquirer': acquirer,
                         'acquirerd': acquirerd,
@@ -160,7 +160,18 @@ class BgSpider(scrapy.Spider):
                         'industry': industry,
                         'link': link,
                     }
-                    yield scrapy.Request(link, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                    header = {
+                        ':authority': 'www.itjuzi.com',
+                        ':method': 'GET',
+                        ':path': '/api/acquisition/'+str(investevent['id']),
+                        ':scheme': 'https',
+                        'content-type': 'application/json;charset=UTF-8',
+                        'accept':'application/json, text/plain, */*',
+                        'accept-language':'zh-CN,zh;q=0.9',
+                        'authorization': kwargs['authorization']
+                    }
+                    time.sleep(10)
+                    yield scrapy.FormRequest(link,headers=header,method='GET', callback=self.parse_item, cb_kwargs=result, dont_filter=True)
                 else:
                     print(1)
                 print(
@@ -176,6 +187,8 @@ class BgSpider(scrapy.Spider):
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
+        print(response.text)
+        return
         try:
             item = tzgx_bgItem()
             item['title'] = response.css('.combine-title-text::text').extract_first()
