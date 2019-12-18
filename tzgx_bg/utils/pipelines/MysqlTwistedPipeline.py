@@ -48,39 +48,39 @@ class MysqlTwistedPipeline(object):
         logging.info(self.spider.name + ": " + "insert into mysql........")
         try:
             sql = f'''
-                insert into `topic_info_zhaopin`(
-                    `job`,
-                    `company_name`,
+                insert into `topic_info_touziguanxi_binggousj`(
+                    `title`,
+                    `acquirer`,
+                    `acquirerd`,
+                    `status`,
                     `industry`,
-                    `location`,
-                    `salary`,
-                    `time`,
+                    `involving_equity`,
+                    `start_time`,
+                    `end_time`,
+                    `supported_vc_pe`,
                     `website`,
                     `link`,
-                    `type`,
-                    `source`,
-                    `content`,
-                    `education`,
                     `create_time`,
+                    `content`,
                     `spider_name`,
                     `module_name`
                 )
                 values (%s,%s, %s, %s, %s, %s,%s, %s, %s,%s,%s, %s, %s, %s, %s)
         '''
             parm = (
-                item['job'],
-                item['company_name'],
+                item['title'],
+                item['acquirer'],
+                item['acquirerd'],
+                item['status'],
                 item['industry'],
-                item['location'],
-                item['salary'],
-                item['time'],
+                item['involving_equity'],
+                item['start_time'],
+                item['end_time'],
+                item['supported_vc_pe'],
                 item['website'],
                 item['link'],
-                item['type'],
-                item['source'],
-                item['content'],
-                item['education'],
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                item['content'],
                 item['spider_name'],
                 item['module_name']
             )

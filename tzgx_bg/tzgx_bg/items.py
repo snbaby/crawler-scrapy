@@ -10,19 +10,18 @@ from scrapy.item import Field
 import scrapy
 from scrapy.loader.processors import TakeFirst, MapCompose, Join
 
-
 class tzgx_bgItem(scrapy.Item):
-    job = scrapy.Field()
-    company_name = scrapy.Field()
+    title = scrapy.Field()
+    acquirer = scrapy.Field()
+    acquirerd = scrapy.Field()
+    status = scrapy.Field()
     industry = scrapy.Field()
-    location = scrapy.Field()
-    salary = scrapy.Field()
-    time = scrapy.Field()
+    involving_equity = scrapy.Field()
+    start_time = scrapy.Field()
+    end_time = scrapy.Field()
+    supported_vc_pe = scrapy.Field()
     website = scrapy.Field()
     link = scrapy.Field()
-    type = scrapy.Field()
-    source = scrapy.Field()
     content = scrapy.Field()
-    education = scrapy.Field()
     spider_name = scrapy.Field()
     module_name = scrapy.Field()
