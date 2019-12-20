@@ -122,9 +122,8 @@ class BgSpider(scrapy.Spider):
                         "hot_city": "",
                         "currency": [],
                         "keyword": ""}
-                    # yield scrapy.FormRequest(content['url'], cb_kwargs={'topic': 'hb', 'authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data), method='POST',
-                    #                          headers=header, callback=self.parse, dont_filter=True)
-                    yield scrapy.FormRequest(content['url'], cb_kwargs={'topic':'sg'}, body=json.dumps(data1), method='POST', headers=header, callback=self.parse, dont_filter=True)
+                    yield scrapy.FormRequest(content['url'], cb_kwargs={'topic': 'hb', 'authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data), method='POST', headers=header, callback=self.parse, dont_filter=True)
+                    yield scrapy.FormRequest(content['url'], cb_kwargs={'topic': 'sg', 'authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data1), method='POST', headers=header, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -171,7 +170,7 @@ class BgSpider(scrapy.Spider):
                         'accept-language': 'zh-CN,zh;q=0.9',
                         'authorization': kwargs['authorization']
                     }
-                    time.sleep(10)
+                    time.sleep(2)
                     yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_hb, cb_kwargs=result, dont_filter=True)
                 else:
                     acquirer = investevent['acquirer'][0]['name']
@@ -179,14 +178,14 @@ class BgSpider(scrapy.Spider):
                     status = investevent['status']
                     industry = investevent['merger_scope']
                     involving_equity = investevent['money']
-                    website = 'IT桔子'
-                    link = 'https://www.itjuzi.com/api/merger/'+str(investevent['id'])
+                    link = 'https://www.itjuzi.com/api/merger/' + \
+                        str(investevent['id'])
                     result = {
                         'acquirer': acquirer,
                         'acquirerd': acquirerd,
                         'status': status,
                         'industry': industry,
-                        'involving_equity':involving_equity,
+                        'involving_equity': involving_equity,
                         'link': link
                     }
                     header = {
@@ -199,8 +198,8 @@ class BgSpider(scrapy.Spider):
                         'accept-language': 'zh-CN,zh;q=0.9',
                         'authorization': kwargs['authorization']
                     }
-                    time.sleep(10)
-                    yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_sg,cb_kwargs=result, dont_filter=True)
+                    time.sleep(2)
+                    yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_sg, cb_kwargs=result, dont_filter=True)
                 print(
                     "===========================>crawled one item" +
                     response.request.url)
