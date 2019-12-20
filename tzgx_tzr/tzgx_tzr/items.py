@@ -12,17 +12,14 @@ from scrapy.loader.processors import TakeFirst, MapCompose, Join
 
 
 class tzgx_tzrItem(scrapy.Item):
+    name = scrapy.Field()
+    company = scrapy.Field()
     job = scrapy.Field()
-    company_name = scrapy.Field()
-    industry = scrapy.Field()
-    location = scrapy.Field()
-    salary = scrapy.Field()
-    time = scrapy.Field()
+    description = scrapy.Field()
     website = scrapy.Field()
     link = scrapy.Field()
-    type = scrapy.Field()
-    source = scrapy.Field()
+    investment_field = scrapy.Field()
+    investment_stage = scrapy.Field()
     content = scrapy.Field()
-    education = scrapy.Field()
     spider_name = scrapy.Field()
     module_name = scrapy.Field()
