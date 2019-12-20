@@ -122,10 +122,9 @@ class BgSpider(scrapy.Spider):
                         "hot_city": "",
                         "currency": [],
                         "keyword": ""}
-                    yield scrapy.FormRequest(content['url'], cb_kwargs={'topic':'hb','authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data), method='POST',
-                                             headers=header, callback=self.parse, dont_filter=True)
-                    # yield scrapy.FormRequest(content['url'], cb_kwargs={'topic':'sg'}, body=json.dumps(data1), method='POST',
+                    # yield scrapy.FormRequest(content['url'], cb_kwargs={'topic': 'hb', 'authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data), method='POST',
                     #                          headers=header, callback=self.parse, dont_filter=True)
+                    yield scrapy.FormRequest(content['url'], cb_kwargs={'topic':'sg'}, body=json.dumps(data1), method='POST', headers=header, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -151,8 +150,10 @@ class BgSpider(scrapy.Spider):
                     status = investevent['status']
                     industry = ''
                     for mergerRelInvst in investevent['merger_rel_invst']:
-                        industry = industry+mergerRelInvst['cat_name']+'-'+mergerRelInvst['sub_cat_name']
-                    link = 'https://www.itjuzi.com/api/acquisition/'+str(investevent['id'])
+                        industry = industry + \
+                            mergerRelInvst['cat_name'] + '-' + mergerRelInvst['sub_cat_name']
+                    link = 'https://www.itjuzi.com/api/acquisition/' + \
+                        str(investevent['id'])
                     result = {
                         'acquirer': acquirer,
                         'acquirerd': acquirerd,
@@ -163,17 +164,43 @@ class BgSpider(scrapy.Spider):
                     header = {
                         ':authority': 'www.itjuzi.com',
                         ':method': 'GET',
-                        ':path': '/api/acquisition/'+str(investevent['id']),
+                        ':path': '/api/acquisition/' + str(investevent['id']),
                         ':scheme': 'https',
                         'content-type': 'application/json;charset=UTF-8',
-                        'accept':'application/json, text/plain, */*',
-                        'accept-language':'zh-CN,zh;q=0.9',
+                        'accept': 'application/json, text/plain, */*',
+                        'accept-language': 'zh-CN,zh;q=0.9',
                         'authorization': kwargs['authorization']
                     }
                     time.sleep(10)
-                    yield scrapy.FormRequest(link,headers=header,method='GET', callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                    yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_hb, cb_kwargs=result, dont_filter=True)
                 else:
-                    print(1)
+                    acquirer = investevent['acquirer'][0]['name']
+                    acquirerd = investevent['merger_name']
+                    status = investevent['status']
+                    industry = investevent['merger_scope']
+                    involving_equity = investevent['money']
+                    website = 'IT桔子'
+                    link = 'https://www.itjuzi.com/api/merger/'+str(investevent['id'])
+                    result = {
+                        'acquirer': acquirer,
+                        'acquirerd': acquirerd,
+                        'status': status,
+                        'industry': industry,
+                        'involving_equity':involving_equity,
+                        'link': link
+                    }
+                    header = {
+                        ':authority': 'www.itjuzi.com',
+                        ':method': 'GET',
+                        ':path': '//api/merger/' + str(investevent['id']),
+                        ':scheme': 'https',
+                        'content-type': 'application/json;charset=UTF-8',
+                        'accept': 'application/json, text/plain, */*',
+                        'accept-language': 'zh-CN,zh;q=0.9',
+                        'authorization': kwargs['authorization']
+                    }
+                    time.sleep(10)
+                    yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_sg,cb_kwargs=result, dont_filter=True)
                 print(
                     "===========================>crawled one item" +
                     response.request.url)
@@ -186,18 +213,55 @@ class BgSpider(scrapy.Spider):
                     e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
-        print(response.text)
-        return
+    def parse_hb(self, response, **kwargs):
+        data = json.loads(response.text)['data']
         try:
             item = tzgx_bgItem()
-            item['title'] = response.css('.combine-title-text::text').extract_first()
-            item['content'] = response.css('.pad::text').extract_first()[0]
-            item['acquirer']= kwargs['acquirer']
+            item['title'] = data['merger_title']
+            item['acquirer'] = kwargs['acquirer']
             item['acquirerd'] = kwargs['acquirerd']
             item['status'] = kwargs['status']
             item['industry'] = kwargs['industry']
+            item['involving_equity'] = ''
+            item['start_time'] = ''
+            item['end_time'] = ''
+            item['supported_vc_pe'] = ''
+            item['website'] = 'IT桔子'
             item['link'] = kwargs['link']
+            item['content'] = data['merger_des']
+            item['spider_name'] = 'bg'
+            item['module_name'] = 'IT桔子-并购'
+            print(
+                "===========================>crawled one item" +
+                response.request.url)
+        except Exception as e:
+            logging.error(
+                self.name +
+                " in parse_item: url=" +
+                response.request.url +
+                ", exception=" +
+                e.__str__())
+            logging.exception(e)
+        yield item
+
+    def parse_sg(self, response, **kwargs):
+        data = json.loads(response.text)['data']
+        try:
+            item = tzgx_bgItem()
+            item['title'] = data['merger_title']
+            item['acquirer'] = kwargs['acquirer']
+            item['acquirerd'] = kwargs['acquirerd']
+            item['status'] = kwargs['status']
+            item['industry'] = kwargs['industry']
+            item['involving_equity'] = kwargs['involving_equity']
+            item['start_time'] = ''
+            item['end_time'] = ''
+            item['supported_vc_pe'] = ''
+            item['website'] = 'IT桔子'
+            item['link'] = kwargs['link']
+            item['content'] = data['merger_des']
+            item['spider_name'] = 'bg'
+            item['module_name'] = 'IT桔子-并购'
             print(
                 "===========================>crawled one item" +
                 response.request.url)
