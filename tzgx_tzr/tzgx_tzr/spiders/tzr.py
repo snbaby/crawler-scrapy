@@ -116,18 +116,18 @@ class TzrSpider(scrapy.Spider):
             try:
                 item = tzgx_tzrItem()
                 item['name'] = investevent['name']
-                item['company'] = ''
-                item['job'] = investevent['type'][0]['name']
-                item['description'] = investevent['des']
-                item['website'] = 'IT桔子'
-                item['link'] = 'https://www.itjuzi.com/person/'+str(investevent['id'])
-                item['investment_field'] = ''
-                for invse in investevent['invse_scope']:
-                    item['investment_field'] = item['investment_field'] + invse['name']
-                item['investment_stage'] = ''
-                for invse in investevent['invse_round']:
-                    item['investment_stage'] = item['investment_field'] + invse['name']
-                item['content'] = investevent['invse_des']
+                # item['company'] = ''
+                # item['job'] = investevent['type'][0]['name']
+                # item['description'] = investevent['des']
+                # item['website'] = 'IT桔子'
+                # item['link'] = 'https://www.itjuzi.com/person/'+str(investevent['id'])
+                # item['investment_field'] = ''
+                # for invse in investevent['invse_scope']:
+                #     item['investment_field'] = item['investment_field'] + invse['name']
+                # item['investment_stage'] = ''
+                # for invse in investevent['invse_round']:
+                #     item['investment_stage'] = item['investment_field'] + invse['name']
+                # item['content'] = investevent['invse_des']
                 item['spider_name'] = 'tzr'
                 item['module_name'] = 'IT桔子-投资人'
                 print(
