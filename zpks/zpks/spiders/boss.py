@@ -5,13 +5,40 @@ import time
 
 from scrapy_splash import SplashRequest
 from zpks.items import zpksItem
+
 script = """
+function wait_for_element(splash, css, maxwait)
+  -- Wait until a selector matches an element
+  -- in the page. Return an error if waited more
+  -- than maxwait seconds.
+  if maxwait == nil then
+      maxwait = 10
+  end
+  return splash:wait_for_resume(string.format([[
+    function main(splash) {
+      var selector = '%s';
+      var maxwait = %s;
+      var end = Date.now() + maxwait*1000;
+
+      function check() {
+        if(document.querySelector(selector)) {
+          splash.resume('Element found');
+        } else if(Date.now() >= end) {
+          var err = 'Timeout waiting for element';
+          splash.error(err + " " + selector);
+        } else {
+          setTimeout(check, 200);
+        }
+      }
+      check();
+    }
+  ]], css, maxwait))
+end
+
 function main(splash, args)
-  assert(splash:go(args.url))
-  assert(splash:wait(1))
-  return {
-    html = splash:html(),
-  }
+  splash:go(args.url)
+  splash:wait(5)
+  return splash:html()
 end
 """
 
@@ -44,17 +71,36 @@ class BeijingZfwjSpider(scrapy.Spider):
         try:
             print(page_count)
             # 在解析翻页数之前，首先解析首页内容
-            for pagenum in range(page_count):
-                if pagenum > 0:
-                    time.sleep(1)
-                    url = "https://www.zhipin.com/c101270100/?page="+str(pagenum)+"&ka=page-"+str(pagenum)
-                    yield scrapy.Request(url,callback=self.parse, dont_filter=True)
+            url = "https://www.lagou.com/jobs/list_?labelWords=&fromSearch=true&suginput="
+            print(url)
+            yield SplashRequest(url,
+                                endpoint='execute',
+                                args={
+                                    'lua_source': script,
+                                    'wait': 1,
+                                    'url': url,
+                                },
+                                callback=self.parse)
+            # for pagenum in range(page_count):
+            #     if pagenum > 0:
+            #         time.sleep(1)
+            #         url = "https://www.zhipin.com/c101270100/?page="+str(pagenum)+"&ka=page-"+str(pagenum)
+            #         print(url)
+            #         yield SplashRequest(url,
+            #                             endpoint='execute',
+            #                             args={
+            #                                 'lua_source': script,
+            #                                 'wait': 1,
+            #                                 'url': url,
+            #                             },
+            #                             callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
         print(response.text)
+        return
         for href in response.xpath('//h3[@class="name"]/a/@href').extract():
             try:
                 print(href)

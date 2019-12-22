@@ -37,12 +37,13 @@ end
 
 function main(splash, args)
   splash:go(args.url)
-  assert(splash:wait(0.5))
   wait_for_element(splash, "#packTablePg")
+  wait_for_element(splash, "#packTable > tbody > tr")
   splash:runjs("document.querySelector('#packTable').innerHTML=''")
-  js = string.format("TabAjaxQuery.gotoPage(%d,'packTable')", args.page)
+  js = string.format("document.querySelector('#packTablePg').value ='%d'", args.page)
   splash:evaljs(js)
-  assert(splash:wait(1))
+  splash:evaljs("document.querySelector('#packTablePgi').click()")
+  wait_for_element(splash, "#packTablePg")
   wait_for_element(splash, "#packTable > tbody > tr")
   return splash:html()
 end
@@ -99,7 +100,7 @@ class GansuSpider(scrapy.Spider):
                     args={
                         'lua_source': script,
                         'wait': 1,
-                        'page': 1,
+                        'page': 6,
                         'url': content['url'],
                     },
                     callback=self.parse_page,
@@ -109,7 +110,9 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
+        print(response.xpath('//*[@id="packTablePg"]/@value').extract_first())
         page_count = int(response.xpath('//*[@id="packTablePageCount"]/text()').re(r'([1-9]\d*\.?\d*)')[0])
+        print(page_count)
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
@@ -128,6 +131,7 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
+        print(response.xpath('//*[@id="packTablePg"]/@value').extract_first())
         for selector in response.xpath('//*[@id="packTable"]/tbody/tr'):
             try:
                 if selector.xpath('./td[1]/a/text()'):
@@ -136,7 +140,6 @@ class GansuSpider(scrapy.Spider):
                     item['time'] = selector.xpath('./td[2]/font/text()').extract_first()
                     url = 'http://ggzy.ah.gov.cn/bulletin.do?method=showHomepage&bulletin_id=' + selector.xpath('./td[1]/a/@value').extract_first()
                     item['url'] = url
-                    print(url)
                     yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
