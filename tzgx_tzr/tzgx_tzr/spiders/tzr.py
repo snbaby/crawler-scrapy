@@ -82,7 +82,7 @@ class TzrSpider(scrapy.Spider):
                     data = {
                         "total": 8020,
                         "per_page": 20,
-                        "page": str(pagenum+1),
+                        "page": str(pagenum + 1),
                         "scope": [],
                         "sub_scope": "",
                         "round": [],
@@ -116,20 +116,26 @@ class TzrSpider(scrapy.Spider):
             try:
                 item = tzgx_tzrItem()
                 item['name'] = investevent['name']
-                # item['company'] = ''
-                # item['job'] = investevent['type'][0]['name']
-                # item['description'] = investevent['des']
-                # item['website'] = 'IT桔子'
-                # item['link'] = 'https://www.itjuzi.com/person/'+str(investevent['id'])
-                # item['investment_field'] = ''
-                # for invse in investevent['invse_scope']:
-                #     item['investment_field'] = item['investment_field'] + invse['name']
-                # item['investment_stage'] = ''
-                # for invse in investevent['invse_round']:
-                #     item['investment_stage'] = item['investment_field'] + invse['name']
-                # item['content'] = investevent['invse_des']
+                item['company'] = ''
+                item['job'] = ''
+                for type in investevent['type']:
+                    item['job'] = item['job'] + type['name']
+                item['description'] = investevent['des']
+                item['website'] = 'IT桔子'
+                item['link'] = 'https://www.itjuzi.com/person/' + \
+                    str(investevent['id'])
+                item['investment_field'] = ''
+                for invse in investevent['invse_scope']:
+                    item['investment_field'] = item['investment_field'] + \
+                        invse['name']
+                item['investment_stage'] = ''
+                for invse in investevent['invse_round']:
+                    item['investment_stage'] = item['investment_field'] + \
+                        invse['name']
+                item['content'] = investevent['des']
                 item['spider_name'] = 'tzr'
                 item['module_name'] = 'IT桔子-投资人'
+                yield item
                 print(
                     "===========================>crawled one item" +
                     response.request.url)
@@ -141,4 +147,3 @@ class TzrSpider(scrapy.Spider):
                     ", exception=" +
                     e.__str__())
                 logging.exception(e)
-            yield item
