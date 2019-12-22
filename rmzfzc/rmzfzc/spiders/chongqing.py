@@ -31,6 +31,10 @@ url = 'http://www.cq.gov.cn/Ajax/AjaxPage'
 class AnhuiSpider(scrapy.Spider):
     name = 'chongqing'
     custom_settings = {
+        'CONCURRENT_REQUESTS': 30,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS_PER_IP': 0,
+        'DOWNLOAD_DELAY': 1,
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
@@ -154,6 +158,7 @@ class AnhuiSpider(scrapy.Spider):
             print(
                 "===========================>crawled one item" +
                 response.request.url)
+            yield item
         except Exception as e:
             logging.error(
                 self.name +
@@ -162,4 +167,3 @@ class AnhuiSpider(scrapy.Spider):
                 ", exception=" +
                 e.__str__())
             logging.exception(e)
-        yield item

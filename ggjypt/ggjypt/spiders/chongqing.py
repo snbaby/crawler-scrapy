@@ -4,7 +4,6 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-import time
 from utils.tools.attachment import get_attachments,get_times
 
 script = """
@@ -37,6 +36,7 @@ function wait_for_element(splash, css, maxwait)
 end
 
 function main(splash, args)
+  splash.images_enabled = false
   splash:go(args.url)
   wait_for_element(splash, ".pg_num_input")
   js = string.format("document.querySelector('#target').value =%d", args.page)
@@ -79,7 +79,7 @@ class GansuSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'quanguo',  # 重庆市公共资源拍卖交易网
+                    'topic': 'chongqing',  # 重庆市公共资源拍卖交易网
                     'url': 'https://www.cqggzy.com/jyxx/jyxx-page.html'
                 }
             ]
@@ -120,15 +120,6 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        script = """
-        function main(splash, args)
-          assert(splash:go(args.url))
-          assert(splash:wait(1))
-          return {
-            html = splash:html(),
-          }
-        end
-        """
         for selector in response.xpath('//*[@class="list-tbnew"]/tbody/tr'):
             try:
                 item = {}
@@ -137,18 +128,12 @@ class GansuSpider(scrapy.Spider):
                 url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
                 print(url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
-                # yield SplashRequest(url,
-                #                     args={
-                #                         'lua_source': script,
-                #                         'wait': 1,
-                #                     },
-                #                     callback=self.parse_page,
-                #                     cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
+        print('aaaaaaaaaaaaaaaaa')
         print(kwargs)
         if kwargs['title']:
             try:
