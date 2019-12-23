@@ -3,6 +3,8 @@ import scrapy
 import logging
 from scrapy_splash import SplashRequest
 from utils.tools.attachment import get_attachments,get_times
+import json
+
 script ="""
 function main(splash, args)
   assert(splash:go(args.url))
@@ -54,7 +56,21 @@ class QuanguoZuixinSpider(scrapy.Spider):
     def start_requests(self):
         try:
             url = "http://www.fujian.gov.cn/zc/zwgkzxd/dzc/szfjszfbgtzcwj/"
-            yield SplashRequest(url, callback=self.parse_page, endpoint='execute', args={'lua_source': script, 'wait': 1})
+            #yield SplashRequest(url, callback=self.parse_page, endpoint='execute', args={'lua_source': script, 'wait': 1})
+            json_body={
+                'js_source': "document.querySelector('#btnSearch').click();",
+                'url' : url,
+                'console': 1,
+                'iframes': 1,
+                'png': 1,
+                'html': 1,
+                'wait':3
+            }
+            yield scrapy.Request("http://47.106.239.73:8050/render.json",
+                           method='POST',
+                           headers={'Content-Type':'application/json'},
+                           body=json.dumps(json_body),
+                           callback=self.parse_result)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -73,7 +89,12 @@ class QuanguoZuixinSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_result(self, response):
-        logging.info("parse_result==============>{}".format(response.css("ul.list-gl a::text").extract_first()))
+        ret = json.loads(response.text)
+        img = ret["png"]
+        import  base64
+        img  = base64.b64decode(img)
+        with open('/tmp/picture_out.png', 'wb') as f:
+            f.write(img)
 
     def parse_pagenum(self, response):
         try:

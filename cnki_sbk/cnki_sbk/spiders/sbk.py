@@ -4,7 +4,8 @@ import logging
 import json
 import time
 
-from cnki_sbk.items import  cnki_sbkItems
+from cnki_sbk.items import  cnki_sbkItem
+from scrapy_splash import SplashRequest
 
 
 class SbkSpider(scrapy.Spider):
@@ -31,12 +32,48 @@ class SbkSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
+        script = """
+        function main(splash, args)
+            assert(splash:go(args.url))
+            assert(splash:wait(1))
+            splash:runjs("document.querySelector('#btnSearch').click();")
+            splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
+            splash:wait(5)
+            return splash:evaljs("iframe()")
+        end
+        """
+
         try:
-            requrl = 'http://kns.cnki.net/kns/brief/brief.aspx?pagename=ASP.brief_result_aspx&isinEn=0&dbPrefix=CDMD&dbCatalog=%e4%b8%ad%e5%9b%bd%e4%bc%98%e7%a7%80%e5%8d%9a%e7%a1%95%e5%a3%ab%e5%ad%a6%e4%bd%8d%e8%ae%ba%e6%96%87%e5%85%a8%e6%96%87%e6%95%b0%e6%8d%ae%e5%ba%93&ConfigFile=CDMD.xml&research=off&t=1577027019127&keyValue=&S=1&sorttype='
-            yield scrapy.Request(requrl,  callback=self.parse_page, dont_filter=True)
+            url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
+            # json_body = {
+            #     'js_source': "document.querySelector('#btnSearch').click();",
+            #     'url': url,
+            #     'console': 1,
+            #     'iframes': 1,
+            #     'png': 1,
+            #     'html': 1,
+            #     'wait': 3
+            # }
+            # yield scrapy.Request("http://47.106.239.73:8050/render.json",
+            #                      method='POST',
+            #                      headers={'Content-Type': 'application/json'},
+            #                      body=json.dumps(json_body),
+            #                      callback=self.parse_result)
+            yield SplashRequest(url,
+                                endpoint='execute',
+                                args={
+                                    'lua_source': script,
+                                    'wait': 1,
+                                    'url': url,
+                                    'iframes':1,
+                                },
+                                callback=self.parse_result)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
+
+    def parse_result(self, response):
+        logging.info("result============{}".format(response.text))
 
     def parse_page(self, response, **kwargs):
         page_count = self.parse_pagenum(response, kwargs)
