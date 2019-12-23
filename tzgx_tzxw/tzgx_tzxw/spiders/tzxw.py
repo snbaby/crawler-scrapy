@@ -140,7 +140,7 @@ class TzxwSpider(scrapy.Spider):
             item['date'] = kwargs['date']
             item['content'] = response.css('body').extract_first()
             item['website'] = 'it桔子'
-            item['link'] = kwargs['url']
+            item['link'] = kwargs['link']
             item['txt'] = ''.join(response.css('body *::text').extract())
             item['spider_name'] = 'tzxw'
             item['module_name'] = 'IT桔子-投资新闻'
