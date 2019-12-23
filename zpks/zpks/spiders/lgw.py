@@ -96,9 +96,9 @@ class LgwSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for li in response.css('.s_position_list ul.item_con_list li'):
+        for href in response.css('.s_position_list::attr(href)').extract():
             try:
-                print(li.css('h3::text').extract_first())
+                print(href)
                 # title = li.css('a::text').extract_first()
                 # time = li.css('span::text').extract_first()
                 # url = response.urljoin(li.css('a::attr(href)').extract_first())
@@ -107,46 +107,32 @@ class LgwSpider(scrapy.Spider):
                 #     'time': time,
                 #     'url': url
                 # }
-                # yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                yield scrapy.Request(href, callback=self.parse_item, cb_kwargs={'url':href}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
         try:
-            title = kwargs['title']
-            if title.find('招标') >= 0:
-                category = '招标'
-            elif title.find('中标') >= 0:
-                category = '中标'
-            elif title.find('成交') >= 0:
-                category = '成交'
-            elif title.find('结果') >= 0:
-                category = '结果'
-            elif title.find('单一') >= 0:
-                category = '单一'
-            else:
-                category = '其他'
-            item = ztbkItem()
-            item['title'] = title
-            item['content'] = response.css('.neirong').extract_first()
-            item['appendix'] = ''
-            item['category'] = category
-            item['time'] = kwargs['time']
-            item['source'] = ''
-            item['website'] = '西藏自治区政府采购网'
+            item = zpksItem()
+            item['job'] = response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()').extract_first()
+            item['company_name'] = response.xpath('//*[@id="job_company"]/dt/a/div/h3/em/text()').extract_first()
+            item['industry'] = ''.join(response.xpath('/html/body/div[5]/div/div[1]/dd/ul//text()').extract())
+            item['location'] = ''.join(response.xpath('//*[@id="job_detail"]/dd[3]/div[1]//text()').extract())
+            item['salary'] = response.xpath('//*[@class="salary"]/text()').extract_first()
+            item['time'] = ''
+            item['website'] = '拉勾网'
             item['link'] = kwargs['url']
-            item['type'] = '2'
-            item['region'] = ''
-            item['appendix_name'] = ''
-            item['spider_name'] = 'xizang_zfcgw'
-            item['txt'] = ''.join(
-                response.css('.neirong *::text').extract())
-            item['module_name'] = '西藏-政府采购网'
-
+            item['type'] = '4'
+            item['source'] = '拉勾网'
+            item['content'] = ''.join(response.xpath('//*[@class="job-detail"]').extract())
+            item['education'] = ''
+            item['spider_name'] = 'boss'
+            item['module_name'] = '拉勾网'
             print(
                 "===========================>crawled one item" +
                 response.request.url)
+            yield item
         except Exception as e:
             logging.error(
                 self.name +
@@ -155,4 +141,3 @@ class LgwSpider(scrapy.Spider):
                 ", exception=" +
                 e.__str__())
             logging.exception(e)
-        yield item

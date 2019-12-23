@@ -106,7 +106,8 @@ class BossSpider(scrapy.Spider):
                                         'wait': 1,
                                         'url': url,
                                     },
-                                    callback=self.parse_item)
+                                    callback=self.parse_item,
+                                    cb_kwargs={'url':url})
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -121,7 +122,7 @@ class BossSpider(scrapy.Spider):
             item['salary'] = response.xpath('//*[@id="main"]/div[1]/div/div/div[2]/div[2]/span/text()').extract_first()
             item['time'] = ''
             item['website'] = 'boss直聘'
-            item['link'] = response.request.url
+            item['link'] = kwargs['url']
             item['type'] = '1'
             item['source'] = 'boss直聘'
             item['content'] = ''.join(response.xpath('//*[@id="main"]/div[3]/div/div[2]/div[2]/div[2]/div').extract())
@@ -140,4 +141,3 @@ class BossSpider(scrapy.Spider):
                 ", exception=" +
                 e.__str__())
             logging.exception(e)
-        yield item
