@@ -168,6 +168,7 @@ class GansuSpider(scrapy.Spider):
                 print(
                     "===========================>crawled one item" +
                     response.request.url)
+                yield item
             except Exception as e:
                 logging.error(
                     self.name +
@@ -176,4 +177,3 @@ class GansuSpider(scrapy.Spider):
                     ", exception=" +
                     e.__str__())
                 logging.exception(e)
-            yield item

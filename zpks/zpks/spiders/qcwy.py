@@ -94,6 +94,7 @@ class BeijingZfwjSpider(scrapy.Spider):
             print(
                 "===========================>crawled one item" +
                 response.request.url)
+            yield item
         except Exception as e:
             logging.error(
                 self.name +
@@ -102,4 +103,3 @@ class BeijingZfwjSpider(scrapy.Spider):
                 ", exception=" +
                 e.__str__())
             logging.exception(e)
-        yield item
