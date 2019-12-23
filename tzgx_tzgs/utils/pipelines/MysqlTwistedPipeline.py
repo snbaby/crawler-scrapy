@@ -48,39 +48,49 @@ class MysqlTwistedPipeline(object):
         logging.info(self.spider.name + ": " + "insert into mysql........")
         try:
             sql = f'''
-                insert into `topic_info_zhaopin`(
-                    `job`,
-                    `company_name`,
-                    `industry`,
-                    `location`,
-                    `salary`,
+                insert into `topic_info_touziguanxi_touziqyk`(
+                    `name`,
+                    `simple_name`,
+                    `en_name`,
+                    `headquarters`,
+                    `register_location`,
                     `time`,
+                    `industry`,
+                    `official_website`,
+                    `introduction`,
+                    `phone`,
+                    `fax`,
+                    `location`,
+                    `zip_code`,
                     `website`,
                     `link`,
-                    `type`,
-                    `source`,
-                    `content`,
-                    `education`,
+                    `company_info`,
                     `create_time`,
+                    `content`,
                     `spider_name`,
                     `module_name`
                 )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s,%s,%s, %s, %s, %s, %s)
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s,%s,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         '''
             parm = (
-                item['job'],
-                item['company_name'],
-                item['industry'],
-                item['location'],
-                item['salary'],
+                item['name'],
+                item['simple_name'],
+                item['en_name'],
+                item['headquarters'],
+                item['register_location'],
                 item['time'],
+                item['industry'],
+                item['official_website'],
+                item['introduction'],
+                item['phone'],
+                item['fax'],
+                item['location'],
+                item['zip_code'],
                 item['website'],
                 item['link'],
-                item['type'],
-                item['source'],
-                item['content'],
-                item['education'],
+                item['company_info'],
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                item['content'],
                 item['spider_name'],
                 item['module_name']
             )

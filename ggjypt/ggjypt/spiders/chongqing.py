@@ -4,7 +4,6 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-import time
 from utils.tools.attachment import get_attachments,get_times
 
 script = """
@@ -37,8 +36,8 @@ function wait_for_element(splash, css, maxwait)
 end
 
 function main(splash, args)
+  splash.images_enabled = false
   splash:go(args.url)
-  assert(splash:wait(0.5))
   wait_for_element(splash, ".pg_num_input")
   js = string.format("document.querySelector('#target').value =%d", args.page)
   splash:evaljs(js)
@@ -52,6 +51,10 @@ end
 class GansuSpider(scrapy.Spider):
     name = 'chongqing_ggjypt'
     custom_settings = {
+        'CONCURRENT_REQUESTS': 10,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS_PER_IP': 0,
+        'DOWNLOAD_DELAY': 0.5,
         'DOWNLOADER_MIDDLEWARES' : {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -76,31 +79,32 @@ class GansuSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'quanguo',  # 重庆市公共资源拍卖交易网
+                    'topic': 'chongqing',  # 重庆市公共资源拍卖交易网
                     'url': 'https://www.cqggzy.com/jyxx/jyxx-page.html'
                 }
             ]
             for content in contents:
                 yield SplashRequest(content['url'],
-                                    endpoint = 'execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'page': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    cb_kwargs=content)
+                    endpoint = 'execute',
+                    args={
+                        'lua_source': script,
+                        'wait': 3,
+                        'page': 1,
+                        'url': content['url'],
+                    },
+                    callback=self.parse_page,
+                    cb_kwargs=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
         page_count = int(response.xpath('//*[@id="index"]').re(r'([1-9]\d*\.?\d*)')[1]) + 1
+        page_count = 5
         try:
             for pagenum in range(page_count):
+                print(pagenum)
                 if pagenum > 0:
-                    time.sleep(0.5)
                     yield SplashRequest(kwargs['url'],
                         endpoint='execute',
                         args={
@@ -122,12 +126,15 @@ class GansuSpider(scrapy.Spider):
                 item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
                 item['time'] = selector.xpath('./td[4]/text()').extract_first()
                 url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
+                print(url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
+        print('aaaaaaaaaaaaaaaaa')
+        print(kwargs)
         if kwargs['title']:
             try:
                 appendix, appendix_name = get_attachments(response)

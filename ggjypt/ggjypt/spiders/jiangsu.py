@@ -86,7 +86,6 @@ class GuangdongSpider(scrapy.Spider):
     def parse(self, response, **kwargs):
         jsonData = json.loads(response.text)
         num = int(int(jsonData['result']['totalcount'])/20) + 1
-        num = 100
         for n in range(num):
             data['pn'] = n * 20
             time.sleep(0.1)
