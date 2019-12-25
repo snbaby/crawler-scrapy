@@ -31,6 +31,10 @@ script_click = """
 class QuanguoZuixinSpider(scrapy.Spider):
     name = 'fujian_zwgkzxd'
     custom_settings = {
+        'CONCURRENT_REQUESTS': 10,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS_PER_IP': 0,
+        'DOWNLOAD_DELAY': 0.5,
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },

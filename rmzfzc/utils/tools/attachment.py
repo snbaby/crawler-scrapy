@@ -3,23 +3,18 @@ import logging
 import re
 
 def get_attachments(response):
-    valid_extensions = [".doc", ".docx", ".xlsx", ".xls", ".pdf", ".zip", "wps", ".rar"]
+    valid_extensions = (".doc", ".docx", ".xlsx", ".xls", ".pdf", ".zip", "wps", ".rar")
     # 取所有超链接
     hrefs = response.css("a::attr(href)").extract()
     texts = response.css('a::text').extract()
-    logging.info(hrefs, texts)
     appendix=""
     appendix_name=""
-    for i in range(len(hrefs)):
-        # 取超链接文本
-        href = hrefs[i]
-        text=""
-        for ext in valid_extensions:
-            if href.endswith(ext):
-                appendix=appendix + href +";"
-                if i >= 0 and i < len(texts):
-                    text=texts[i]
-                appendix_name=appendix_name + text +";"
+    for i in hrefs :
+        if i.endswith(valid_extensions):
+            appendix=appendix +response.urljoin(i) +","
+    for n in texts:
+        if n.endswith(valid_extensions):
+                    appendix_name = appendix_name + n +","
     return appendix, appendix_name
 
 #时间格式化
