@@ -69,7 +69,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                self.add_pagenum = int(response.xpath('//*[@id="3bb45f8814654e33ae014e740ccf771b"]/div[2]/table[2]/tbody/tr[2]/td/div[2]/span/b[3]').re(r'([1-9]\d*\.?\d*)')[0])
+                return int(response.xpath('//*[@id="3bb45f8814654e33ae014e740ccf771b"]/div[2]/table[2]/tbody/tr[2]/td/div[2]/span/b[3]').re(r'([1-9]\d*\.?\d*)')[0])
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())

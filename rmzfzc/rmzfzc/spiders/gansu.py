@@ -169,7 +169,9 @@ class shandongZfwjSpider(scrapy.Spider):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            return response.xpath('//*[@class="default_pgTotalPage"]/text()').extract_first()
+            if not self.add_pagenum:
+                return response.xpath('//*[@class="default_pgTotalPage"]/text()').extract_first()
+            return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)

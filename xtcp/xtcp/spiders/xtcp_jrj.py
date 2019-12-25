@@ -58,7 +58,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
-                    time.sleep(2)
                     url = "http://trust.jrj.com/json/p.jspa?size=2000&pn="+str(pagenum)+"&t={%22prd_status%22:%22%22,%22inv_fld%22:%22%22,%22trust_type%22:%22%22,%22trust_peri%22:%22%22,%22exp_yld%22:%22%22,%22min_cap%22:%22%22,%22orgcode%22:%22%22,%22trust_name%22:%22%22,%22order%22:%22desc%22,%22sort%22:%22enddate%22}&run=0.9985752275784832&_=1576253875459"
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
@@ -81,7 +80,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
         data = json.loads(dataStr)
         for obj in data['trustProductList']:
             try:
-                time.sleep(0.1)
                 url = 'http://trust.jrj.com/json/d.jspa?innercode='+str(obj['innerCode']+'&_=1576256634483')
                 yield SplashRequest(url,callback=self.parse_item, dont_filter=True)
             except Exception as e:

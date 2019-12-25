@@ -58,7 +58,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
-                    time.sleep(2)
                     url = "http://www.yanglee.com/Action/ProductAJAX.ashx?mode=statistics&pageSize=40&pageIndex="+str(pagenum)+"&conditionStr=producttype%3A1&start_released=&end_released=&orderStr=1&ascStr=ulup&_=1576330869045"
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1},headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
                               'Referer': 'http://www.yanglee.com/Product/Index.aspx'}, callback=self.parse, dont_filter=True)
@@ -81,7 +80,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
         data = json.loads(response.text)
         for obj in data['result']:
             try:
-                time.sleep(0.1)
                 url = 'http://www.yanglee.com/Product/Detail.aspx?id='+str(obj['ID'])
                 print(url)
                 yield SplashRequest(url,callback=self.parse_item, dont_filter=True)

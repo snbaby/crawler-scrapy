@@ -46,7 +46,6 @@ class BeijingZfwjSpider(scrapy.Spider):
             # 在解析翻页数之前，首先解析首页内容
             for pagenum in range(page_count):
                 if pagenum > 0:
-                    time.sleep(1)
                     url = "https://search.51job.com/list/010000,000000,0000,00,9,99,%2B,2," + str(
                         pagenum) + ".html?lang=c&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&ord_field=0&dibiaoid=0&line=&welfare="
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse,

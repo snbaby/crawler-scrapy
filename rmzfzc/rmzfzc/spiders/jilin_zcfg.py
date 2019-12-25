@@ -60,7 +60,6 @@ class BeijingZfwjSpider(scrapy.Spider):
             # 在解析翻页数之前，首先解析首页内容
             for pagenum in range(page_count):
                 if pagenum>0:
-                    time.sleep(1)
                     url = "http://was.jl.gov.cn/was5/response_szfzcfg_list.jsp?callback=result&pageIndex="+ str(pagenum) +"&pageSize=10&themeIds=&siteIds=&orderType=desc&_=" + str((int(round(time.time() * 1000))))
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
@@ -72,8 +71,7 @@ class BeijingZfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                print(response['totalCount'])
-                self.add_pagenum = int(response['totalCount']) / int(response['pageSize']) + 2
+                return int(response['totalCount']) / int(response['pageSize']) + 2
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())

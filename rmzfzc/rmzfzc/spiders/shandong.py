@@ -84,7 +84,6 @@ class AnhuiSpider(scrapy.Spider):
             '<record>', '').replace('</nextgroup>', '')
         sel = scrapy.Selector(text=text)
         for href in sel.xpath('//*[@class="tit"]/a/@href').extract():
-            time.sleep(0.5)
             try:
                 yield scrapy.Request(href, callback=self.parse_item,
                                      dont_filter=True, cb_kwargs=kwargs)

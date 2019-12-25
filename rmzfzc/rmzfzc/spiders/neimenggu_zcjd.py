@@ -77,10 +77,7 @@ class AnhuiSpider(scrapy.Spider):
             '<datastore>', '').replace('<nextgroup>', '').replace('<recordset>', '').replace('</recordset>','').replace('</datastore>','').replace(
             '<record>', '').replace('</nextgroup>', '')
         sel = scrapy.Selector(text=text)
-        # print(text)
         for href in sel.xpath('//*[@class="msg_listcon_list_title"]/a/@href').extract():
-            print(href)
-            time.sleep(0.5)
             try:
                 yield scrapy.Request('http://www.nmg.gov.cn' + href, callback=self.parse_item,
                                      dont_filter=True, cb_kwargs=kwargs)

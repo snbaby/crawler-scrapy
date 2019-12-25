@@ -92,7 +92,6 @@ class GuangdongSpider(scrapy.Spider):
         print(page_count)
         for n in range(page_count):
             data['pn'] = n * 20
-            time.sleep(0.1)
             print(n)
             yield scrapy.Request(url, body=json.dumps(data), method='POST',
                                  headers={'Content-Type': 'application/json'}, callback=self.parse_page)

@@ -122,7 +122,6 @@ class AnhuiSpider(scrapy.Spider):
 
     def parse_page(self, response, **kwargs):
         for selector in response.xpath('//*[@class="list"]/li'):
-            time.sleep(0.5)
             item = {}
             item['title'] = selector.xpath('./a/text()').extract_first()
             item['link'] = 'http://www.cq.gov.cn' + selector.xpath('./a/@href').extract_first()

@@ -132,7 +132,6 @@ class heilongjiangZfwjSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
-                    time.sleep(0.5)
                     url = 'http://www.hlj.gov.cn/gkml/ztfl.html?p='+str(pagenum)+'&c=1&k=&t='
                     yield SplashRequest(url,
                                         endpoint='execute',

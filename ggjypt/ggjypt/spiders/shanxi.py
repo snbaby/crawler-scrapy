@@ -117,7 +117,6 @@ class GansuSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 if pagenum > 1:
-                    time.sleep(0.5)
                     print('pagenum' + str(pagenum))
                     yield SplashRequest(kwargs['url'],
                                         endpoint='execute',

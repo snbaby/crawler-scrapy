@@ -170,7 +170,6 @@ class BgSpider(scrapy.Spider):
                         'accept-language': 'zh-CN,zh;q=0.9',
                         'authorization': kwargs['authorization']
                     }
-                    time.sleep(2)
                     yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_hb, cb_kwargs=result, dont_filter=True)
                 else:
                     acquirer = investevent['acquirer'][0]['name']
@@ -198,7 +197,6 @@ class BgSpider(scrapy.Spider):
                         'accept-language': 'zh-CN,zh;q=0.9',
                         'authorization': kwargs['authorization']
                     }
-                    time.sleep(2)
                     yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_sg, cb_kwargs=result, dont_filter=True)
                 print(
                     "===========================>crawled one item" +

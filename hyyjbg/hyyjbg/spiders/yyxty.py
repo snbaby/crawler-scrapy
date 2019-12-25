@@ -62,7 +62,6 @@ class YyxtySpider(scrapy.Spider):
                     "title": obj['C_TITLE'],
                     "time": obj['C_ADDTIME']
                 }
-                time.sleep(0.5)
                 yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())

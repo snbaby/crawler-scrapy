@@ -59,7 +59,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
             for pagenum in range(page_count):
                 if pagenum > 0:
                     temUrl = 'http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html?categoryNum=002&pageIndex='
-                    time.sleep(1)
                     url = temUrl + str(pagenum)
                     print(url)
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
