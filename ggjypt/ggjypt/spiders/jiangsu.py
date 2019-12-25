@@ -84,14 +84,25 @@ class GuangdongSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        jsonData = json.loads(response.text)
-        num = int(int(jsonData['result']['totalcount'])/20) + 1
-        for n in range(num):
+        page_count = int(self.parse_pagenum(response))
+        print(page_count)
+        for n in range(page_count):
             data['pn'] = n * 20
             time.sleep(0.1)
             print(n)
             yield scrapy.Request(url, body=json.dumps(data), method='POST',
                                  headers={'Content-Type': 'application/json'}, callback=self.parse_page)
+    def parse_pagenum(self, response):
+        try:
+            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
+            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
+            if not self.add_pagenum:
+                jsonData = json.loads(response.text)
+                return int(int(jsonData['result']['totalcount']) / 20) + 1
+            return self.add_pagenum
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
     def parse_page(self, response):
         jsonData = json.loads(response.text)
         records = jsonData['result']['records']

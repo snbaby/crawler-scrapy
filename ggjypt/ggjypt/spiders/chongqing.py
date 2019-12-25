@@ -99,8 +99,7 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        page_count = int(response.xpath('//*[@id="index"]').re(r'([1-9]\d*\.?\d*)')[1]) + 1
-        page_count = 5
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 print(pagenum)
@@ -119,7 +118,26 @@ class GansuSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
+    def parse_pagenum(self, response):
+        try:
+            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
+            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
+            if not self.add_pagenum:
+                return int(response.xpath('//*[@id="index"]').re(r'([1-9]\d*\.?\d*)')[1]) + 1
+            return self.add_pagenum
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
     def parse(self, response, **kwargs):
+        script = """
+        function main(splash, args)
+          assert(splash:go(args.url))
+          assert(splash:wait(1))
+          return {
+            html = splash:html(),
+          }
+        end
+        """
         for selector in response.xpath('//*[@class="list-tbnew"]/tbody/tr'):
             try:
                 item = {}
@@ -127,13 +145,21 @@ class GansuSpider(scrapy.Spider):
                 item['time'] = selector.xpath('./td[4]/text()').extract_first()
                 url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
                 print(url)
-                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                item['url'] = url
+                yield SplashRequest(url,
+                    endpoint='execute',
+                    args={
+                        'lua_source': script,
+                        'wait': 1,
+                        'url': url,
+                    },
+                    callback=self.parse_item,
+                    cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
-        print('aaaaaaaaaaaaaaaaa')
         print(kwargs)
         if kwargs['title']:
             try:

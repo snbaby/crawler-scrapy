@@ -142,7 +142,7 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        page_count = int(response.xpath('//*[@class="mmggxlh"]/a[last()-1]/text()').extract()[0]) + 1
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
@@ -159,7 +159,16 @@ class GansuSpider(scrapy.Spider):
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
-
+    def parse_pagenum(self, response):
+        try:
+            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
+            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
+            if not self.add_pagenum:
+                return int(response.xpath('//*[@class="mmggxlh"]/a[last()-1]/text()').extract()[0]) + 1
+            return self.add_pagenum
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
     def parse(self, response, **kwargs):
         for selector in response.xpath('//*[@class="content_right fr"]/div[4]/table/tbody/tr'):
             try:

@@ -132,15 +132,15 @@ class GansuGgjyptSpider(scrapy.Spider):
             for pagenum in range(page_count):
                 url = kwargs['url']
                 yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'pagenum': pagenum + 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    cb_kwargs=kwargs)
+                    endpoint='execute',
+                    args={
+                        'lua_source': script,
+                        'wait': 1,
+                        'pagenum': pagenum + 1,
+                        'url': url,
+                    },
+                    callback=self.parse,
+                    cb_kwargs=kwargs)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)

@@ -141,34 +141,44 @@ class GansuSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'],
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'page': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    cb_kwargs=content)
+                    endpoint='execute',
+                    args={
+                        'lua_source': script,
+                        'page': 1,
+                        'url': content['url'],
+                    },
+                    callback=self.parse_page,
+                    cb_kwargs=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        page_count = int(response.xpath('//*[@class="mmggxlh"]/a[last()-1]/text()').extract()[0]) + 1
+        page_count = int(self.parse_pagenum(response))
         print('page_count' + str(page_count))
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
                     time.sleep(0.5)
                     yield SplashRequest(kwargs['url'],
-                                        endpoint='execute',
-                                        args={
-                                            'lua_source': script,
-                                            'page': pagenum,
-                                            'url': kwargs['url'],
-                                        },
-                                        callback=self.parse,
-                                        cb_kwargs=kwargs)
+                        endpoint='execute',
+                        args={
+                            'lua_source': script,
+                            'page': pagenum,
+                            'url': kwargs['url'],
+                        },
+                        callback=self.parse,
+                        cb_kwargs=kwargs)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
+    def parse_pagenum(self, response):
+        try:
+            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
+            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
+            if not self.add_pagenum:
+                return int(response.xpath('//*[@class="mmggxlh"]/a[last()-1]/text()').extract()[0]) + 1
+            return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)

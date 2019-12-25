@@ -79,7 +79,6 @@ class hubeiSzfwjSpider(scrapy.Spider):
                                 cb_kwargs={'url': kwargs['url']})
 
     def parse_page(self, response,**kwargs):
-        print(response)
         page_count = int(self.parse_pagenum(response, '0'))
         print('page_count' + str(page_count))
         try:
@@ -130,21 +129,23 @@ class hubeiSzfwjSpider(scrapy.Spider):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if type == '0':
-                if response.xpath('//*[@class="ewb-page-li ewb-page-noborder ewb-page-num"]/span'):
-                    return int(response.xpath('//*[@class="ewb-page-li ewb-page-noborder ewb-page-num"]/span').re(r'([1-9]\d*\.?\d*)')[1])
-                else:
-                    return '0'
-            elif type == '1':
-                if response.xpath('//*[@class="flickr"]/a[4]/text()'):
-                    return int(response.xpath('//*[@class="flickr"]/a[4]/text()').extract_first())
-                else:
-                    return '0'
-            elif type == '2':
-                details = response.xpath('//script')[4].re(r'([1-9]\d*\.?\d*)')[2]
-                pageCount = response.xpath('//script')[4].re(r'([1-9]\d*\.?\d*)')[1]
-                return int(details) / int(pageCount) + 1
-
+            if not self.add_pagenum:
+                if type == '0':
+                    if response.xpath('//*[@class="ewb-page-li ewb-page-noborder ewb-page-num"]/span'):
+                        return int(response.xpath('//*[@class="ewb-page-li ewb-page-noborder ewb-page-num"]/span').re(
+                            r'([1-9]\d*\.?\d*)')[1])
+                    else:
+                        return '0'
+                elif type == '1':
+                    if response.xpath('//*[@class="flickr"]/a[4]/text()'):
+                        return int(response.xpath('//*[@class="flickr"]/a[4]/text()').extract_first())
+                    else:
+                        return '0'
+                elif type == '2':
+                    details = response.xpath('//script')[4].re(r'([1-9]\d*\.?\d*)')[2]
+                    pageCount = response.xpath('//script')[4].re(r'([1-9]\d*\.?\d*)')[1]
+                    return int(details) / int(pageCount) + 1
+            return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
