@@ -20,6 +20,10 @@ end
 class TianJinSzfwjSpider(scrapy.Spider):
     name = 'jilin_ggjypt'
     custom_settings = {
+        'CONCURRENT_REQUESTS': 10,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS_PER_IP': 0,
+        'DOWNLOAD_DELAY': 0.5,
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
@@ -64,7 +68,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 try:
                     print(selector.xpath('.//*[@class="ewb-com-link r"]/@href').extract_first())
                     url = response.urljoin(selector.xpath('.//*[@class="ewb-com-link r"]/@href').extract_first())
-                    print('url==='+url)
                     yield SplashRequest(url, callback=self.parse_page, dont_filter=True, cb_kwargs={'url': url})
                 except Exception as e:
                     logging.error(self.name + ": " + e.__str__())

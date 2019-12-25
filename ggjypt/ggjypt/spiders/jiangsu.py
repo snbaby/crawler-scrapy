@@ -52,6 +52,10 @@ url = 'http://221.226.253.51/inteligentsearch/rest/inteligentSearch/getFullTextD
 class GuangdongSpider(scrapy.Spider):
     name = 'jiangsu_ggjypt'
     custom_settings = {
+        'CONCURRENT_REQUESTS': 10,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS_PER_IP': 0,
+        'DOWNLOAD_DELAY': 0.5,
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
