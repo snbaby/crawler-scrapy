@@ -105,7 +105,7 @@ MYSQL_USER = 'root'
 MYSQL_PASSWORD = 'Liqin1988'
 # MYSQL_PASSWORD ='yeyang112114'
 
-MYSQL_DB = 'crawl'
+MYSQL_DB = 'python'
 MYSQL_PORT = 3306
 MYSQL_CHRSET = 'utf8'
 
