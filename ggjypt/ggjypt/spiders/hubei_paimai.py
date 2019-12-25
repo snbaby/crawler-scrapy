@@ -108,7 +108,7 @@ class GansuSpider(scrapy.Spider):
                     args={
                         'lua_source': script,
                         'wait': 1,
-                        'page': 40,
+                        'page': 1,
                         'url': content['url'],
                     },
                     callback=self.parse_page,

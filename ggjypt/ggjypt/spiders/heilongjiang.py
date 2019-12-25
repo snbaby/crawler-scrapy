@@ -53,13 +53,14 @@ class TianJinSzfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response,**kwargs):
-        page_count = int(self.parse_pagenum(response))
+        page_count = int(self.parse_pagenum(response)) + 1
         try:
             for pagenum in range(page_count):
                 temUrl = 'http://www.hljggzyjyw.gov.cn/trade/tradezfcg?cid=E92C3437-9CB8-40FB-BC5C-E78A6E4E475D&pageNo='
-                url = temUrl + \
-                      str(pagenum) + '&type=0&notice_name=' if pagenum > 0 else "http://www.hljggzyjyw.gov.cn/trade/tradezfcg?cid=E92C3437-9CB8-40FB-BC5C-E78A6E4E475D&pageNo=1&type=0&notice_name="
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
+                if pagenum > 0:
+                    url = temUrl + \
+                          str(pagenum) + '&type=0&notice_name=' if pagenum > 1 else "http://www.hljggzyjyw.gov.cn/trade/tradezfcg?cid=E92C3437-9CB8-40FB-BC5C-E78A6E4E475D&pageNo=1&type=0&notice_name="
+                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)

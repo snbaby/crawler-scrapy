@@ -83,7 +83,6 @@ class GansuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_type(self, response):
-        num = 1
         for href in response.xpath('//*[@class="LeftMenuSub"]/a/@onclick'):
             for id in response.xpath('//*[@class="hubs"]/ul/li/@id'):
                 try:

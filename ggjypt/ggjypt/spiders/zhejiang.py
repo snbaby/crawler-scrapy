@@ -108,6 +108,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['title'] = selector.xpath('./td[2]/a/text()').extract_first().strip()
                 item['time'] = selector.xpath('./td[3]/text()').extract_first().strip().replace('[','').replace(']','')
                 url = response.urljoin(selector.xpath('./td[2]/a/@href').extract_first())
+                print(url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
