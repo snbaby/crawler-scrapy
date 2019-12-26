@@ -68,10 +68,12 @@ class ZhejiangSpider(scrapy.Spider):
 
     def parse_page(self, response, **kwargs):
         page_count = int(self.parse_pagenum(response, kwargs))
+        print(page_count)
         try:
             for pagenum in range(page_count):
                 url = kwargs['url'] + '?uid=' + response.css(
                     '.zjszfxxlb div::attr(id)').extract_first() + '&pageNum=' + str(pagenum + 1)
+
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -108,7 +110,7 @@ class ZhejiangSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = response.css('meta[name="contentSource"]::attr(content)').extract_first()
             item['time'] = response.css('meta[name="Maketime"]::attr(content)').extract_first()
-            item['province'] = ''
+            item['province'] = '浙江省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '浙江省人民政府'

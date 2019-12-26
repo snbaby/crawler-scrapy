@@ -120,7 +120,7 @@ class HubeiSpider(scrapy.Spider):
             item['source'] = ''
             item['time'] = response.css(
                 '.metadata_content > div:nth-child(2) > div:nth-child(2)::text').extract()[1].strip()
-            item['province'] = ''
+            item['province'] = '湖北省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '湖北省人民政府'
@@ -156,7 +156,7 @@ class HubeiSpider(scrapy.Spider):
                 '.metadata_block ul li:nth-child(2) span::text').extract_first().replace('来源：', '')
             item['time'] = response.css(
                 '.metadata_block ul li:nth-child(1) span::text').extract_first().replace('发布时间：', '')
-            item['province'] = ''
+            item['province'] = '湖北省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '湖北省人民政府'

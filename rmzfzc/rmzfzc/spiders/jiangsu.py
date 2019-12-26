@@ -127,7 +127,7 @@ class JiangsuSpider(scrapy.Spider):
             item['source'] = ''
             item['time'] = response.css(
                 '.xxgk_table tr:nth-child(2) td:nth-child(4)::text').extract_first()
-            item['province'] = ''
+            item['province'] = '江苏省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '江苏省人民政府'
@@ -161,7 +161,7 @@ class JiangsuSpider(scrapy.Spider):
                 '.sp_time font:nth-child(2)::text').extract_first().replace('来源：', '')
             item['time'] = response.css(
                 '.sp_time font:nth-child(1)::text').extract_first().replace('发布日期：', '')
-            item['province'] = ''
+            item['province'] = '江苏省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '江苏省人民政府'
@@ -196,7 +196,7 @@ class JiangsuSpider(scrapy.Spider):
                 '.sp_time font:nth-child(2)::text').extract_first().replace('来源：', '')
             item['time'] = response.css(
                 '.sp_time font:nth-child(1)::text').extract_first().replace('发布日期：', '')
-            item['province'] = ''
+            item['province'] = '江苏省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '江苏省人民政府'
@@ -231,7 +231,7 @@ class JiangsuSpider(scrapy.Spider):
             item['source'] = ''
             item['time'] = response.css(
                 '.xxgk_table tr:nth-child(2) td:nth-child(4)::text').extract_first()
-            item['province'] = ''
+            item['province'] = '江苏省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '江苏省人民政府'

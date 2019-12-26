@@ -126,7 +126,7 @@ class ShaanxiSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = ''
             item['time'] = response.css('.zfwj_news_table tr:nth-child(4) td:nth-child(4)::text').extract_first().strip()
-            item['province'] = ''
+            item['province'] = '陕西省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '陕西省人民政府'
@@ -159,7 +159,7 @@ class ShaanxiSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = ''
             item['time'] = response.css('.gk_news_table tr:nth-child(2) td:nth-child(4)::text').extract_first().strip()
-            item['province'] = ''
+            item['province'] = '陕西省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '陕西省人民政府'
@@ -192,7 +192,7 @@ class ShaanxiSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = response.css('#info_source::text').extract_first().strip()
             item['time'] = response.css('#info_released_dtime::text').extract_first().strip()
-            item['province'] = ''
+            item['province'] = '陕西省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '陕西省人民政府'

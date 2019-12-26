@@ -23,20 +23,19 @@ class TianJinSzfwjSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
         'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOADER_MIDDLEWARES': {
+            'scrapy_splash.SplashCookiesMiddleware': 723,
+            'scrapy_splash.SplashMiddleware': 725,
+            'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+        },
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
-        'DOWNLOADER_MIDDLEWARES': {
-            'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
-            'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
-            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
@@ -83,10 +82,12 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['article_num'] = selector.xpath('./p//text()').extract_first().strip()
                 item['time'] = selector.xpath('./span//text()').extract_first().strip()
                 href = selector.xpath('./a[1]/@href').extract_first()
+                item['link'] = href
                 print(href)
                 # 加密记录不处理
-                yield SplashRequest(href, callback=self.parse_item, dont_filter=True, cb_kwargs=item)
-
+                yield SplashRequest(href, endpoint='execute',
+                                args={'lua_source': script, 'wait': 1, 'url': href}, callback=self.parse_item,
+                                dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)

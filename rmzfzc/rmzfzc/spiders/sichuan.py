@@ -143,7 +143,7 @@ class SichuanSpider(scrapy.Spider):
                 item['time'] = response.css('.box[bgcolor] tr:nth-child(2) td:nth-child(2) *::text').extract_first().strip()
             else:
                 item['time'] = ''
-            item['province'] = ''
+            item['province'] = '四川省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '四川省人民政府'
@@ -189,7 +189,7 @@ class SichuanSpider(scrapy.Spider):
                 item['time'] = response.css('.box[bgcolor] tr:nth-child(2) td:nth-child(2) *::text').extract_first().strip()
             else:
                 item['time'] = ''
-            item['province'] = ''
+            item['province'] = '四川省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '四川省人民政府'

@@ -125,7 +125,7 @@ class GuangxiSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = ''
             item['time'] = response.css('.people-desc tr:nth-child(3) td:nth-child(2)::text').extract_first().strip()
-            item['province'] = ''
+            item['province'] = '广西壮族自治区'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '广西壮族自治区人民政府门户网站'
@@ -158,7 +158,7 @@ class GuangxiSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = response.css('.article-inf-left::text').extract_first().split('来源：')[1].strip()
             item['time'] = response.css('.article-inf-left::text').extract_first().split('来源：')[0].strip()
-            item['province'] = ''
+            item['province'] = '广西壮族自治区'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '广西壮族自治区人民政府门户网站'

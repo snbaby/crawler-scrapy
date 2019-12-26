@@ -94,7 +94,10 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['title'] = response.xpath('//div[@id="info_title"]/text()').extract_first() if response.xpath('//div[@id="info_title"]/text()') else response.xpath('//div[@class="article oneColumn pub_border"]/h1/text()').extract_first()
             item['article_num'] = ''
             item['content'] = "".join(response.xpath('//div[@class="info_box"]').extract()) if response.xpath('//div[@class="info_box"]') else "".join(response.xpath('//div[@id="UCAP-CONTENT"]').extract())
-            item['source'] = response.xpath('//span[@id="info_source"]/text()').extract_first() if response.xpath('//span[@id="info_source"]/text()') else  response.xpath('//span[@class="font"]/text()').extract_first().replace('来源：','')
+            source = response.xpath('//span[@id="info_source"]/text()').extract_first() if response.xpath(
+                '//span[@id="info_source"]/text()') else response.xpath(
+                '//span[@class="font"]/text()').extract_first().replace('来源：', '')
+            item['source'] = source.replace('来源：', '') if source else ''
             item['time'] = response.xpath('//span[@id="info_released_dtime"]/text()').extract_first() if response.xpath('//span[@id="info_released_dtime"]/text()') else  response.xpath('//span[@class="pages-date"]/text()').extract_first()
             item['province'] = '宁夏回族自治区'
             item['city'] = ''

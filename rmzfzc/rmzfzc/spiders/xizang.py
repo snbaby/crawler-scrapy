@@ -106,7 +106,7 @@ class XizangSpider(scrapy.Spider):
                 item['appendix'] = appendix
                 item['source'] = response.css(".vvx-time-author.lf::text").extract_first().split('作者：')[0].split('来源：')[1].strip()
                 item['time'] = response.css(".vvx-time-author.lf::text").extract_first().split('时间：')[1].split('来源：')[0].strip()
-                item['province'] = ''
+                item['province'] = '西藏自治区'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '西藏自治区人民政府'
@@ -125,7 +125,7 @@ class XizangSpider(scrapy.Spider):
                 item['appendix'] = appendix
                 item['source'] = ''
                 item['time'] = response.css(".vvx-time-author.lf::text").extract_first().split('时间：')[1].split('来源：')[0].strip()
-                item['province'] = ''
+                item['province'] = '西藏自治区'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '西藏自治区人民政府'

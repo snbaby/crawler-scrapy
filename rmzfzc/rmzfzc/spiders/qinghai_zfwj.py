@@ -30,6 +30,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
             'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
             'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
             'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
+            'scrapy_splash.SplashCookiesMiddleware': 140,
+            'scrapy_splash.SplashMiddleware': 725,
+            'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
@@ -37,7 +40,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -100,7 +103,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             appendix, appendix_name = get_attachments(response)
             item['title'] = kwargs['title']
             item['article_num'] = kwargs['article_num']
-            item['content'] = "".join(response.xpath('//div[@id="k-xxgk2"]').extract())
+            item['content'] = "".join(response.xpath('//div[@id="zw-art-content3"]').extract())
             item['source'] = response.xpath('//li[@class="w712"]/span[not(contains(@class, "tit"))]/text()').extract()[1]
             item['time'] = kwargs['time']
             item['province'] = '青海省'
@@ -109,7 +112,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['website'] = '青海省人民政府'
             item['module_name'] = '青海省人民政府-政府文件'
             item['spider_name'] = 'qinghai_zfwj'
-            item['txt'] = "".join(response.xpath('//div[@id="k-xxgk2"]//text()').extract())
+            item['txt'] = "".join(response.xpath('//div[@id="zw-art-content3"]//text()').extract())
             item['appendix_name'] = appendix_name
             item['link'] = response.request.url
             item['appendix'] = appendix

@@ -185,7 +185,7 @@ class ZhejiangZfwjSpider(scrapy.Spider):
             else:
                 item['source'] = ''
                 item['time'] = ''
-            item['province'] = ''
+            item['province'] = '浙江省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '浙江省人民政府'

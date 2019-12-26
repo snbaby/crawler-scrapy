@@ -115,7 +115,7 @@ class GuangdongSpider(scrapy.Spider):
                 item['appendix'] = appendix
                 item['source'] = ''
                 item['time'] = response.css('.classify > div:nth-child(2) div:nth-child(2) span::text').extract_first()
-                item['province'] = ''
+                item['province'] = '广东省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '广东省人民政府'
@@ -134,7 +134,7 @@ class GuangdongSpider(scrapy.Spider):
                 item['source'] = ''
                 item['time'] = response.css(
                     '.introduce > div:nth-child(2) > div:nth-child(2) > span::text').extract_first()
-                item['province'] = ''
+                item['province'] = '广东省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '广东省人民政府'
@@ -168,7 +168,7 @@ class GuangdongSpider(scrapy.Spider):
                 '.ly::text').extract_first().replace('来源  :', '').strip()
             item['time'] = response.css(
                 '.time::text').extract_first().replace('时间  :', '').strip()
-            item['province'] = ''
+            item['province'] = '广东省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '广东省人民政府'

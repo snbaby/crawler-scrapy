@@ -80,10 +80,13 @@ class QuanguoZuixinSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.xpath('//ul[@class="listTxt"]/li/h4/a/@href'):
+        for selector in response.xpath('//ul[@class="listTxt"]/li/h4'):
             try:
-                print('>>>>>>>>>' + href.extract())
-                yield scrapy.Request(href.extract(), callback=self.parse_item, dont_filter=True)
+                item = {}
+                item['title'] = selector.xpath('./a/text()').extract_first()
+                item['time'] = selector.xpath('./span/text()').extract_first()
+                href = selector.xpath('./a/@href').extract_first()
+                yield scrapy.Request(href, callback=self.parse_item, dont_filter=True,cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -91,16 +94,15 @@ class QuanguoZuixinSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response):
+    def parse_item(self, response,**kwargs):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = response.css('.bd1 td::text').extract()[4] if response.css('.bd1 td::text') else ''
-            item['article_num'] = response.css('.bd1 td::text').extract()[5]  if response.css('.bd1 td::text') else ''
-            item['content'] = response.text
+            item['title'] = kwargs['title']
+            item['article_num'] = response.xpath('//table[@class="bd1"]/tbody/tr[4]/td[2]/text()').extract_first()
+            item['content'] = "".join(response.xpath('//*[@id="UCAP-CONTENT"]').extract())
             item['appendix'] = appendix
-            item['source'] = response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract_first()
-            item['time'] = response.css('.bd1 td::text').extract()[3]  if response.css('.bd1 td::text') else ''
+            item['source'] = response.xpath('//table[@class="bd1"]/tbody/tr[2]/td[2]/text()').extract_first() if response.xpath('//table[@class="bd1"]/tbody/tr[2]/td[2]/text()') else response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract_first().replace('来源： ','')
             item['province'] = ''
             item['city'] = ''
             item['area'] = ''
@@ -109,7 +111,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
             item['spider_name'] = 'quanguo_zuixin'
             item['txt'] = "".join(response.xpath('//div[@id="UCAP-CONTENT"]//text()').extract())
             item['appendix_name'] = appendix_name
-            item['time'] = get_times(item['time'])
+            item['time'] = get_times(kwargs['time'])
             item['link'] = response.request.url
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())

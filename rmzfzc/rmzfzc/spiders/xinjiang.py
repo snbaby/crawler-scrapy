@@ -106,7 +106,7 @@ class XinjiangSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = response.css('div.title div.t_left span:nth-child(2)::text').extract_first().replace('来源：','')
             item['time'] = response.css('div.title div.t_left span:nth-child(1)::text').extract_first().replace('时间：','')
-            item['province'] = ''
+            item['province'] = '新疆维吾尔自治区'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '新疆维吾尔自治区人民政府'

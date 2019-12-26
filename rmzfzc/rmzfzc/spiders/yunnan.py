@@ -123,7 +123,7 @@ class YunnanSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = response.css('.referencebox dl:nth-child(3) dd::text').extract_first()
             item['time'] = response.css('.referencebox dl:nth-child(4) dd::text').extract_first()
-            item['province'] = ''
+            item['province'] = '云南省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '云南省人民政府'
@@ -160,7 +160,7 @@ class YunnanSpider(scrapy.Spider):
             item['appendix'] = ''
             item['source'] = response.css('.datetime::text').extract_first().strip().splitlines()[0].replace('来源：','')
             item['time'] = response.css('.datetime::text').extract_first().strip().splitlines()[2].strip()
-            item['province'] = ''
+            item['province'] = '云南省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '云南省人民政府'

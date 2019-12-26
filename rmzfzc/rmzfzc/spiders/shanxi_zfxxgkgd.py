@@ -110,17 +110,28 @@ class BeijingZfwjSpider(scrapy.Spider):
                 item['time'] = get_times(item['time'])
             else:
                 item['title'] = response.xpath('//td[contains(@colspan,"3")]/text()').extract_first()
-                item['article_num'] = response.xpath('//td[@class="affairs-detail-head-cnt"]/text()').extract()[4] if response.xpath('//td[@class="affairs-detail-head-cnt"]/text()') else response.css('.bd1 td::text').extract()[5]
-                item['time'] = response.xpath('//td[@class="affairs-detail-head-cnt"]/text()').extract()[5] if response.xpath('//td[@class="affairs-detail-head-cnt"]/text()') else response.css('.bd1 td::text').extract()[6]
-                item['content'] = "".join(response.xpath('//*[@id="UCAP-CONTENT"]').extract())
-                item['source'] = response.xpath('//td[@class="affairs-detail-head-cnt"]/text()').extract()[2] if response.xpath('//td[@class="affairs-detail-head-cnt"]/text()') else response.css('.bd1 td::text').extract()[2]
+                item['article_num'] = response.xpath('//table[@class="affairs-detail-head"]/tbody/tr[4]/td[2]/text()').extract_first()
+                item['time'] = response.xpath('//table[@class="affairs-detail-head"]/tbody/tr[4]/td[4]/text()').extract_first()
+                content = ''
+                txt = ''
+                if response.xpath('//*[@id="UCAP-CONTENT"]'):
+                    content = "".join(response.xpath('//*[@id="UCAP-CONTENT"]').extract())
+                    txt = "".join(response.xpath('//*[@id="UCAP-CONTENT"]//text()').extract())
+                elif response.xpath('//*[@class="TRS_PreAppend"]'):
+                    content = "".join(response.xpath('//*[@class="TRS_PreAppend"]').extract())
+                    txt = "".join(response.xpath('//*[@class="TRS_PreAppend"]//text()').extract())
+                else:
+                    content = "".join(response.xpath('//*[@class="affairs-detail-inner-cnt oflow-hd"]').extract())
+                    txt = "".join(response.xpath('//*[@class="affairs-detail-inner-cnt oflow-hd"]//text()').extract())
+                item['content'] = content
+                item['source'] = response.xpath('//table[@class="affairs-detail-head"]/tbody/tr[2]/td[2]/text()').extract_first()
                 item['province'] = '山西省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '山西省人民政府'
                 item['module_name'] = '山西省人民政府-政务公开法规政策'
                 item['spider_name'] = 'shanxi_zfxxgkgd'
-                item['txt'] = "".join(response.xpath('//*[@id="UCAP-CONTENT"]//text()').extract())
+                item['txt'] = txt
                 item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
                 item['appendix'] = appendix

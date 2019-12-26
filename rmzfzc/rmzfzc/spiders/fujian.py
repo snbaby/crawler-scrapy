@@ -129,7 +129,7 @@ class FujianSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = kwargs['source']
             item['time'] = kwargs['time']
-            item['province'] = ''
+            item['province'] = '福建省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '福建省人民政府'

@@ -128,7 +128,7 @@ class AnhuiSpider(scrapy.Spider):
             item['source'] = response.css(
                 '.wzbjxx p::text').extract_first().replace('信息来源：', '')
             item['time'] = response.css('.nr_topcon ul li:nth-child(4)::text').extract_first().strip()
-            item['province'] = ''
+            item['province'] = '安徽省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '安徽省人民政府'
@@ -161,7 +161,7 @@ class AnhuiSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = response.css('.wzbjxx p::text').extract_first().replace('信息来源：', '')
             item['time'] = response.css('.nr_topcon ul li:nth-child(4)::text').extract_first().strip()
-            item['province'] = ''
+            item['province'] = '安徽省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '安徽省人民政府'

@@ -125,8 +125,8 @@ class GuizhouSpider(scrapy.Spider):
             item['content'] = response.css('.zw-con').extract_first()
             item['appendix'] = appendix
             item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
-            item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first().replace('发布时间：', '').strip()
-            item['province'] = ''
+            item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first()
+            item['province'] = '贵州省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '贵州省人民政府'
@@ -161,8 +161,8 @@ class GuizhouSpider(scrapy.Spider):
                 item['content'] = response.css('.zw-con').extract_first()
                 item['appendix'] = appendix
                 item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
-                item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first().replace('发布时间：', '').strip()
-                item['province'] = ''
+                item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first()
+                item['province'] = '贵州省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '贵州省人民政府'
@@ -177,9 +177,8 @@ class GuizhouSpider(scrapy.Spider):
                 item['content'] = response.css('.zw-con').extract_first()
                 item['appendix'] = appendix
                 item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
-                item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first().replace('发布时间：',
-                                                                                                           '').strip()
-                item['province'] = ''
+                item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first()
+                item['province'] = '贵州省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '贵州省人民政府'

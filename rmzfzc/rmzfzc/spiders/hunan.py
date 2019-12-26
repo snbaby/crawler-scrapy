@@ -60,7 +60,7 @@ class HunanSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
+                yield scrapy.Request(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
                                     cb_kwargs=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -123,7 +123,7 @@ class HunanSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = ''
             item['time'] = response.css('.a1 > font:nth-child(14)::text').extract_first().replace('发文日期：','').strip()
-            item['province'] = ''
+            item['province'] = '湖南省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '湖南省人民政府'
@@ -131,7 +131,7 @@ class HunanSpider(scrapy.Spider):
             item['txt'] = ''.join(response.css('#zoom *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '湖南省人民政府'
-            item['spider_name'] = 'hunan'
+            item['spider_name'] = 'hunan_fggz'
             item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
@@ -156,7 +156,7 @@ class HunanSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = response.css('.sp_time > span:nth-child(1)::text').extract_first()
             item['time'] = response.css('.time::text').extract_first().strip()
-            item['province'] = ''
+            item['province'] = '湖南省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '湖南省人民政府'
@@ -164,7 +164,7 @@ class HunanSpider(scrapy.Spider):
             item['txt'] = ''.join(response.css('#zoom *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '湖南省人民政府'
-            item['spider_name'] = 'hunan'
+            item['spider_name'] = 'hunan_bmjd'
             item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +

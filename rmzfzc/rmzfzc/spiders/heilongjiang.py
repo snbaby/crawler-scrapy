@@ -107,10 +107,10 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['content'] = "".join(response.xpath('//div[@class="nr5"]').extract())
             if kwargs['topic'] == 'zcjd':
                 item['source'] = "".join(response.xpath('//*[@class="tm3"]/span[2]//text()').extract()).replace('来源：','')
-                item['time'] = "".join(response.xpath('//*[@class="tm3"]/span[1]//text()').extract()).replace('时间：','')
+                item['time'] = "".join(response.xpath('//*[@class="tm3"]/span[1]//text()').extract())
             else:
                 item['source'] = ''
-                item['time'] = "".join(response.xpath('//*[@class="tm3"]/span[2]//text()').extract()).replace('发文时间：', '')
+                item['time'] = "".join(response.xpath('//*[@class="tm3"]/span[2]//text()').extract())
             item['province'] = '黑龙江省'
             item['city'] = ''
             item['area'] = ''

@@ -113,7 +113,7 @@ class JiangxiSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = ''
             item['time'] = response.css('.xxgkTitle tr:nth-child(2) td:nth-child(3)::text').extract_first().strip()
-            item['province'] = ''
+            item['province'] = '江西省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '江西省人民政府'
@@ -146,7 +146,7 @@ class JiangxiSpider(scrapy.Spider):
             item['appendix'] = appendix
             item['source'] = ''
             item['time'] = response.css('.sp_time font:nth-child(1)::text').extract_first().replace('发布时间：','')
-            item['province'] = ''
+            item['province'] = '江西省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '江西省人民政府'

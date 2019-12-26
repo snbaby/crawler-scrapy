@@ -23,21 +23,20 @@ class TianJinSzfwjSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
         'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOADER_MIDDLEWARES': {
+            'scrapy_splash.SplashCookiesMiddleware': 723,
+            'scrapy_splash.SplashMiddleware': 725,
+            'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+        },
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
-        'DOWNLOADER_MIDDLEWARES': {
-            'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
-            'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
-            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,7 +45,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
     def start_requests(self):
         try:
             url = "https://www.henan.gov.cn/zwgk/zcjd/bmjd/index.html"
-            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
+            yield SplashRequest(url,endpoint = 'execute',args={'lua_source': script, 'wait': 1,'url':url}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -79,7 +78,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for href in response.xpath('//div[@class="mt15 list-box"]/ul/li/a/@href'):
             try:
                 print('href===' + href.extract())
-                yield scrapy.Request(href.extract(),callback=self.parse_item, dont_filter=True)
+                yield SplashRequest(href.extract(),endpoint = 'execute',args={'lua_source': script, 'wait': 1,'url':href.extract()},callback=self.parse_item,dont_filter=True,cb_kwargs={'link':href.extract()})
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -87,7 +86,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response):
+    def parse_item(self, response, **kwargs):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -104,7 +103,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['spider_name'] = 'henan_bmjd'
             item['txt'] = "".join(response.xpath('//div[@id="content"]//text()').extract())
             item['appendix_name'] = appendix_name
-            item['link'] = response.request.url
+            item['link'] = kwargs['link']
             item['appendix'] = appendix
             item['time'] = get_times(item['time'])
             print(

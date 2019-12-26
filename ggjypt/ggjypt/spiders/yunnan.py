@@ -222,7 +222,7 @@ class GansuSpider(scrapy.Spider):
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '云南省'
-                item['time'] = kwargs['time'].strip()
+                item['time'] = kwargs['time']
                 item['website'] = '云南省公共资源交易服务平台'
                 item['module_name'] = '云南省-公共交易平台'
                 item['spider_name'] = 'yunnan_ggjypt'

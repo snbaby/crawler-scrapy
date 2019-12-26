@@ -97,7 +97,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             appendix, appendix_name = get_attachments(response)
             item['title'] = kwargs['title']
             item['article_num'] = ''
-            item['content'] = "".join(response.xpath('//div[@id="k-xxgk2"]').extract())
+            item['content'] = "".join(response.xpath('//div[@id="zw-art-content3"]').extract())
             item['source'] = response.xpath('//li[@class="w712"]/span[not(contains(@class, "tit"))]/text()').extract()[1]
             item['time'] = kwargs['time']
             item['province'] = '青海省'
@@ -106,7 +106,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['website'] = '青海省人民政府'
             item['module_name'] = '青海省人民政府-部门解读'
             item['spider_name'] = 'qinghai_bmjd'
-            item['txt'] = "".join(response.xpath('//div[@id="k-xxgk2"]//text()').extract())
+            item['txt'] = "".join(response.xpath('//div[@id="zw-art-content3"]//text()').extract())
             item['appendix_name'] = appendix_name
             item['link'] = response.request.url
             item['appendix'] = appendix

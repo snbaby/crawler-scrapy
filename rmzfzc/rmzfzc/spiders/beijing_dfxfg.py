@@ -94,9 +94,9 @@ class BeijingZfwjSpider(scrapy.Spider):
             item = rmzfzcItem()
             item['title'] = response.xpath(
                 '//div[@class="header"]/p/text()').extract_first()
-            article_num = response.xpath('//*[@id="mainText"]/p[2]/text()').extract()[0] if response.xpath(
+            article_num = response.xpath('//*[@id="mainText"]/p[2]/text()').extract_first() if response.xpath(
                 '//*[@id="mainText"]/p[2]/text()').extract() else \
-                response.xpath('//*[@id="mainText"]/div/p[1]/text()').extract()[0]
+                response.xpath('//*[@id="mainText"]/div/p[1]/text()').extract_first()
             item['article_num'] = article_num if article_num.find('〔')>=0 else ''
             item['content'] = "".join(response.xpath('//div[@id="mainText"]').extract())
             item['source'] = ''

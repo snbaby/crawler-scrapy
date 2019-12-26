@@ -111,7 +111,7 @@ class HainanSpider(scrapy.Spider):
                 item['appendix'] = appendix
                 item['source'] = response.css('#ly::text').extract_first()
                 item['time'] = response.css('publishtime::text').extract_first().strip()
-                item['province'] = ''
+                item['province'] = '海南省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '海南省人民政府'
@@ -129,7 +129,7 @@ class HainanSpider(scrapy.Spider):
                 item['appendix'] = appendix
                 item['source'] = source.replace('来源：','') if source else ''
                 item['time'] = response.css('table tr:nth-child(4) td:nth-child(4)::text').extract_first() if response.css('table tr:nth-child(4) td:nth-child(4)::text') else response.xpath('//*[@class="pages-date"]/text()').extract_first()
-                item['province'] = ''
+                item['province'] = '海南省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '海南省人民政府'

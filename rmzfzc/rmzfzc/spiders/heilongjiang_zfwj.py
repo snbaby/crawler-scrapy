@@ -158,6 +158,15 @@ class heilongjiangZfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
+        script = """
+        function main(splash, args)
+          assert(splash:go(args.url))
+          assert(splash:wait(1))
+          return {
+            html = splash:html(),
+          }
+        end
+        """
         for selector in response.xpath('//*[@id="_fill"]/tbody/tr'):
             try:
                 item = {}
@@ -166,9 +175,12 @@ class heilongjiangZfwjSpider(scrapy.Spider):
                 item['article_num'] = selector.xpath('./td[2]/div/ul/li[6]/text()').extract_first()
                 item['source'] = selector.xpath('./td[3]/text()').extract_first()
                 url = selector.xpath('./td[2]/a/@href').extract_first()
+                item['url'] = url
                 if url:
                     print('url==='+url)
-                    yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                    yield SplashRequest(url, endpoint='execute',
+                                        args={'lua_source': script, 'wait': 1, 'url': url},
+                                        callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -184,7 +196,7 @@ class heilongjiangZfwjSpider(scrapy.Spider):
                 item['appendix'] = appendix
                 item['source'] = kwargs['source']
                 item['time'] = kwargs['time']
-                item['province'] = ''
+                item['province'] = '黑龙江省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '黑龙江省人民政府'
@@ -192,7 +204,7 @@ class heilongjiangZfwjSpider(scrapy.Spider):
                 item['spider_name'] = 'heilongjiang_zfwj'
                 item['txt'] = "".join(response.xpath('//*[@class="zwnr"]//text()').extract())
                 item['appendix_name'] = appendix_name
-                item['link'] = response.request.url
+                item['link'] = kwargs['url']
                 item['time'] = get_times(item['time'])
                 print("===========================>crawled one item" +
                     response.request.url)

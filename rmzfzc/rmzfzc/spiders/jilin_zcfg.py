@@ -96,7 +96,17 @@ class BeijingZfwjSpider(scrapy.Spider):
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
             item['title'] = kwargs['title']
-            item['article_num'] =  response.xpath('//td[@class="zly_xxgk_20170120l2"]/text()').extract_first()
+            article_num = ''
+            if response.xpath('//table[@class="bd1"]/tbody/tr[4]/td[2]'):
+                article_num = response.xpath('//table[@class="bd1"]/tbody/tr[4]/td[2]/text()').extract_first()
+            elif response.xpath('//table[@class="zly_xxgk_20170120l"]/tr[4]/td[2]'):
+                article_num = response.xpath('//table[@class="zly_xxgk_20170120l"]/tr[4]/td[2]/text()').extract_first()
+            elif response.xpath('//div[@class="TRS_Editor"]/p[1][contains(text(),"〔")]'):
+                article_num = response.xpath('//div[@class="TRS_Editor"]/p[1][contains(text(),"〔")]/text()').extract_first()
+            elif response.xpath('//div[@class="mqj_xbbjtyst_xxnry_fbt"]/p'):
+                article_num = response.xpath('//div[@class="mqj_xbbjtyst_xxnry_fbt"]/p/text()').extract_first()
+
+            item['article_num'] = article_num
             item['time'] = kwargs['time']
             item['content'] = "".join(response.xpath('//div[@id="xx_conter1023"]').extract())
             item['source'] = ''

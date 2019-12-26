@@ -203,7 +203,7 @@ class shandongZfwjSpider(scrapy.Spider):
                 item['content'] = "".join(response.xpath('//*[@class="bt_content"]').extract())
                 item['source'] = '省政府办公厅'
                 item['time'] = kwargs['time']
-                item['province'] = ''
+                item['province'] = '甘肃省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '甘肃省人民政府'
