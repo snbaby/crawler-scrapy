@@ -97,7 +97,7 @@ class BeijingZfwjSpider(scrapy.Spider):
             article_num = response.xpath('//*[@id="mainText"]/p[2]/text()').extract_first() if response.xpath(
                 '//*[@id="mainText"]/p[2]/text()').extract() else \
                 response.xpath('//*[@id="mainText"]/div/p[1]/text()').extract_first()
-            item['article_num'] = article_num if article_num.find('〔')>=0 else ''
+            item['article_num'] = article_num if article_num and article_num.find('〔')>=0 else ''
             item['content'] = "".join(response.xpath('//div[@id="mainText"]').extract())
             item['source'] = ''
             item['time'] = response.xpath(

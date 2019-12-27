@@ -8,12 +8,39 @@ from ggjypt.items import ztbkItem
 from utils.tools.attachment import get_attachments,get_times
 
 script = """
+function wait_for_element(splash, css, maxwait)
+  -- Wait until a selector matches an element
+  -- in the page. Return an error if waited more
+  -- than maxwait seconds.
+  if maxwait == nil then
+      maxwait = 10
+  end
+  return splash:wait_for_resume(string.format([[
+    function main(splash) {
+      var selector = '%s';
+      var maxwait = %s;
+      var end = Date.now() + maxwait*1000;
+
+      function check() {
+        if(document.querySelector(selector)) {
+          setTimeout(check, 200);
+        } else if(Date.now() >= end) {
+          var err = 'Timeout waiting for element';
+          splash.error(err + " " + selector);
+        } else {
+          splash.resume('Element found');
+        }
+      }
+      check();
+    }
+  ]], css, maxwait))
+end
+
 function main(splash, args)
-  assert(splash:go(args.url))
-  assert(splash:wait(1))
-  return {
-    html = splash:html(),
-  }
+  splash:go(args.url)
+  wait_for_element(splash, ".layui-layer-content.layui-layer-loading1")
+  assert(splash:wait(3))
+  return splash:html()
 end
 """
 
@@ -24,20 +51,20 @@ class TianJinSzfwjSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
         'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOADER_MIDDLEWARES': {
+            'scrapy_splash.SplashCookiesMiddleware': 723,
+            'scrapy_splash.SplashMiddleware': 725,
+            'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+        },
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
-        'DOWNLOADER_MIDDLEWARES': {
-            'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
-            'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
-            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
+        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
@@ -46,7 +73,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html?categoryNum=002&pageIndex=1"
+            url = "http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html"
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -54,14 +81,23 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def parse_page(self, response,**kwargs):
         page_count = int(self.parse_pagenum(response))
-        print(page_count)
         try:
             for pagenum in range(page_count):
-                if pagenum > 0:
-                    temUrl = 'http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html?categoryNum=002&pageIndex='
-                    url = temUrl + str(pagenum)
-                    print(url)
-                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
+                if pagenum == 0:
+                    url = "http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html"
+                    yield SplashRequest(url,endpoint = 'execute', args={'lua_source': script, 'wait': 1,'url': url}, callback=self.parse,
+                                        dont_filter=True)
+                elif pagenum < 7 and pagenum > 1:
+                    url = "http://ggzyjy.sc.gov.cn/jyxx/"+str(pagenum)+".html"
+                    yield SplashRequest(url, endpoint='execute', args={'lua_source': script, 'wait': 1, 'url': url},
+                                        callback=self.parse,
+                                        dont_filter=True)
+                elif pagenum > 6:
+                    url = "http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html?categoryNum=002&pageIndex=" + str(pagenum)
+                    yield SplashRequest(url, endpoint='execute', args={'lua_source': script, 'wait': 1, 'url': url},
+                                        callback=self.parse,
+                                        dont_filter=True)
+                print(url + str(pagenum))
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)

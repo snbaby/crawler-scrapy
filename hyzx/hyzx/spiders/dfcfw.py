@@ -7,6 +7,10 @@ from hyzx.items import hyzxItem
 class DfcfwSpider(scrapy.Spider):
     name = 'dfcfw'
     custom_settings = {
+        'CONCURRENT_REQUESTS': 10,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS_PER_IP': 0,
+        'DOWNLOAD_DELAY': 0.5,
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -20,7 +24,6 @@ class DfcfwSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):

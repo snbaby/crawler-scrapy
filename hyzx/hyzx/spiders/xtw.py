@@ -8,6 +8,10 @@ from hyzx.items import hyzxItem
 class XtwSpider(scrapy.Spider):
     name = 'xtw'
     custom_settings = {
+        'CONCURRENT_REQUESTS': 10,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS_PER_IP': 0,
+        'DOWNLOAD_DELAY': 0.5,
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,

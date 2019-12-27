@@ -17,7 +17,6 @@ def get_attachments(response):
                 if href.endswith(ext) or name.endswith(ext):
                     appendix = appendix + response.urljoin(href) + ","
                     appendix_name = appendix_name + name + ","
-    print(appendix +"        "+ appendix_name)
     return appendix, appendix_name
 
 #时间格式化
