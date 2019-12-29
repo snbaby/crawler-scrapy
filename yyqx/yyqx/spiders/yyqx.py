@@ -5,6 +5,7 @@ import time
 
 from scrapy_splash import SplashRequest
 from yyqx.items import yyqxItem
+from utils.tools.attachment import get_attachments,get_times
 
 script = """
 function wait_for_element(splash, css, maxwait)
@@ -143,40 +144,41 @@ class YyqxSpider(scrapy.Spider):
     def parse_item(self, response):
         try:
             datas = eval(response.text)
+            print(datas)
             if datas[0]:
                 item = yyqxItem()
                 item['registration_code'] = datas[0]['CONTENT']
                 item['registrar'] = datas[1]['CONTENT']
                 item['registrar_address'] = datas[2]['CONTENT']
                 item['production_address'] = datas[3]['CONTENT']
-                item['agent_name'] = datas[4]['CONTENT']
-                item['agent_address'] = datas[5]['CONTENT']
-                item['name'] = datas[6]['CONTENT']
-                specifications = datas[7]['CONTENT']
+                item['agent_name'] = ''
+                item['agent_address'] = ''
+                item['name'] = datas[4]['CONTENT']
+                specifications = datas[6]['CONTENT']
                 item['specifications'] = specifications.replace('\n', '').replace('\r', '')
-                compose = datas[8]['CONTENT']
+                compose = datas[7]['CONTENT']
                 item['compose'] = compose.replace('\n', '').replace('\r', '')
-                item['scope'] = datas[9]['CONTENT']
-                item['other'] = datas[10]['CONTENT']
-                remark = datas[11]['CONTENT']
+                item['scope'] = datas[8]['CONTENT']
+                item['other'] = datas[11]['CONTENT']
+                remark = datas[12]['CONTENT']
                 item['remark'] = remark.replace('\n', '').replace('\r', '')
-                item['approval_date'] = datas[12]['CONTENT']
-                item['period_of_validity'] = datas[13]['CONTENT']
-                item['appendix'] = datas[14]['CONTENT']
-                item['product_standard'] = datas[15]['CONTENT']
+                item['approval_date'] = get_times(datas[14]['CONTENT'])
+                item['period_of_validity'] = get_times(datas[15]['CONTENT'])
+                item['appendix'] = datas[10]['CONTENT']
+                item['product_standard'] = datas[9]['CONTENT']
                 remark = datas[16]['CONTENT']
                 item['change_date'] = remark.replace('\n', '').replace('\r', '').replace('\u3000', '') \
                     .replace('<br>', '')
-                item['zip_code'] = datas[17]['CONTENT']
-                item['major_component'] = datas[18]['CONTENT']
-                item['usage'] = datas[19]['CONTENT']
-                item['storage_conditions'] = datas[20]['CONTENT']
-                item['approval_dept'] = datas[21]['CONTENT']
+                item['zip_code'] = ''
+                item['major_component'] = ''
+                item['usage'] = ''
+                item['storage_conditions'] = datas[9]['CONTENT']
+                item['approval_dept'] = ''
                 item['category'] = ''
-                modify = datas[22]['CONTENT']
+                modify = ''
                 item['modify'] = modify.replace('\n', '').replace('\r', '')
                 try:
-                    notes = datas[23]['CONTENT']
+                    notes = ''
                     item['notes'] = notes.replace('\n', '').replace('\r', '')
 
                 except:

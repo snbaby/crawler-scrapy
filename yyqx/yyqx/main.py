@@ -1,1 +1,1 @@
-# -*- coding: utf-8 -*-import sys,osfrom scrapy.cmdline import executeexecute("scrapy crawl yyqx_qcwy".split())execute("scrapy crawl yyqx_lgw".split())
+# -*- coding: utf-8 -*-import sys,osfrom scrapy.cmdline import executeexecute("scrapy crawl yyqx".split())

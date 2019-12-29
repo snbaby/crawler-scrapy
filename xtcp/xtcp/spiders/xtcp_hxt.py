@@ -60,6 +60,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 if pagenum > 0:
                     url = 'http://www2.haoxintuo.com/index.php?a=lists&catid=34&status=all&page=' + str(pagenum)
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
+                    yield SplashRequest(url, endpoint='execute',
+                                        args={'lua_source': script, 'wait': 1, 'url': url},
+                                        callback=self.parse_item, dont_filter=True, cb_kwargs={'link': url})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -88,16 +91,26 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse_item(self, response,**kwargs):
-        logging.error(response.text)
         try:
             item = xtcpItem()
             name = response.xpath('//div[@class="productgk"]/table/tr[1]/td[2]/text()').extract_first()
-
+            issure = response.xpath('//div[@class="productgk"]/table/tr[2]/td[4]/text()').extract_first()
+            pro_address = response.xpath('//div[@class="productgk"]/table/tr[6]/td[2]/text()').extract_first()
+            real_scale = response.xpath('//div[@class="productgk"]/table/tr[4]/td[2]/text()').extract_first()
+            pro_deadline = response.xpath('//div[@class="productgk"]/table/tr[5]/td[2]/text()').extract_first()
+            invest_still = response.xpath('//div[@class="productgk"]/table/tr[4]/td[4]/text()').extract_first()
+            pro_type = response.xpath('//div[@class="productgk"]/table/tr[2]/td[2]/text()').extract_first()
+            money_invest = response.xpath('//div[@class="productgk"]/table/tr[3]/td[2]/text()').extract_first()
+            pre_year_income = response.xpath('//div[@class="productgk"]/table/tr[6]/td[4]/text()').extract_first()
+            income_type = response.xpath('//div[@class="productgk"]/table/tr[3]/td[4]/text()').extract_first()
+            pay_method = response.xpath('//div[@class="productgk"]/table/tr[5]/td[4]/text()').extract_first()
+            pro_state = response.xpath('//em[@class="saleing"]/text()').extract_first()
+            pro_plan = response.xpath('/html/body/div[8]/div/div[2]/div[3]/div[1]/div/text()').extract_first()
 
             item['name'] = name  # 产品名称
             item['issure'] = issure  # 发行机构
             item['issue_date'] = '' # 发行时间
-            item['pro_address'] = ''  # 项目所在地
+            item['pro_address'] = pro_address  # 项目所在地
             item['pre_scale'] = ''  # 预期发行规模
             item['real_scale'] = real_scale  # 实际发行规模
             item['deadline_type'] = ''  # 期限类型
@@ -109,19 +122,19 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['invest_still'] = invest_still  # 投资门槛
             item['income_deadline'] = ''  # 收益期限
             item['pro_state'] = pro_state.replace('\xa0','') if pro_state else ''  # 产品状态
-            item['pro_type'] = '信托产品'  # 产品类型
+            item['pro_type'] = pro_type  # 产品类型
             item['invest_method'] = ''  # 投资方式
             item['money_invest'] = money_invest  # 资金投向
             item['money_use'] = ''  # 资金运用
             item['pre_year_income'] = pre_year_income  # 预期年收益率
             item['real_year_income'] = ''  # 实际年收益率
-            item['income_type'] = ''  # 收益类型
+            item['income_type'] = income_type  # 收益类型
             item['income_explane'] = ''  # 收益说明
             item['pay_method'] = pay_method  # 付息方式
-            item['finance_peo'] = finance_peo  # 融资方
-            item['risk_method'] = risk_method.replace('\xa0','') if risk_method else ''  # 风险控制
-            item['payment'] = payment.replace('\xa0','') if payment else ''  # 还款来源
-            item['pro_highlight'] = pro_highlight  # 项目亮点
+            item['finance_peo'] = ''  # 融资方
+            item['risk_method'] =  ''  # 风险控制
+            item['payment'] =  ''  # 还款来源
+            item['pro_highlight'] = '' # 项目亮点
             item['pro_plan'] = pro_plan  # 项目进度
             item['raise_account'] = ''  # 募集账号
             item['money_host_bank'] = ''  # 资金托管行
@@ -131,6 +144,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['link'] = response.request.url  # 数据源链接
             item['spider_name'] = 'xtcp_hxt'  # 名称
             item['module_name'] = '信托产品_好信托'  # 模块名称
+            yield item
             print(
                 "===========================>crawled one item" +
                 response.request.url)
@@ -142,5 +156,5 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 ", exception=" +
                 e.__str__())
             logging.exception(e)
-        yield item
+
 
