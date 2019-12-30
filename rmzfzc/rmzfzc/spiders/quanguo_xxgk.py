@@ -99,7 +99,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
                 item['appendix'] = appendix
                 item['source'] = kwargs['source']
                 item['time'] = kwargs['time']
-                item['province'] = ''
+                item['province'] = '国家'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '中华人民共和国中央人民政府'

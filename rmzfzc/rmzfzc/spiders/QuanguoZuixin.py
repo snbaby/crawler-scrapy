@@ -103,7 +103,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
             item['content'] = "".join(response.xpath('//*[@id="UCAP-CONTENT"]').extract())
             item['appendix'] = appendix
             item['source'] = response.xpath('//table[@class="bd1"]/tbody/tr[2]/td[2]/text()').extract_first() if response.xpath('//table[@class="bd1"]/tbody/tr[2]/td[2]/text()') else response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract_first().replace('来源： ','')
-            item['province'] = ''
+            item['province'] = '国家'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '中华人民共和国中央人民政府'

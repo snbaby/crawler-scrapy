@@ -4,8 +4,8 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
-from utils.tools.attachment import get_attachments,get_times
-script ="""
+from utils.tools.attachment import get_attachments, get_times
+script = """
 function main(splash, args)
   assert(splash:go(args.url))
   assert(splash:wait(1))
@@ -15,6 +15,7 @@ function main(splash, args)
 end
 """
 
+
 class QuanguoZuixinSpider(scrapy.Spider):
     name = 'quanguo_jd'
     custom_settings = {
@@ -22,7 +23,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
         'DOWNLOAD_DELAY': 0.5,
-        'SPIDER_MIDDLEWARES':{
+        'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
@@ -35,30 +36,34 @@ class QuanguoZuixinSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
 
-        'DUPEFILTER_CLASS':'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE':'scrapy_splash.SplashAwareFSCacheStorage',
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
+        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
     }
+
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        urlList = ['http://sousuo.gov.cn/column/30593/','http://sousuo.gov.cn/column/40048/','http://sousuo.gov.cn/column/30474/']
+        urlList = [
+            'http://sousuo.gov.cn/column/30593/',
+            'http://sousuo.gov.cn/column/40048/',
+            'http://sousuo.gov.cn/column/30474/']
         try:
             for urlTmp in urlList:
-                url = urlTmp+"/0.htm"
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page,cb_kwargs={'preUrl':urlTmp})
+                url = urlTmp + "/0.htm"
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page, cb_kwargs={'preUrl': urlTmp})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        page_count  = int(self.parse_pagenum(response))
+        page_count = int(self.parse_pagenum(response))
         try:
             preUrl = kwargs['preUrl']
             for pagenum in range(page_count):
-                url = preUrl + str(pagenum) +".htm"
-                yield  SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
+                url = preUrl + str(pagenum) + ".htm"
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -89,23 +94,33 @@ class QuanguoZuixinSpider(scrapy.Spider):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = response.css('.oneColumn h1::text').extract_first().strip()
+            item['title'] = response.css(
+                '.oneColumn h1::text').extract_first().strip()
             item['article_num'] = ''
-            item['content'] = "".join(response.xpath('//div[@id="UCAP-CONTENT"]').extract())
+            item['content'] = "".join(
+                response.xpath('//div[@id="UCAP-CONTENT"]').extract())
             item['appendix'] = appendix
-            item['source'] = response.xpath('//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract_first().replace('来源：','')
-            item['time'] = response.xpath('//div[@class="pages-date"]/text()').extract_first()
-            item['province'] = ''
+            item['source'] = response.xpath(
+                '//div[@class="pages-date"]//span[contains(text(),"来源")]/text()').extract_first().replace('来源：', '')
+            item['time'] = response.xpath(
+                '//div[@class="pages-date"]/text()').extract_first()
+            item['province'] = '国家'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '中华人民共和国中央人民政府'
             item['module_name'] = '中华人民共和国中央人民政府-政策解读'
             item['spider_name'] = 'quanguo_jd'
-            item['txt'] = "".join(response.xpath('//div[@id="UCAP-CONTENT"]//text()').extract())
+            item['txt'] = "".join(
+                response.xpath('//div[@id="UCAP-CONTENT"]//text()').extract())
             item['appendix_name'] = appendix_name
             item['link'] = response.request.url
             item['time'] = get_times(item['time'])
         except Exception as e:
-            logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())
+            logging.error(
+                self.name +
+                " in parse_item: url=" +
+                response.request.url +
+                ", exception=" +
+                e.__str__())
             logging.exception(e)
         yield item
