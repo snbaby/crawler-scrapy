@@ -9,10 +9,8 @@ from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
-  assert(splash:wait(1))
-  return {
-    html = splash:html(),
-  }
+  assert(splash:wait(3))
+  return splash:html()
 end
 """
 
@@ -24,24 +22,20 @@ class HunanSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
         'DOWNLOAD_DELAY': 0.5,
-        'SPIDER_MIDDLEWARES': {
-            'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
         'DOWNLOADER_MIDDLEWARES': {
-            'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
-            'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
-            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
-            'scrapy_splash.SplashCookiesMiddleware': 140,
+            'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
             'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+        },
+        'SPIDER_MIDDLEWARES': {
+            'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://47.106.239.73:8050/"}
+        'SPLASH_URL': "http://39.100.240.19:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -60,8 +54,9 @@ class HunanSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield scrapy.Request(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    cb_kwargs=content)
+                yield SplashRequest(content['url'], endpoint='execute', args={'lua_source': script, 'wait': 1, 'url': content['url']},
+                                    callback=self.parse_page,
+                                    dont_filter=True,cb_kwargs=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -75,7 +70,10 @@ class HunanSpider(scrapy.Spider):
                 else:
                     url = kwargs['url'].replace(
                         '.html', '_' + str(pagenum + 1) + '.html')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs)
+                yield SplashRequest(url, endpoint='execute', args={'lua_source': script, 'wait': 1, 'url': url},
+                                    callback=self.parse,
+                                    dont_filter=True,
+                                    cb_kwargs=kwargs)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -84,6 +82,7 @@ class HunanSpider(scrapy.Spider):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
+            print(response)
             if not self.add_pagenum:
                 return int(
                     response.css('.page_count span::text').extract_first().replace(
@@ -99,7 +98,9 @@ class HunanSpider(scrapy.Spider):
             for href in response.css('.table a::attr(href)').extract():
                 try:
                     url = response.urljoin(href)
-                    yield scrapy.Request(url, callback=self.parse_fggz, cb_kwargs={'url': url}, dont_filter=True)
+                    yield SplashRequest(url,endpoint = 'execute', args={'lua_source': script, 'wait': 1,'url': url},
+                                        callback=self.parse_fggz,
+                                        cb_kwargs={'url': url})
                 except Exception as e:
                     logging.error(self.name + ": " + e.__str__())
                     logging.exception(e)
