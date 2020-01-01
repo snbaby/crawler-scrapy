@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-
+from utils.tools.attachment import get_attachments,get_times
 class GansuZfcgwSpider(scrapy.Spider):
     name = 'gansu_zfcgw'
     custom_settings = {
@@ -177,6 +177,7 @@ class GansuZfcgwSpider(scrapy.Spider):
 
     def parse_item(self, response, **kwargs):
         try:
+            appendix, appendix_name = get_attachments(response)
             title = response.css('.title::text').extract_first()
             if title.find('招标') >= 0:
                 category = '招标'
@@ -193,19 +194,19 @@ class GansuZfcgwSpider(scrapy.Spider):
             item = ztbkItem()
             item['title'] = title
             item['content'] = response.css('#fontzoom').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = response.css('.property span:nth-child(2)::text').extract_first().replace('发布时间：','')
             item['source'] = response.css('.property span:nth-child(1)::text').extract_first().replace('文章来源：','')
             item['website'] = '甘肃政府采购网'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = ''
-            item['appendix_name'] = ''
+            item['region'] = '甘肃省'
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'gansu_zfcgw'
             item['txt'] = ''.join(response.css('#fontzoom *::text').extract())
             item['module_name'] = '甘肃-政府采购网'
-
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

@@ -161,7 +161,7 @@ class GansuSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="fully_toggle"]').extract())
+                item['content'] = "".join(response.xpath('//div[@class="fully_toggle_cont"]').extract())
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
@@ -170,7 +170,7 @@ class GansuSpider(scrapy.Spider):
                 item['website'] = '全国公共资源交易服务平台'
                 item['module_name'] = '全国-公共交易平台'
                 item['spider_name'] = 'quanguo_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="fully_toggle"]//text()').extract())
+                item['txt'] = "".join(response.xpath('//div[@class="fully_toggle_cont"]//text()').extract())
                 item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
                 item['appendix'] = appendix

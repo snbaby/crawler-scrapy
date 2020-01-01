@@ -84,7 +84,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 tmp = selector.xpath('./@onclick').extract_first()
                 tmp = tmp.replace('window.open(\'', '').replace('\')', '')
                 url = response.urljoin(tmp)
-                print('url===========' + url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -116,7 +115,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '贵州省'
-                item['time'] = kwargs['time'].strip()
+                item['time'] = kwargs['time']
                 item['website'] = '贵州省公共资源交易服务平台'
                 item['module_name'] = '贵州省-公共交易平台'
                 item['spider_name'] = 'guizhou_ggjypt'

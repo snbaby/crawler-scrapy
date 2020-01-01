@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-
+from utils.tools.attachment import get_attachments,get_times
 
 class ZhejiangZfcgwSpider(scrapy.Spider):
     name = 'zhejiang_zfcgw'
@@ -83,7 +83,7 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
                                         'wait': 1,
                                         'url': content['url'],
                 },
-                    callback=self.parse_type,
+                    callback=self.parse_page,
                     cb_kwargs=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -123,7 +123,6 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
           wait_for_element(splash, "#gpozItems a")
           splash:runjs("document.querySelector('#gpozItems').innerHTML = ''")
           js = string.format("document.querySelector('#accordion li[data-num=\\%s\\]').click()", args.num)
-          
           splash:runjs(js)
           wait_for_element(splash, "#gpozItems a")
           splash:wait(1)
@@ -153,47 +152,46 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response, **kwargs):
-        print(response.css('.paginationjs-last a::text').extract_first())
-        return
         script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
+        function wait_for_element(splash, css, maxwait)
+          -- Wait until a selector matches an element
+          -- in the page. Return an error if waited more
+          -- than maxwait seconds.
+          if maxwait == nil then
+              maxwait = 10
+          end
+          return splash:wait_for_resume(string.format([[
+            function main(splash) {
+              var selector = '%s';
+              var maxwait = %s;
+              var end = Date.now() + maxwait*1000;
 
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
+              function check() {
+                if(document.querySelector(selector)) {
+                  splash.resume('Element found');
+                } else if(Date.now() >= end) {
+                  var err = 'Timeout waiting for element';
+                  splash.error(err + " " + selector);
+                } else {
+                  setTimeout(check, 200);
                 }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-              splash:go(args.url)
-              wait_for_element(splash, "#gpozItems a")
-              splash:runjs("document.querySelector('#gpozItems').innerHTML = ''")
-              js = string.format(document.querySelector('#accordion li[data-num=\'%s\']').click(), args.num)
-              splash:evaljs(js)
-              wait_for_element(splash, "#gpozItems a")
-              splash:wait(1)
-              return splash:html()
-            end
-            """
+              }
+              check();
+            }
+          ]], css, maxwait))
+        end
+        function main(splash, args)
+          splash:go(args.url)
+          wait_for_element(splash, "#gpozItems a")
+          splash:runjs("document.querySelector('#gpozItems').innerHTML = ''")
+          js = string.format("document.querySelector('.J-paginationjs-go-pagenumber').value='%d'", args.pagenum)
+          splash:evaljs(js)
+          splash:runjs("document.querySelector('.J-paginationjs-go-button').click()")
+          wait_for_element(splash, "#gpozItems a")
+          splash:wait(1)
+          return splash:html()
+        end
+        """
         page_count = int(self.parse_pagenum(response, kwargs))
         try:
             for pagenum in range(page_count):
@@ -225,21 +223,37 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        for href in response.css(
-                '.Expand_SearchSLisi a::attr(href)').extract():
+        script = """
+        function main(splash, args)
+          splash:go(args.url)
+          assert(splash:wait(1))
+          splash:runjs("document.querySelector('body').innerHTML = document.getElementsByTagName('iframe')[0].contentWindow.document.body.querySelector('#iframe_box').innerHTML")
+          return splash:html()
+        end
+        """
+        for selector in response.css('#gpozItems p'):
             try:
-                url = response.urljoin(href)
-                result = {
-                    'url': url
-                }
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                result = {}
+                result['url'] = response.urljoin(selector.xpath('./a/@href').extract_first())
+                result['title'] = response.urljoin(selector.xpath('./span[@class="underline"]/text()').extract_first())
+                result['time'] = response.urljoin(selector.xpath('./span/text()').extract_first())
+                yield SplashRequest(result['url'],
+                                    endpoint='execute',
+                                    args={
+                                        'lua_source': script,
+                                        'wait': 1,
+                                        'url': result['url'],
+                                    },
+                                    callback=self.parse_item,
+                                    cb_kwargs=result)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
         try:
-            title = response.css('.title::text').extract_first()
+            appendix, appendix_name = get_attachments(response)
+            title = kwargs['title']
             if title.find('招标') >= 0:
                 category = '招标'
             elif title.find('中标') >= 0:
@@ -254,22 +268,19 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
                 category = '其他'
             item = ztbkItem()
             item['title'] = title
-            item['content'] = response.css('#fontzoom').extract_first()
-            item['appendix'] = ''
+            item['content'] = "".join(response.xpath('//div[@class="gpoz-detail"]').extract())
+            item['appendix'] = appendix
             item['category'] = category
-            item['time'] = response.css(
-                '.property span:nth-child(2)::text').extract_first().replace('发布时间：', '')
-            item['source'] = response.css(
-                '.property span:nth-child(1)::text').extract_first().replace('文章来源：', '')
-            item['website'] = '甘肃政府采购网'
+            item['source'] = ''
+            item['website'] = '浙江政府采购网'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = ''
-            item['appendix_name'] = ''
-            item['spider_name'] = 'gansu_zfcgw'
-            item['txt'] = ''.join(response.css('#fontzoom *::text').extract())
-            item['module_name'] = '甘肃-政府采购网'
-
+            item['region'] = '浙江省'
+            item['appendix_name'] = appendix_name
+            item['spider_name'] = 'zhejiang_zfcgw'
+            item['txt'] = "".join(response.xpath('//div[@class="gpoz-detail"]//text()').extract())
+            item['module_name'] = '浙江-政府采购网'
+            item['time'] = get_times(kwargs['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

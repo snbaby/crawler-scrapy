@@ -189,7 +189,7 @@ class GansuSpider(scrapy.Spider):
                 item['spider_name'] = 'chongqing_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@class="epoint-article-content"]//text()').extract())
                 item['appendix_name'] = appendix_name
-                item['link'] = response.request.url
+                item['link'] = kwargs['url']
                 item['appendix'] = appendix
                 print(
                     "===========================>crawled one item" +

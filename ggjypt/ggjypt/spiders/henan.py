@@ -134,7 +134,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//table[@class="infodetail"]').extract())
+                item['content'] = "".join(response.xpath('//td[@class="infodetail"]').extract())
                 item['source'] = '河南省公共资源交易服务平台'
                 item['category'] = category
                 item['type'] = ''
@@ -143,7 +143,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['website'] = '河南省公共资源交易服务平台'
                 item['module_name'] = '河南省-公共交易平台'
                 item['spider_name'] = 'henan_ggjypt'
-                item['txt'] = "".join(response.xpath('//table[@class="infodetail"]//text()').extract())
+                item['txt'] = "".join(response.xpath('//td[@class="infodetail"]//text()').extract())
                 item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
                 item['appendix'] = appendix

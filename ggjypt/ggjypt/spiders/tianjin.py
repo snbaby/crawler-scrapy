@@ -92,6 +92,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for href in response.xpath('//div[@class="article-list3-t"]/a/@url'):
             try:
                 url = response.urljoin(href.extract())
+                print(url)
                 yield SplashRequest(url,callback=self.parse_item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
