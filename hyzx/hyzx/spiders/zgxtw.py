@@ -3,7 +3,7 @@ import scrapy
 import logging
 
 from hyzx.items import hyzxItem
-
+from utils.tools.attachment import get_times
 class ZgxtwSpider(scrapy.Spider):
     name = 'zgxtw'
     custom_settings = {
@@ -80,7 +80,7 @@ class ZgxtwSpider(scrapy.Spider):
         try:
             item = hyzxItem()
             item['title'] = response.css('.zd-title::text').extract_first()
-            item['date'] = response.css('.zd-author >span:nth-child(3)::text').extract_first()
+            item['date'] = get_times(response.css('.zd-author >span:nth-child(3)::text').extract_first())
             item['resource'] = response.css('.source::text').extract_first().replace('来源：','').strip()
             item['content'] = response.css('.zd-content').extract_first()
             item['website'] = '中国信托网'

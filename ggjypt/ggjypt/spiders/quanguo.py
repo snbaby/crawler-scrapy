@@ -132,13 +132,30 @@ class GansuSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
     def parse(self, response, **kwargs):
+        script = """
+        function main(splash, args)
+          splash:go(args.url)
+          assert(splash:wait(1))
+          splash:runjs("document.querySelector('body').innerHTML = document.getElementsByTagName('iframe')[0].contentWindow.document.body.querySelector('.detail').innerHTML")
+          return splash:html()
+        end
+        """
         for selector in response.xpath('//*[@class="publicont"]/div/h4'):
             try:
                 item = {}
                 item['title'] = selector.xpath('./a/text()').extract_first()
                 item['time'] = selector.xpath('./span/text()').extract_first()
                 url = selector.xpath('./a/@href').extract_first()
-                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                item['url'] = url
+                yield SplashRequest(url,
+                    endpoint='execute',
+                    args={
+                        'lua_source': script,
+                        'wait': 1,
+                        'url': url,
+                    },
+                    callback=self.parse_item,
+                    cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -161,7 +178,7 @@ class GansuSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="fully_toggle_cont"]').extract())
+                item['content'] = "".join(response.xpath('//div[@id="mycontent"]').extract())
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
@@ -170,9 +187,9 @@ class GansuSpider(scrapy.Spider):
                 item['website'] = '全国公共资源交易服务平台'
                 item['module_name'] = '全国-公共交易平台'
                 item['spider_name'] = 'quanguo_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="fully_toggle_cont"]//text()').extract())
+                item['txt'] = "".join(response.xpath('//div[@id="mycontent"]//text()').extract())
                 item['appendix_name'] = appendix_name
-                item['link'] = response.request.url
+                item['link'] = kwargs['url']
                 item['appendix'] = appendix
                 item['time'] = get_times(item['time'])
                 print(

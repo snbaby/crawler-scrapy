@@ -33,8 +33,8 @@ class TzjgSpider(scrapy.Spider):
     def start_requests(self):
         try:
             data = {
-                "account": "18502828078",
-                "password": "123456",
+                "account": "13060099652",
+                "password": "111111",
                 "type": "pswd"}
 
             header = {
@@ -122,6 +122,7 @@ class TzjgSpider(scrapy.Spider):
         investevents = json.loads(response.text)['data']['data']
         for investevent in investevents:
             try:
+                print(investevent)
                 item = tzgx_tzjgItem()
                 item['name'] = investevent['name']
                 item['simple_name'] = investevent['name']
@@ -134,7 +135,6 @@ class TzjgSpider(scrapy.Spider):
                 item['time'] = investevent['invst_born_year']
                 item['headquarters'] = ''
                 item['official_website'] = ''
-                item['investment_phase'] = investevent['new_round']
                 item['introduction'] = investevent['des']
                 item['phone'] = ''
                 item['fax'] = ''
@@ -149,10 +149,12 @@ class TzjgSpider(scrapy.Spider):
                 item['content'] = investevent['des']
                 item['spider_name'] = 'tzjg'
                 item['module_name'] = 'IT桔子-投资机构'
-                yield item
-                print(
-                    "===========================>crawled one item" +
-                    response.request.url)
+                url = 'https://www.itjuzi.com/api/investments/' + str(investevent['id'])
+                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=item, dont_filter=True)
+                # yield item
+                # print(
+                #     "===========================>crawled one item" +
+                #     response.request.url)
             except Exception as e:
                 logging.error(
                     self.name +
@@ -161,3 +163,22 @@ class TzjgSpider(scrapy.Spider):
                     ", exception=" +
                     e.__str__())
                 logging.exception(e)
+
+    def parse_item(self, response, **kwargs):
+        print(response.text)
+        try:
+            investevents = json.loads(response.text)['data']
+            investment_round = investevents['investment_round']
+            list = []
+            for name in investment_round:
+                list.append(name['name'].replace('&nbsp;&nbsp;',''))
+            kwargs['investment_phase'] = ';'.join(list)
+            yield kwargs
+        except Exception as e:
+            logging.error(
+                self.name +
+                " in parse_item: url=" +
+                response.request.url +
+                ", exception=" +
+                e.__str__())
+            logging.exception(e)

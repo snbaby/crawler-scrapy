@@ -120,7 +120,7 @@ class AnhuiZfcgwSpider(scrapy.Spider):
                 category = '其他'
             item = ztbkItem()
             item['title'] = title
-            item['content'] = response.css('.frameNews').extract_first()
+            item['content'] = response.css('.frameNews table').extract_first()
             item['appendix'] = appendix
             item['category'] = category
             item['time'] = kwargs['time']
@@ -131,7 +131,7 @@ class AnhuiZfcgwSpider(scrapy.Spider):
             item['region'] = '安徽省'
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'anhui_zfcgw'
-            item['txt'] = ''.join(response.css('.frameNews *::text').extract())
+            item['txt'] = ''.join(response.css('.frameNews table *::text').extract())
             item['module_name'] = '安徽-政府采购网'
             item['time'] = get_times(item['time'])
             print(

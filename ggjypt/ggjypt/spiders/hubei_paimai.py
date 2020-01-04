@@ -163,7 +163,6 @@ class GansuSpider(scrapy.Spider):
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
-        print('kwargs====' + str(kwargs))
         if kwargs['title']:
             try:
                 appendix, appendix_name = get_attachments(response)
@@ -180,7 +179,8 @@ class GansuSpider(scrapy.Spider):
                 elif title.find('单一') >= 0:
                     category = '单一'
                 item = ztbkItem()
-                item['title'] = title
+                print('title===' + title)
+                item['title'] = title.strip().replace('[]','') if title else ''
                 item['content'] = "".join(response.xpath('//div[@class="zwbf"]').extract())
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category

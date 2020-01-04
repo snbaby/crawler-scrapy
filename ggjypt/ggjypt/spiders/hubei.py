@@ -191,7 +191,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
         for selector in response.xpath('//ul[@class="ewb-news-items"]/li'):
             try:
                 item = {}
-                item['title'] = "".join(selector.xpath('./a//text()').extract())
+                item['title'] = selector.xpath('./a/@title').extract_first()
                 item['time'] = selector.xpath('./span/text()').extract_first().strip()
                 url = selector.xpath('./a/@href').extract_first()
                 print('url=============='+url)
@@ -219,7 +219,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 elif title.find('单一') >= 0:
                     category = '单一'
                 item = ztbkItem()
-                item['title'] = title
+                item['title'] = title.strip().replace('[]','') if title else ''
                 if response.xpath('//div[@class="entry"]').extract():
                     content = "".join(response.xpath('//div[@class="entry"]').extract())
                     txt = "".join(response.xpath('//div[@class="entry"]//text()').extract())

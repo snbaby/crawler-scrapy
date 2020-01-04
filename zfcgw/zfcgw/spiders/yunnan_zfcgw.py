@@ -262,7 +262,7 @@ class YunnanZfcgwSpider(scrapy.Spider):
             item = ztbkItem()
             item['title'] = title
             item['content'] = ''.join(
-                response.css('.panel-default').extract())
+                response.css('.col-xs-10-sm').extract())
             item['appendix'] = appendix
             item['category'] = category
             item['time'] = kwargs['time']
@@ -274,7 +274,7 @@ class YunnanZfcgwSpider(scrapy.Spider):
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'yunnan_zfcgw'
             item['txt'] = ''.join(
-                response.css('.panel-default *::text').extract())
+                response.css('.col-xs-10-sm *::text').extract())
             item['module_name'] = '云南-政府采购网'
             item['time'] = get_times(item['time'])
             print(

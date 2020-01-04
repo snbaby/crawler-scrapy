@@ -3,7 +3,7 @@ import scrapy
 import logging
 
 from hyyjbg.items import hyyjbgItem
-
+from utils.tools.attachment import get_times
 class HxtSpider(scrapy.Spider):
     name = 'hxt'
     custom_settings = {
@@ -100,7 +100,7 @@ class HxtSpider(scrapy.Spider):
             item['txt'] = ''.join(
                 response.css('.newsCon *::text').extract())
             item['module_name'] = '信托融资一行业基本报告-好信托'
-
+            item['date'] = get_times(item['date'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

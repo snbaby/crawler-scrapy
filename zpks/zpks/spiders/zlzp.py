@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
-import time
 from scrapy_splash import SplashRequest
 from zpks.items import zpksItem
 import json
@@ -10,10 +9,10 @@ from utils.tools.attachment import get_times
 class ZlzpSpider(scrapy.Spider):
     name = 'zlzp'
     custom_settings = {
-        'CONCURRENT_REQUESTS': 20,
+        'CONCURRENT_REQUESTS': 10,
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 1,
+        'DOWNLOAD_DELAY': 0.5,
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -27,8 +26,7 @@ class ZlzpSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://39.100.240.19:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -37,32 +35,72 @@ class ZlzpSpider(scrapy.Spider):
     def start_requests(self):
         try:
             json_body = {
-                "start": 1000,
                 "pageSize": "90",
+                "cityId": "801",
                 "workExperience": "-1",
                 "education": "-1",
                 "companyType": "-1",
                 "employmentType": "-1",
                 "jobWelfareTag": "-1",
                 "kt": "3",
-                "at": "cee6a5bb282c45b1a3af0d466af20f18",
-                "rt": "093d2b5d43f84f5d885fb6604f6153b8",
-                "_v": "0.76340331",
-                "userCode": 702162523
+                "at": "3e24e15426604d72a964d28f7d1228a3",
+                "rt": "a48e54219dc847399c1cbdeb41907156",
+                "_v": "0.32762194",
+                "userCode": 1055007456
             }
+            cityList = [
+                530,
+                538,
+                765,
+                763,
+                531,
+                801,
+                653,
+                600,
+                613,
+                635,
+                702,
+                703,
+                639,
+                599,
+                854,
+                719,
+                749,
+                551,
+                622,
+                636,
+                654,
+                681,
+                682,
+                565,
+                664,
+                773
+            ]
             pages = 11
-            for j in range(pages):
-                json_body['start'] = j*90
-                yield scrapy.Request(
-                    "https://fe-api.zhaopin.com/c/i/sou?at=cee6a5bb282c45b1a3af0d466af20f18&rt=093d2b5d43f84f5d885fb6604f6153b8&_v=0.53759414&x-zp-page-request-id=2e4b51e656a8495093e59f37dbfcb301-1577207673282-314929&x-zp-client-id=342b4fd1-653a-415e-b3b2-1603acbccdba&MmEwMD=4U.7hI3E_Tkr85QtiHNTgEjtNp1Mv3QpJZ7yE0_1FfCzGHmDHfGMFIhSp3CXIiMnK_gONKotKVTUJthi213Y1ip_RRcLP6VCT2KkLVsKcCv_0dNCSYr8MpjLTbSjVnh_afHeGNWoj.BpFVlKYcqVCTA6Fkg64HXTidPjsuTl5C7kGxP2otzqCyKKMSUdkXKSnMz1qA3O8KtB1S2uzuX6NFfZE5FjSbsx2uvk.6kmbqHzzYUIokJbARH07ozDmd0auk.Fk9cUM5Q18O7pjdj2I6eXqaEKuaFLTU2h5IVaq1U6_RZ08fOfDZf1Yl95IcuVOUfzXzmr6DrsKIL_yHXzf51E99_DSIL_qs.L7fxVlffRDKM4K0G1dN1eF7LvNSx2t0NEeI7vVnfmDXb0QkO1DcgxcJN1cOYXqY4aUVxqXe0Bzz46Ktbqz9NQ5Db.zRtnZoX9",
-                    method='POST',
-                    headers={'Content-Type': ' application/json;charset=UTF-8'},
-                    body=json.dumps(json_body),
-                    callback=self.parse_page)
+            for city in cityList:
+                for j in range(pages):
+                    if j>0:
+                        json_body['start'] = j*90
+                    json_body['cityId'] = str(city)
+                    yield scrapy.Request(
+                        "https://fe-api.zhaopin.com/c/i/sou?at=3e24e15426604d72a964d28f7d1228a3&rt=a48e54219dc847399c1cbdeb41907156&_v=0.31682191&x-zp-page-request-id=d24b8e8d045340c180b5d617ebae39e3-1578154614610-240921&x-zp-client-id=342b4fd1-653a-415e-b3b2-1603acbccdba&MmEwMD=4L0MCGodotQCOrkeuaCcm6TeVXJ7FvkbakuiTh22v8NFwaFSn8d7vGVD7vNRPSlm.mvVVN3e..jGaTVy3zoPBSiJ9WK3ugRau7NQ7w9QcW2_ortWDEMQjYv2fpzGRQ3DthIe9U0w3VyzEqoJU0lbqbHotVKDGP2vHQvxf5RrTMEIMop6lrKrURB0dbS5Bl7NDNH39oZC7CWT8K.FQ9kgPykqeIkmGCwqPRJhapj2K.tCyNwtkUVF_5grwVrm2nc4HKAGx5GA4_HqlSdZraMtabW4QO1KoY.jziRyWTT7P27ygBuYo.N19tfOlBtCprpNVXBywhoxyUz4DX1tWXp6rBb8VRt.xd3SOGQB3PqYhH8RvpEsSCTPU7N_zIiTpJjajjGQICvQ1ZTPWImEMBU06ybqzlm3zPIogsBcWuCj53A6uMYg_B6cStBsqxGSdDIielgK",
+                        method='POST',
+                        headers={'Content-Type': ' application/json;charset=UTF-8'},
+                        body=json.dumps(json_body),
+                        callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
     def parse_page(self, response,**kwargs):
+        print('aaaaaaaaaaaaaaaaaaa')
+        script = """
+        function main(splash, args)
+          splash.images_enabled = false
+          splash:go(args.url)
+          splash:wait(1)
+          return splash:html()
+        end
+        """
         try:
             ret = json.loads(response.text)
             item = zpksItem()
@@ -75,16 +113,28 @@ class ZlzpSpider(scrapy.Spider):
                 item['time'] = get_times(obj['updateDate'])
                 item['link'] = obj['positionURL']
                 item['education'] = obj['eduLevel']['name']
-                yield scrapy.Request(obj['positionURL'], callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                # 'https://fe-api.zhaopin.com/c/i/jobs/qrcode?number='+num+'&width=120&hyaline=false&_v=0.36637930&x-zp-page-request-id=996aa803fdd84a87b2a54ebedd8b4992-1577987777991-350633&x-zp-client-id=342b4fd1-653a-415e-b3b2-1603acbccdba'
+                print(obj['positionURL'])
+                yield SplashRequest(obj['positionURL'],
+                    endpoint='execute',
+                    args={
+                        'lua_source': script,
+                        'wait': 1,
+                        'url': obj['positionURL'],
+                    },
+                    callback=self.parse_item,
+                    cb_kwargs=item)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_item(self, response, **kwargs):
+        print(response.text)
         try:
             kwargs['website'] = '智联招聘'
             kwargs['type'] = '3'
             kwargs['source'] = '智联招聘'
+            print(response.xpath('//*[@class="describtion__detail-content"]').extract())
             kwargs['content'] = ''.join(response.xpath('//*[@class="describtion__detail-content"]').extract())
             kwargs['spider_name'] = 'zlzp'
             kwargs['module_name'] = '智联招聘'

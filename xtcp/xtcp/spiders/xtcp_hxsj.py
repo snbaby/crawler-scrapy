@@ -118,11 +118,11 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 pro_type = response.xpath('//table[@class="jibenxinxi"]/tr[2]/td[2]/text()').extract_first()
                 money_use = response.xpath('//table[@class="jibenxinxi"]/tr[14]/td[2]/text()').extract_first()
                 real_year_income = response.xpath('//table[@class="jibenxinxi"]/tr[7]/td[4]/text()').extract_first()
-                income_type = response.xpath('//table[@class="jibenxinxi"]/tr[11]/td[4]/text()').extract_first()
+                income_type = response.xpath('//table[@class="jibenxinxi"]/tr[11]/td[2]/text()').extract_first()
 
                 item['name'] = kwargs['name']
                 item['issure'] = kwargs['issure']
-                item['issue_date'] = get_times(kwargs['issue_date'])
+                item['issue_date'] = '20' + get_times(kwargs['issue_date']) if kwargs['issue_date']!='null' else ''
                 item['pro_address'] = pro_address.replace('\xa0','') if pro_address else ''
                 item['pre_scale'] = ''
                 item['real_scale'] = kwargs['real_scale']
@@ -136,7 +136,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['income_deadline'] = ''
                 item['pro_state'] = pro_state.replace('\xa0','') if pro_state else ''
                 item['pro_type'] = pro_type.replace('\xa0','') if pro_type else ''
-                item['invest_method'] = kwargs['issue_date']
+                item['invest_method'] = kwargs['invest_method']
                 item['money_invest'] = kwargs['money_invest']
                 item['money_use'] = money_use.replace('\xa0','') if money_use else ''
                 item['pre_year_income'] = kwargs['pre_year_income']

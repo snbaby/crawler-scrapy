@@ -207,7 +207,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             item['category'] = category
             item['time'] = kwargs['time']
             item['source'] = ''
-            item['website'] = '江西公共资源交易网'
+            item['website'] = '江西省政府采购网'
             item['link'] = kwargs['url']
             item['type'] = '2'
             item['region'] = '江西省'

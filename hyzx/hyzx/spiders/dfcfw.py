@@ -3,7 +3,7 @@ import scrapy
 import logging
 
 from hyzx.items import hyzxItem
-
+from utils.tools.attachment import get_times
 class DfcfwSpider(scrapy.Spider):
     name = 'dfcfw'
     custom_settings = {
@@ -79,7 +79,7 @@ class DfcfwSpider(scrapy.Spider):
         try:
             item = hyzxItem()
             item['title'] = response.css('h1::text').extract_first()
-            item['date'] = response.css('.time::text').extract_first()
+            item['date'] = get_times(response.css('.time::text').extract_first())
             item['resource'] = response.css('.data-source::attr(data-source)').extract_first()
             item['content'] = response.css('#ContentBody').extract_first()
             item['website'] = '东方财富网'

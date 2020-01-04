@@ -5,7 +5,7 @@ import json
 import time
 
 from hyyjbg.items import hyyjbgItem
-
+from utils.tools.attachment import get_times
 class YyxtySpider(scrapy.Spider):
     name = 'yyxty'
     custom_settings = {
@@ -83,6 +83,7 @@ class YyxtySpider(scrapy.Spider):
             item['spider_name'] = 'yyxty'
             item['txt'] = ''.join(response.css('.article-con *::text').extract())
             item['module_name'] = '信托融资一行业基本报告-用益信托易'
+            item['date'] = get_times(item['date'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

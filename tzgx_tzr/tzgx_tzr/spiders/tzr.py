@@ -135,10 +135,8 @@ class TzrSpider(scrapy.Spider):
                 item['content'] = investevent['des']
                 item['spider_name'] = 'tzr'
                 item['module_name'] = 'IT桔子-投资人'
-                yield item
-                print(
-                    "===========================>crawled one item" +
-                    response.request.url)
+                url = 'https://www.itjuzi.com/api/persons/'+str(investevent['id'])
+                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=item, dont_filter=True)
             except Exception as e:
                 logging.error(
                     self.name +
@@ -147,3 +145,18 @@ class TzrSpider(scrapy.Spider):
                     ", exception=" +
                     e.__str__())
                 logging.exception(e)
+
+    def parse_item(self, response, **kwargs):
+        try:
+            investevents = json.loads(response.text)['data']
+            kwargs['company'] = investevents['invst'][0]['name']
+            kwargs['job'] = investevents['invst'][0]['position']
+            yield kwargs
+        except Exception as e:
+            logging.error(
+                self.name +
+                " in parse_item: url=" +
+                response.request.url +
+                ", exception=" +
+                e.__str__())
+            logging.exception(e)

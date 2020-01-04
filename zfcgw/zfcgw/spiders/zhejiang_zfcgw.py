@@ -227,7 +227,7 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
         function main(splash, args)
           splash:go(args.url)
           assert(splash:wait(1))
-          splash:runjs("document.querySelector('body').innerHTML = document.getElementsByTagName('iframe')[0].contentWindow.document.body.querySelector('#iframe_box').innerHTML")
+          splash:runjs("document.querySelector('body').innerHTML = document.getElementsByTagName('iframe')[0].contentWindow.document.body.innerHTML")
           return splash:html()
         end
         """
@@ -235,8 +235,8 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
             try:
                 result = {}
                 result['url'] = response.urljoin(selector.xpath('./a/@href').extract_first())
-                result['title'] = response.urljoin(selector.xpath('./span[@class="underline"]/text()').extract_first())
-                result['time'] = response.urljoin(selector.xpath('./span/text()').extract_first())
+                result['title'] = selector.xpath('./a/span[@class="underline"]/text()').extract_first()
+                result['time'] = selector.xpath('./span/text()').extract_first()
                 yield SplashRequest(result['url'],
                                     endpoint='execute',
                                     args={
@@ -268,7 +268,7 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
                 category = '其他'
             item = ztbkItem()
             item['title'] = title
-            item['content'] = "".join(response.xpath('//div[@class="gpoz-detail"]').extract())
+            item['content'] = "".join(response.xpath('//div[@id="iframe_box"]').extract())
             item['appendix'] = appendix
             item['category'] = category
             item['source'] = ''
@@ -278,7 +278,7 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
             item['region'] = '浙江省'
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'zhejiang_zfcgw'
-            item['txt'] = "".join(response.xpath('//div[@class="gpoz-detail"]//text()').extract())
+            item['txt'] = "".join(response.xpath('//div[@id="iframe_box"]//text()').extract())
             item['module_name'] = '浙江-政府采购网'
             item['time'] = get_times(kwargs['time'])
             print(

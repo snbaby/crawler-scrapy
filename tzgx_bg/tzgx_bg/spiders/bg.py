@@ -212,6 +212,7 @@ class BgSpider(scrapy.Spider):
 
     def parse_hb(self, response, **kwargs):
         data = json.loads(response.text)['data']
+        print(data)
         try:
             item = tzgx_bgItem()
             item['title'] = data['merger_title']
