@@ -5,7 +5,7 @@ import json
 import time
 
 from tzgx_bg.items import tzgx_bgItem
-
+from utils.tools.attachment import get_times
 
 class BgSpider(scrapy.Spider):
     name = 'bg'
@@ -219,7 +219,7 @@ class BgSpider(scrapy.Spider):
             item['industry'] = kwargs['industry']
             item['involving_equity'] = ''
             start_time = str(data['prev_id']['merger_show_year']) + '-' + str(data['prev_id']['merger_show_month']) + '-' + str(data['prev_id']['merger_show_day'])
-            item['start_time'] = start_time
+            item['start_time'] = get_times(start_time)
             item['end_time'] = ''
             item['supported_vc_pe'] = ''
             item['website'] = 'IT桔子'
@@ -252,7 +252,7 @@ class BgSpider(scrapy.Spider):
             item['involving_equity'] = kwargs['involving_equity']
             start_time = str(data['prev_id']['merger_show_year']) + '-' + str(
                 data['prev_id']['merger_show_month']) + '-' + str(data['prev_id']['merger_show_day'])
-            item['start_time'] = start_time
+            item['start_time'] = get_times(start_time)
             item['end_time'] = ''
             item['supported_vc_pe'] = ''
             item['website'] = 'IT桔子'

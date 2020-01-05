@@ -36,7 +36,7 @@ end
 function main(splash, args)
   splash.images_enabled = false
   splash:go(args.url)
-  splash:wait(1)
+  splash:wait(3)
   return splash:html()
 end
 """
@@ -61,7 +61,6 @@ class BossSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'SPLASH_URL': "http://39.100.240.19:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
@@ -71,7 +70,7 @@ class BossSpider(scrapy.Spider):
     def start_requests(self):
         try:
             contents = [
-                'c101020100',
+                'c101020100'
                 'c101280100',
                 'c101010100',
                 'c101280600',
@@ -89,7 +88,8 @@ class BossSpider(scrapy.Spider):
             for content in contents:
                 page_count = 10
                 for pagenum in range(page_count):
-                    url =  'https://www.zhipin.com/'+content+'/?page='+str(pagenum)+'&ka=page-'+str(pagenum)
+                    url = 'https://www.zhipin.com/'+content+'/?page='+str(pagenum+1)+'&ka=page-'+str(pagenum+1)
+                    print(url)
                     yield SplashRequest(url,
                         endpoint='execute',
                         args={
@@ -104,7 +104,6 @@ class BossSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        print(len(response.xpath('//div[@class="info-primary"]/h3/a/@href')))
         for href in response.xpath('//div[@class="info-primary"]/h3/a/@href').extract():
             try:
                 url = response.urljoin(href)
