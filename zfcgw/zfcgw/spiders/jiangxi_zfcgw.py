@@ -5,7 +5,7 @@ import logging
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
 from utils.tools.attachment import get_attachments
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -166,7 +166,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             item['website'] = '江西公共资源交易网'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = kwargs['region']
+            item['region'] = '江西省'
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'jiangxi_zfcgw'
             item['txt'] = ''.join(response.css('.article-info *::text').extract())
@@ -207,15 +207,15 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             item['category'] = category
             item['time'] = kwargs['time']
             item['source'] = ''
-            item['website'] = '江西公共资源交易网'
+            item['website'] = '江西省政府采购网'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = kwargs['region']
+            item['region'] = '江西省'
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'jiangxi_zfcgw'
             item['txt'] = ''.join(response.css('.fui-accordions *::text').extract())
             item['module_name'] = '江西-政府采购网'
-
+            item['time'] = get_times(item['time'])
             print("===========================>crawled one item:url = {}, appendix={}, appendix_name={}"
                   .format(response.request.url, appendix, appendix_name))
         except Exception as e:

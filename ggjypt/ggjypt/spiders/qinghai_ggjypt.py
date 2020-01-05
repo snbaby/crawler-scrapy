@@ -243,7 +243,7 @@ class QinghaiGgjyptSpider(scrapy.Spider):
             item['website'] = '青海省公共资源交易网'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = kwargs['region']
+            item['region'] = '青海省'
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'qinghai_ggjypt'
             item['module_name'] = '青海-公共交易平台'

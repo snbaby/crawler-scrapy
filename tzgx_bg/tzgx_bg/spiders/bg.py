@@ -5,7 +5,7 @@ import json
 import time
 
 from tzgx_bg.items import tzgx_bgItem
-
+from utils.tools.attachment import get_times
 
 class BgSpider(scrapy.Spider):
     name = 'bg'
@@ -198,9 +198,6 @@ class BgSpider(scrapy.Spider):
                         'authorization': kwargs['authorization']
                     }
                     yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_sg, cb_kwargs=result, dont_filter=True)
-                print(
-                    "===========================>crawled one item" +
-                    response.request.url)
             except Exception as e:
                 logging.error(
                     self.name +
@@ -212,6 +209,7 @@ class BgSpider(scrapy.Spider):
 
     def parse_hb(self, response, **kwargs):
         data = json.loads(response.text)['data']
+        print(data)
         try:
             item = tzgx_bgItem()
             item['title'] = data['merger_title']
@@ -220,7 +218,8 @@ class BgSpider(scrapy.Spider):
             item['status'] = kwargs['status']
             item['industry'] = kwargs['industry']
             item['involving_equity'] = ''
-            item['start_time'] = ''
+            start_time = str(data['prev_id']['merger_show_year']) + '-' + str(data['prev_id']['merger_show_month']) + '-' + str(data['prev_id']['merger_show_day'])
+            item['start_time'] = get_times(start_time)
             item['end_time'] = ''
             item['supported_vc_pe'] = ''
             item['website'] = 'IT桔子'
@@ -251,7 +250,9 @@ class BgSpider(scrapy.Spider):
             item['status'] = kwargs['status']
             item['industry'] = kwargs['industry']
             item['involving_equity'] = kwargs['involving_equity']
-            item['start_time'] = ''
+            start_time = str(data['prev_id']['merger_show_year']) + '-' + str(
+                data['prev_id']['merger_show_month']) + '-' + str(data['prev_id']['merger_show_day'])
+            item['start_time'] = get_times(start_time)
             item['end_time'] = ''
             item['supported_vc_pe'] = ''
             item['website'] = 'IT桔子'

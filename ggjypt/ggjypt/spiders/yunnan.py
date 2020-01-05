@@ -191,7 +191,7 @@ class GansuSpider(scrapy.Spider):
             try:
                 item = {}
                 item['title'] = selector.xpath('./td[3]/a/text()').extract_first()
-                item['time'] = selector.xpath('./td[4]/text()').extract_first()
+                item['time'] = selector.xpath('./td[last()]/text()').extract_first()
                 url = response.urljoin(selector.xpath('./td[3]/a/@href').extract_first())
                 print('url===='+url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
@@ -217,7 +217,13 @@ class GansuSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="detail_contect"]').extract())
+                if response.xpath('//div[@class="detail_contect"]'):
+                    content = "".join(response.xpath('//div[@class="detail_contect"]').extract())
+                    txt = "".join(response.xpath('//div[@class="detail_contect"]//text()').extract())
+                elif response.xpath('//div[@class="page_contect bai_bg"]'):
+                    content = "".join(response.xpath('//div[@class="page_contect bai_bg"]').extract())
+                    txt = "".join(response.xpath('//div[@class="page_contect bai_bg"]//text()').extract())
+                item['content'] = content
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
@@ -226,7 +232,7 @@ class GansuSpider(scrapy.Spider):
                 item['website'] = '云南省公共资源交易服务平台'
                 item['module_name'] = '云南省-公共交易平台'
                 item['spider_name'] = 'yunnan_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="detail_contect"]//text()').extract())
+                item['txt'] = txt
                 item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
                 item['appendix'] = appendix

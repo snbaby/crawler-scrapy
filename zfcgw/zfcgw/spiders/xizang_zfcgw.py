@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-
+from utils.tools.attachment import get_attachments,get_times
 class XizangZfcgwSpider(scrapy.Spider):
     name = 'xizang_zfcgw'
     custom_settings = {
@@ -114,6 +114,7 @@ class XizangZfcgwSpider(scrapy.Spider):
 
     def parse_item(self, response, **kwargs):
         try:
+            appendix, appendix_name = get_attachments(response)
             title = kwargs['title']
             if title.find('招标') >= 0:
                 category = '招标'
@@ -130,20 +131,20 @@ class XizangZfcgwSpider(scrapy.Spider):
             item = ztbkItem()
             item['title'] = title
             item['content'] = response.css('.neirong').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = kwargs['time']
             item['source'] = ''
             item['website'] = '西藏自治区政府采购网'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = ''
-            item['appendix_name'] = ''
+            item['region'] = '西藏自治区'
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'xizang_zfcgw'
             item['txt'] = ''.join(
                 response.css('.neirong *::text').extract())
             item['module_name'] = '西藏-政府采购网'
-
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

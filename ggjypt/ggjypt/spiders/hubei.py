@@ -191,7 +191,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
         for selector in response.xpath('//ul[@class="ewb-news-items"]/li'):
             try:
                 item = {}
-                item['title'] = "".join(selector.xpath('./a//text()').extract())
+                item['title'] = selector.xpath('./a/@title').extract_first()
                 item['time'] = selector.xpath('./span/text()').extract_first().strip()
                 url = selector.xpath('./a/@href').extract_first()
                 print('url=============='+url)
@@ -219,8 +219,14 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 elif title.find('单一') >= 0:
                     category = '单一'
                 item = ztbkItem()
-                item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="entry"]').extract())
+                item['title'] = title.strip().replace('[]','') if title else ''
+                if response.xpath('//div[@class="entry"]').extract():
+                    content = "".join(response.xpath('//div[@class="entry"]').extract())
+                    txt = "".join(response.xpath('//div[@class="entry"]//text()').extract())
+                if response.xpath('//div[@class="news-article-para"]'):
+                    content = "".join(response.xpath('//div[@class="news-article-para"]').extract())
+                    txt = "".join(response.xpath('//div[@class="news-article-para"]//text()').extract())
+                item['content'] = content
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
@@ -229,7 +235,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 item['website'] = '湖北省公共资源交易服务平台'
                 item['module_name'] = '湖北省-公共交易平台'
                 item['spider_name'] = 'hubei_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="entry"]//text()').extract())
+                item['txt'] = txt
                 item['appendix_name'] = ";".join(response.xpath('//div[@class="entry"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/text()').extract())
                 item['link'] = response.request.url
                 item['appendix'] = ";".join(response.xpath('//div[@class="entry"]//a[contains(@href,"pdf") or contains(@href,"doc") or contains(@href,"docx") or contains(@href,"xls")]/@href').extract())
@@ -264,7 +270,13 @@ class hubeiSzfwjSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@class="entry"]').extract())
+                if response.xpath('//div[@class="entry"]').extract():
+                    content = "".join(response.xpath('//div[@class="entry"]').extract())
+                    txt = "".join(response.xpath('//div[@class="entry"]//text()').extract())
+                if response.xpath('//div[@class="news-article-para"]'):
+                    content = "".join(response.xpath('//div[@class="news-article-para"]').extract())
+                    txt = "".join(response.xpath('//div[@class="news-article-para"]//text()').extract())
+                item['content'] = content
                 item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
                 item['category'] = category
                 item['type'] = ''
@@ -273,7 +285,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 item['website'] = '湖北省公共资源交易服务平台'
                 item['module_name'] = '湖北省-公共交易平台'
                 item['spider_name'] = 'hubei_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@class="entry"]//text()').extract())
+                item['txt'] = txt
                 item['appendix_name'] = appendix_name
                 item['link'] = response.request.url
                 item['appendix'] = appendix

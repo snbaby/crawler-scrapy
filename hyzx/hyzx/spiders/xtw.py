@@ -3,7 +3,7 @@ import scrapy
 import logging
 
 from hyzx.items import hyzxItem
-
+from utils.tools.attachment import get_times
 
 class XtwSpider(scrapy.Spider):
     name = 'xtw'
@@ -86,13 +86,13 @@ class XtwSpider(scrapy.Spider):
             item['title'] = response.css('h1::text').extract_first()
             item['date'] = response.css('.article-info::text').extract_first().replace('时间：','')
             item['resource'] = response.css('.comeform::text').extract_first().replace('来源：','')
-            item['content'] = response.css('.texttit_m1').extract_first()
+            item['content'] = response.css('.texttit_m1').extract_first() if response.css('.texttit_m1') else response.css('.article-box').extract_first()
             item['website'] = '信托网'
             item['link'] = kwargs['url']
             item['spider_name'] = 'xtw'
-            item['txt'] = ''.join(response.css('.texttit_m1 *::text').extract())
+            item['txt'] = ''.join(response.css('.texttit_m1 *::text').extract()) if response.css('.texttit_m1') else ''.join(response.css('.article-box *::text').extract())
             item['module_name'] = '信托融资一行业资讯-信托网'
-
+            item['date'] = get_times(item['date'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

@@ -24,21 +24,20 @@ class TianJinSzfwjSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
         'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOADER_MIDDLEWARES': {
+            'scrapy_splash.SplashCookiesMiddleware': 723,
+            'scrapy_splash.SplashMiddleware': 725,
+            'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+        },
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
-        'DOWNLOADER_MIDDLEWARES': {
-            'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
-            'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
-            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://47.106.239.73:8050/"}
+        'SPLASH_URL': "http://39.100.240.19:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -54,6 +53,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def parse_page(self, response,**kwargs):
         page_count = int(self.parse_pagenum(response))
+        print(page_count)
         try:
             for pagenum in range(page_count):
                 temUrl = 'http://ggzy.guizhou.gov.cn/queryContent_'
@@ -76,6 +76,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
+        print(response.xpath('//div[@class="list_all_style_1"]/div'))
         for selector in response.xpath('//div[@class="list_all_style_1"]/div'):
             try:
                 item = {}
@@ -84,7 +85,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 tmp = selector.xpath('./@onclick').extract_first()
                 tmp = tmp.replace('window.open(\'', '').replace('\')', '')
                 url = response.urljoin(tmp)
-                print('url===========' + url)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -116,7 +116,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '贵州省'
-                item['time'] = kwargs['time'].strip()
+                item['time'] = kwargs['time']
                 item['website'] = '贵州省公共资源交易服务平台'
                 item['module_name'] = '贵州省-公共交易平台'
                 item['spider_name'] = 'guizhou_ggjypt'

@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-
+from utils.tools.attachment import get_attachments,get_times
 
 class YunnanZfcgwSpider(scrapy.Spider):
     name = 'yunnan_zfcgw'
@@ -245,6 +245,7 @@ class YunnanZfcgwSpider(scrapy.Spider):
 
     def parse_item(self, response, **kwargs):
         try:
+            appendix, appendix_name = get_attachments(response)
             title = kwargs['title']
             if title.find('招标') >= 0:
                 category = '招标'
@@ -260,21 +261,22 @@ class YunnanZfcgwSpider(scrapy.Spider):
                 category = '其他'
             item = ztbkItem()
             item['title'] = title
-            item['content'] = response.css('.panel-default').extract_first()
-            item['appendix'] = ''
+            item['content'] = ''.join(
+                response.css('.col-xs-10-sm').extract())
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = kwargs['time']
             item['source'] = ''
             item['website'] = '云南政府采购网'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = kwargs['region']
-            item['appendix_name'] = ''
+            item['region'] = '云南省'
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'yunnan_zfcgw'
             item['txt'] = ''.join(
-                response.css('.panel-default *::text').extract())
+                response.css('.col-xs-10-sm *::text').extract())
             item['module_name'] = '云南-政府采购网'
-
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

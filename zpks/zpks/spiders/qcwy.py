@@ -33,7 +33,7 @@ class BeijingZfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://39.100.240.19:8050/"}
+         'SPLASH_URL': "http://localhost:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,7 +87,10 @@ class BeijingZfwjSpider(scrapy.Spider):
             item['type'] = '2'
             item['source'] = '前程无忧'
             item['content'] = ''.join(response.xpath('//div[@class="bmsg job_msg inbox"]').extract())
-            item['education'] = ''
+            tmp = response.xpath('//*[@class="msg ltype"]//text()').extract()
+            print(len(tmp))
+            education = tmp[4].replace('\xa0','') if len(tmp) > 8 else ''
+            item['education'] = education
             item['spider_name'] = 'qcwy'
             item['module_name'] = '前程无忧'
             print(

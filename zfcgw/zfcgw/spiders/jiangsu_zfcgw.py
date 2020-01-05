@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-
+from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -151,7 +151,8 @@ class JiangsuZfcgwSpider(scrapy.Spider):
 
     def pares_item(self, response, **kwargs):
         try:
-            title = response.css('.dtit h1::text').extract_first().strip()
+            appendix, appendix_name = get_attachments(response)
+            title = response.css('.dtit h1::text').extract_first()
             if title.find('招标') >= 0:
                 category = '招标'
             elif title.find('中标') >= 0:
@@ -167,19 +168,19 @@ class JiangsuZfcgwSpider(scrapy.Spider):
             item = ztbkItem()
             item['title'] = title
             item['content'] = response.css('.detail_con').extract_first()
-            item['appendix'] = ''
+            item['appendix'] = appendix
             item['category'] = category
             item['time'] = kwargs['time']
             item['source'] = ''
             item['website'] = '江苏政府采购'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = '江苏'
-            item['appendix_name'] = ''
+            item['region'] = '江苏省'
+            item['appendix_name'] = appendix_name
             item['spider_name'] = 'jiangsu_zfcgw'
             item['txt'] = ''.join(response.css('.detail_con *::text').extract())
             item['module_name'] = '江苏-政府采购网'
-
+            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

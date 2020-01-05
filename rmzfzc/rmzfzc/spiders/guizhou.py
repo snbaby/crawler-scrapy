@@ -9,10 +9,8 @@ from utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
-  assert(splash:wait(1))
-  return {
-    html = splash:html(),
-  }
+  assert(splash:wait(3))
+  return splash:html()
 end
 """
 
@@ -24,24 +22,20 @@ class GuizhouSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
         'DOWNLOAD_DELAY': 0.5,
-        'SPIDER_MIDDLEWARES': {
-            'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
         'DOWNLOADER_MIDDLEWARES': {
-            'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
-            'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
-            'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
-            'scrapy_splash.SplashCookiesMiddleware': 140,
+            'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
             'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+        },
+        'SPIDER_MIDDLEWARES': {
+            'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://47.106.239.73:8050/"}
+        'SPLASH_URL': "http://localhost:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -124,8 +118,9 @@ class GuizhouSpider(scrapy.Spider):
                 '.Article_xx table tr:nth-child(3) td:nth-child(2)::text').extract_first().strip()
             item['content'] = response.css('.zw-con').extract_first()
             item['appendix'] = appendix
-            item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
-            item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first()
+            item['source'] = response.xpath('//label[contains(text(),"文章来源")]/text()').extract_first().replace('文章来源：','')
+            item['time'] = response.xpath(
+                '//*[@class="Article_ly"]/span[contains(text(),"发布时间")]/text()').extract_first()
             item['province'] = '贵州省'
             item['city'] = ''
             item['area'] = ''
@@ -160,8 +155,8 @@ class GuizhouSpider(scrapy.Spider):
                     '.Article_xx table tr:nth-child(3) td:nth-child(2)::text').extract_first().strip()
                 item['content'] = response.css('.zw-con').extract_first()
                 item['appendix'] = appendix
-                item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
-                item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first()
+                item['source'] = response.xpath('//label[contains(text(),"文章来源")]/text()').extract_first().replace('文章来源：','')
+                item['time'] = response.xpath('//*[@class="Article_ly"]/span[contains(text(),"发布时间")]/text()').extract_first()
                 item['province'] = '贵州省'
                 item['city'] = ''
                 item['area'] = ''
@@ -176,8 +171,8 @@ class GuizhouSpider(scrapy.Spider):
                 item['article_num'] = ''
                 item['content'] = response.css('.zw-con').extract_first()
                 item['appendix'] = appendix
-                item['source'] = response.css('.Article_ly span:nth-child(1)::text').extract_first()
-                item['time'] = response.css('.Article_ly span:nth-child(2)::text').extract_first()
+                item['source'] = response.xpath('//label[contains(text(),"文章来源")]/text()').extract_first().replace('文章来源：','')
+                item['time'] = response.xpath('//*[@class="Article_ly"]/span[contains(text(),"发布时间")]/text()').extract_first()
                 item['province'] = '贵州省'
                 item['city'] = ''
                 item['area'] = ''

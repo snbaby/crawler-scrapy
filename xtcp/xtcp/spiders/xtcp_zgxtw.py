@@ -104,7 +104,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
             issue_date = response.xpath(
                 '//div[@class="zd-table"]/table/tbody/tr[1]/td[4]/text()').extract_first() if response.xpath(
                 '//div[@class="zd-table"]/table/tbody/tr[1]/td[3]/text()').extract_first() == '发售日期' else ''
-
+            money_use = response.xpath('//div[@class="zd-content"]/p[contains(text(),"资金用途：")]/text()').extract_first()
+            finance_peo = response.xpath('//div[@class="zd-content"]/p[contains(text(),"融资企业：")]/text()').extract_first()
+            print('money_use===' + money_use)
             item['name'] = name  # 产品名称
             item['issure'] = issure  # 发行机构
             item['issue_date'] = get_times(issue_date)  # 发行时间
@@ -123,13 +125,13 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['pro_type'] = pro_type.replace('\xa0', '') if pro_type else ''  # 产品类型
             item['invest_method'] = ''  # 投资方式
             item['money_invest'] = money_invest  # 资金投向
-            item['money_use'] = ''  # 资金运用
+            item['money_use'] = money_use.replace('资金用途：', '') if money_use else ''  # 资金运用
             item['pre_year_income'] = pre_year_income  # 预期年收益率
             item['real_year_income'] = ''  # 实际年收益率
             item['income_type'] = ''  # 收益类型
             item['income_explane'] = ''  # 收益说明
             item['pay_method'] = pay_method  # 付息方式
-            item['finance_peo'] = ''  # 融资方
+            item['finance_peo'] = finance_peo.replace('融资企业：', '') if finance_peo else ''  # 融资方
             item['risk_method'] = ''  # 风险控制
             item['payment'] = ''  # 还款来源
             item['pro_highlight'] = ''  # 项目亮点

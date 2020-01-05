@@ -136,13 +136,11 @@ class SsSpider(scrapy.Spider):
                 item['rotation'] = ''
                 item['inv_money'] = investevent['money']
                 item['equity_ratio'] = '未透露'
-                item['inv_value'] = investevent['money']
                 item['content'] = investevent['invse_des']
                 item['spider_name'] = 'ss'
                 item['module_name'] = 'IT桔子-上市'
-                print(
-                    "===========================>crawled one item" +
-                    response.request.url)
+                url = 'https://www.itjuzi.com/api/investevents/'+str(investevent['id'])
+                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=item, dont_filter=True)
             except Exception as e:
                 logging.error(
                     self.name +
@@ -151,4 +149,16 @@ class SsSpider(scrapy.Spider):
                     ", exception=" +
                     e.__str__())
                 logging.exception(e)
-            yield item
+    def parse_item(self, response, **kwargs):
+        try:
+            investevents = json.loads(response.text)['data']
+            kwargs['inv_value'] = investevents['invse_guess_particulars']
+            yield kwargs
+        except Exception as e:
+            logging.error(
+                self.name +
+                " in parse_item: url=" +
+                response.request.url +
+                ", exception=" +
+                e.__str__())
+            logging.exception(e)

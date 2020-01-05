@@ -126,22 +126,36 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['issue_date'] = get_times(issue_date)  # 发行时间
                 item['pro_address'] = pro_address  # 项目所在地
                 item['pre_scale'] = ''  # 预期发行规模
-                item['real_scale'] = real_scale  # 实际发行规模
+                item['real_scale'] = str(real_scale) + '万' if int(real_scale)>0 else '' # 实际发行规模
                 item['deadline_type'] = ''  # 期限类型
                 item['pro_deadline'] = pro_deadline  # 产品期限
                 item['tj_start_time'] = get_times(tj_start_time)  # 推介起始日
                 item['tj_end_time'] = get_times(tj_end_time)  # 推介截止日
                 item['establish_date'] = get_times(establish_date)  # 成立日期
                 item['deadline_date'] =get_times(deadline_date)  # 截止日期
-                item['invest_still'] = invest_still  # 投资门槛
+                item['invest_still'] = str(invest_still) + '万' if int(invest_still)>0 else ''  # 投资门槛
                 item['income_deadline'] = ''  # 收益期限
-                item['pro_state'] = pro_state  # 产品状态
+                if str(pro_state) == '2':
+                    pro_state = '运行中'
+                elif str(pro_state) == '3':
+                    pro_state = '已到期'
+                elif str(pro_state) == '4':
+                    pro_state = '--'
+                item['pro_state'] = pro_state# 产品状态
                 item['pro_type'] = pro_type.replace('\xa0', '') if pro_type else ''  # 产品类型
                 item['invest_method'] = ''  # 投资方式
                 item['money_invest'] = money_invest  # 资金投向
                 item['money_use'] = money_use.replace('\xa0', '') if money_use else ''  # 资金运用
                 item['pre_year_income'] = pre_year_income  # 预期年收益率
                 item['real_year_income'] = ''  # 实际年收益率
+                if str(income_type) == '1':
+                    income_type = '固定'
+                elif str(income_type) == '2':
+                    income_type = '浮动'
+                elif str(income_type) == '3':
+                    income_type = '分层'
+                elif str(income_type) == '0':
+                    income_type = '--'
                 item['income_type'] = income_type  # 收益类型
                 item['income_explane'] = income_explane  # 收益说明
                 item['pay_method'] = ''  # 付息方式

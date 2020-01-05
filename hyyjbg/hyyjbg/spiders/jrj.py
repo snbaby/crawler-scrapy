@@ -3,7 +3,7 @@ import scrapy
 import logging
 
 from hyyjbg.items import hyyjbgItem
-
+from utils.tools.attachment import get_times
 class JrjSpider(scrapy.Spider):
     name = 'jrj'
     custom_settings = {
@@ -91,7 +91,7 @@ class JrjSpider(scrapy.Spider):
             item['spider_name'] = 'jrj'
             item['txt'] = ''.join(response.css('.texttit_m1 *::text').extract())
             item['module_name'] = '信托融资一行业基本报告-金融界'
-
+            item['date'] = get_times(item['date'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

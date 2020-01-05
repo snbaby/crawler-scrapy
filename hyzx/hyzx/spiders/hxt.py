@@ -3,7 +3,7 @@ import scrapy
 import logging
 
 from hyzx.items import hyzxItem
-
+from utils.tools.attachment import get_times
 
 class HxtSpider(scrapy.Spider):
     name = 'hxt'
@@ -94,7 +94,7 @@ class HxtSpider(scrapy.Spider):
         try:
             item = hyzxItem()
             item['title'] = kwargs['title']
-            item['date'] = kwargs['time']
+            item['date'] = get_times(kwargs['time'])
             item['resource'] = ''
             item['content'] = response.css('.newsCon').extract_first()
             item['website'] = '好信托'

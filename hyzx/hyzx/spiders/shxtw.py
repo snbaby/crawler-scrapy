@@ -4,7 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from hyzx.items import hyzxItem
-
+from utils.tools.attachment import get_times
 
 class ShxtwSpider(scrapy.Spider):
     name = 'shxtw'
@@ -85,13 +85,19 @@ class ShxtwSpider(scrapy.Spider):
         try:
             item = hyzxItem()
             item['title'] = response.css('h1::text').extract_first()
-            item['date'] = response.css('p.p::text').extract_first().split('作者')[0].replace('时间：','').strip()
+            item['date'] = get_times(response.css('p.p::text').extract_first().split('作者')[0].replace('时间：',''))
             item['resource'] = ''
-            item['content'] = response.css('.news_det').extract_first()
+            content = ''
+            txt = ''
+            for selector in response.xpath('//div[@class="news_det"]/*'):
+                if selector.xpath('./@class').extract_first() != 'mt1':
+                    content = content + ''.join(selector.xpath('.').extract())
+                    txt = content + ''.join(selector.xpath('.//text()').extract())
+            item['content'] = content
             item['website'] = '上海信托网'
             item['link'] = kwargs['url']
             item['spider_name'] = 'shxtw'
-            item['txt'] = ''.join(response.css('.news_det *::text').extract())
+            item['txt'] = txt
             item['module_name'] = '信托融资一行业资讯-上海信托网'
 
             print(

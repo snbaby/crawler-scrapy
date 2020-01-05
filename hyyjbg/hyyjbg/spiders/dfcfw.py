@@ -3,7 +3,7 @@ import scrapy
 import logging
 
 from hyyjbg.items import hyyjbgItem
-
+from utils.tools.attachment import get_times
 class DfcfwSpider(scrapy.Spider):
     name = 'dfcfw'
     custom_settings = {
@@ -88,7 +88,7 @@ class DfcfwSpider(scrapy.Spider):
             item['spider_name'] = 'dfcfw'
             item['txt'] = ''.join(response.css('#ContentBody *::text').extract())
             item['module_name'] = '信托融资一行业基本报告-东方财富网'
-
+            item['date'] = get_times(item['date'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

@@ -52,19 +52,19 @@ class XianGgjyptSpider(scrapy.Spider):
             contents = [
                 {
                     'topic': 'gcjs',  # 工程建设项目招标投标
-                    'url': 'http://xa.sxggzyjy.cn/jydt/001001/001001001/subPage.html'
+                    'url': 'http://www.sxggzyjy.cn/jydt/001001/001001001/subPage_jyxx.html'
                 },
                 {
                     'topic': 'tdsy',  # 土地使用权和矿业权出让
-                    'url': 'http://xa.sxggzyjy.cn/jydt/001001/001001002/subPage.html'
+                    'url': 'http://www.sxggzyjy.cn/jydt/001001/001001002/subPage_jyxx.html'
                 },
                 {
                     'topic': 'gycq',  # 国有产权交易
-                    'url': 'http://xa.sxggzyjy.cn/jydt/001001/001001003/subPage.html'
+                    'url': 'http://www.sxggzyjy.cn/jydt/001001/001001003/subPage_jyxx.html'
                 },
                 {
                     'topic': 'zfcg',  # 政府采购
-                    'url': 'http://xa.sxggzyjy.cn/jydt/001001/001001004/subPage.html'
+                    'url': 'http://www.sxggzyjy.cn/jydt/001001/001001004/subPage_jyxx.html'
                 }
             ]
             for content in contents:
@@ -138,15 +138,15 @@ class XianGgjyptSpider(scrapy.Spider):
                 '.info-source::text').extract_first().strip().split('】')[1].split('：')[1].strip()
             item['source'] = response.css(
                 '.info-source::text').extract_first().strip().split('】')[0].split('：')[1].strip()
-            item['website'] = '陕西省西安市公共资源交易信息网'
+            item['website'] = '陕西省公共资源交易信息网'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = '陕西省西安市'
+            item['region'] = '陕西省'
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'xian_ggjypt'
             item['txt'] = ''.join(
                 response.css('#mainContent *::text').extract())
-            item['module_name'] = '陕西省西安市-公共交易平台'
+            item['module_name'] = '陕西省-公共交易平台'
             item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +

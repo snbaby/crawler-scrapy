@@ -60,9 +60,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 if pagenum > 0:
                     url = 'http://www2.haoxintuo.com/index.php?a=lists&catid=34&status=all&page=' + str(pagenum)
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
-                    yield SplashRequest(url, endpoint='execute',
-                                        args={'lua_source': script, 'wait': 1, 'url': url},
-                                        callback=self.parse_item, dont_filter=True, cb_kwargs={'link': url})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -96,9 +93,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
             name = response.xpath('//div[@class="productgk"]/table/tr[1]/td[2]/text()').extract_first()
             issure = response.xpath('//div[@class="productgk"]/table/tr[2]/td[4]/text()').extract_first()
             pro_address = response.xpath('//div[@class="productgk"]/table/tr[6]/td[2]/text()').extract_first()
-            real_scale = response.xpath('//div[@class="productgk"]/table/tr[4]/td[2]/text()').extract_first()
+            real_scale = response.xpath('//div[@class="productgk"]/table/tr[4]/td[2]/i/text()').extract_first()
             pro_deadline = response.xpath('//div[@class="productgk"]/table/tr[5]/td[2]/text()').extract_first()
-            invest_still = response.xpath('//div[@class="productgk"]/table/tr[4]/td[4]/text()').extract_first()
+            invest_still = response.xpath('//div[@class="productgk"]/table/tr[4]/td[4]/i/text()').extract_first()
             pro_type = response.xpath('//div[@class="productgk"]/table/tr[2]/td[2]/text()').extract_first()
             money_invest = response.xpath('//div[@class="productgk"]/table/tr[3]/td[2]/text()').extract_first()
             pre_year_income = response.xpath('//div[@class="productgk"]/table/tr[6]/td[4]/text()').extract_first()

@@ -101,7 +101,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             issure = response.xpath('//table[@class="maintab"]/tr[3]/td[2]/text()').extract_first()
             issue_date = response.xpath('//table[@class="maintab"]/tr[5]/td[2]/text()').extract_first()
             pro_address = response.xpath('//table[@class="maintab"]/tr[4]/td[2]/text()').extract_first()
-            real_scale = response.xpath('//table[@class="maintab"]/tr[4]/td[4]/text()').extract_first()
+            real_scale = response.xpath('//table[@class="maintab"]/tr[5]/td[4]/text()').extract_first()
             deadline_type = response.xpath('//table[@class="maintab"]/tr[7]/td[4]/text()').extract_first()
             pro_deadline = response.xpath('//table[@class="maintab"]/tr[7]/td[2]/text()').extract_first()
             establish_date = response.xpath('//table[@class="maintab"]/tr[6]/td[2]/text()').extract_first()
@@ -114,6 +114,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
             income_type = response.xpath('//table[@class="maintab"]/tr[8]/td[4]/text()').extract_first()
             income_explane = response.xpath('//table[@class="maintab"]/tr[12]/td[2]/text()').extract_first()
             pay_method = response.xpath('//table[@class="maintab"]/tr[4]/td[4]/text()').extract_first()
+            money_host_bank = response.xpath('//table[@class="maintab"]/tr[9]/td[4]/text()').extract_first()
+            pro_highlight = response.xpath('//table[@class="maintab"]/tr[11]/td[2]/p/text()').extract_first()
 
             money_use = response.xpath('//div[@class="wbox"][2]/p/text()').extract_first()
             finance_peo = ''.join(response.xpath('//div[@class="wbox"][1]/p/text()').extract())
@@ -150,10 +152,10 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['finance_peo'] = finance_peo  # 融资方
             item['risk_method'] = risk_method  # 风险控制
             item['payment'] = payment  # 还款来源
-            item['pro_highlight'] = ''  # 项目亮点
+            item['pro_highlight'] = pro_highlight  # 项目亮点
             item['pro_plan'] = ''  # 项目进度
             item['raise_account'] = ''  # 募集账号
-            item['money_host_bank'] = ''  # 资金托管行
+            item['money_host_bank'] = money_host_bank  # 资金托管行
             item['asset_manager'] = asset_manager  # 资产管理人
             item['host_people'] = ''  # 托管人
             item['website'] = '用益信托网'  # 数据来源网站

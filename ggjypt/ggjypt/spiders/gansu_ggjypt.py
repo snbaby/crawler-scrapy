@@ -257,7 +257,7 @@ class GansuGgjyptSpider(scrapy.Spider):
             item['website'] = '甘肃省公共资源交易网'
             item['link'] = kwargs['url']
             item['type'] = '2'
-            item['region'] = ''
+            item['region'] = '甘肃省'
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'gansu_ggjypt'
             item['module_name'] = '甘肃-公共交易平台'

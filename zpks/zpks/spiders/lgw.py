@@ -2,6 +2,7 @@
 import scrapy
 import logging
 import time
+import datetime
 from scrapy_splash import SplashRequest
 from zpks.items import zpksItem
 
@@ -9,6 +10,10 @@ from zpks.items import zpksItem
 class LgwSpider(scrapy.Spider):
     name = 'lgw'
     custom_settings = {
+        'CONCURRENT_REQUESTS': 10,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS_PER_IP': 0,
+        'DOWNLOAD_DELAY': 0.5,
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -22,8 +27,7 @@ class LgwSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://39.100.240.19:8050/"}
+         'SPLASH_URL': "http://localhost:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,47 +35,48 @@ class LgwSpider(scrapy.Spider):
 
     def start_requests(self):
         script = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
+                function wait_for_element(splash, css, maxwait)
+                  -- Wait until a selector matches an element
+                  -- in the page. Return an error if waited more
+                  -- than maxwait seconds.
+                  if maxwait == nil then
+                      maxwait = 10
+                  end
+                  return splash:wait_for_resume(string.format([[
+                    function main(splash) {
+                      var selector = '%s';
+                      var maxwait = %s;
+                      var end = Date.now() + maxwait*1000;
 
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-          splash:go(args.url)
-          wait_for_element(splash,'.s_position_list ul.item_con_list li')
-          splash:runjs("document.querySelector('.s_position_list ul.item_con_list').innerHTML = ''")
-          splash:runjs("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').classList.remove('pager_is_current')")
-          splash:runjs("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').classList.add('pager_not_current')")
-          js = string.format("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').setAttribute('page',%d)", args.pagenum)
-          splash:evaljs(js)
-          splash:runjs("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').click()")
-          wait_for_element(splash,'.s_position_list ul.item_con_list li')
-          splash:wait(1)
-          return splash:html()
-        end
-        """
+                      function check() {
+                        if(document.querySelector(selector)) {
+                          splash.resume('Element found');
+                        } else if(Date.now() >= end) {
+                          var err = 'Timeout waiting for element';
+                          splash.error(err + " " + selector);
+                        } else {
+                          setTimeout(check, 200);
+                        }
+                      }
+                      check();
+                    }
+                  ]], css, maxwait))
+                end
+                function main(splash, args)
+                  splash.images_enabled = false
+                  splash:go(args.url)
+                  wait_for_element(splash,'.s_position_list ul.item_con_list li')
+                  splash:runjs("document.querySelector('.s_position_list ul.item_con_list').innerHTML = ''")
+                  splash:runjs("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').classList.remove('pager_is_current')")
+                  splash:runjs("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').classList.add('pager_not_current')")
+                  js = string.format("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').setAttribute('page',%d)", args.pagenum)
+                  splash:evaljs(js)
+                  splash:runjs("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').click()")
+                  wait_for_element(splash,'.s_position_list ul.item_con_list li')
+                  splash:wait(1)
+                  return splash:html()
+                end
+                """
         try:
             contents = [
                 {
@@ -83,15 +88,15 @@ class LgwSpider(scrapy.Spider):
                 page_count = 30
                 for pagenum in range(page_count):
                     yield SplashRequest(content['url'],
-                        endpoint='execute',
-                        args={
-                            'lua_source': script,
-                            'wait': 1,
-                            'pagenum': pagenum + 1,
-                            'url': content['url'],
-                        },
-                        callback=self.parse,
-                        cb_kwargs=content)
+                                        endpoint='execute',
+                                        args={
+                                            'lua_source': script,
+                                            'wait': 1,
+                                            'pagenum': pagenum + 1,
+                                            'url': content['url'],
+                                        },
+                                        callback=self.parse,
+                                        cb_kwargs=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -123,25 +128,30 @@ class LgwSpider(scrapy.Spider):
 
     def parse_item(self, response, **kwargs):
         try:
-            item = zpksItem()
-            item['job'] = response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()').extract_first()
-            item['company_name'] = response.xpath('//*[@id="job_company"]/dt/a/div/h3/em/text()').extract_first()
-            item['industry'] = ''.join(response.xpath('/html/body/div[5]/div/div[1]/dd/ul//text()').extract())
-            item['location'] = ''.join(response.xpath('//*[@id="job_detail"]/dd[3]/div[1]//text()').extract())
-            item['salary'] = response.xpath('//*[@class="salary"]/text()').extract_first()
-            item['time'] = ''
-            item['website'] = '拉勾网'
-            item['link'] = kwargs['url']
-            item['type'] = '4'
-            item['source'] = '拉勾网'
-            item['content'] = ''.join(response.xpath('//*[@class="job-detail"]').extract())
-            item['education'] = ''
-            item['spider_name'] = 'lgw'
-            item['module_name'] = '拉勾网'
-            print(
-                "===========================>crawled one item" +
-                response.request.url)
-            yield item
+            if response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()'):
+                item = zpksItem()
+                item['job'] = response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()').extract_first()
+                company_name = response.xpath('//em[@class="fl-cn"]/text()').extract_first()
+                item['company_name'] = company_name.strip() if company_name else ''
+                item['industry'] = ''.join(response.xpath('//ul[@class="position-label clearfix"]/li/text()').extract())
+                location = ''.join(response.xpath('//div[@class="work_addr"]/a/text()').extract())
+                item['location'] = location.replace('查看地图', '') if location else ''
+                item['salary'] = response.xpath('//*[@class="salary"]/text()').extract_first()
+                item['time'] = datetime.date.today()
+                item['website'] = '拉勾网'
+                item['link'] = kwargs['url']
+                item['type'] = '4'
+                item['source'] = '拉勾网'
+                item['content'] = ''.join(response.xpath('//*[@class="job-detail"]').extract())
+                print(response.xpath('//dd[@class="job_request"]/h3/span[4]').extract_first())
+                education = response.xpath('//dd[@class="job_request"]/h3/span[4]/text()').extract_first()
+                item['education'] = education.replace('/','') if education else ''
+                item['spider_name'] = 'lgw'
+                item['module_name'] = '拉勾网'
+                print(
+                    "===========================>crawled one item" +
+                    response.request.url)
+                yield item
         except Exception as e:
             logging.error(
                 self.name +
