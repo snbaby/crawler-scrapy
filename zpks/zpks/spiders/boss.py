@@ -61,7 +61,7 @@ class BossSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://39.100.240.19:8050/"}
+        'SPLASH_URL': "http://localhost:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -70,7 +70,7 @@ class BossSpider(scrapy.Spider):
     def start_requests(self):
         try:
             contents = [
-                'c101020100'
+                'c101020100',
                 'c101280100',
                 'c101010100',
                 'c101280600',
@@ -136,7 +136,7 @@ class BossSpider(scrapy.Spider):
             item['source'] = 'boss直聘'
             item['content'] = ''.join(response.xpath('//*[@id="main"]/div[3]/div/div[2]/div[2]/div[2]/div').extract())
             tmp = response.xpath('//*[@id="main"]/div[1]/div/div/div[2]/p//text()').extract()
-            item['education'] = tmp[len(tmp)-1]
+            item['education'] = tmp[len(tmp)-1] if len(tmp)>0 else ''
             item['spider_name'] = 'boss'
             item['module_name'] = 'boss直聘'
             print(
