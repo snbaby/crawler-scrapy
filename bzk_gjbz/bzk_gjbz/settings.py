@@ -9,10 +9,10 @@
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'bzk_dfbz'
+BOT_NAME = 'bzk_gjbz'
 
-SPIDER_MODULES = ['bzk_dfbz.spiders']
-NEWSPIDER_MODULE = 'bzk_dfbz.spiders'
+SPIDER_MODULES = ['bzk_gjbz.spiders']
+NEWSPIDER_MODULE = 'bzk_gjbz.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'haiguanshuju (+http://www.yourdomain.com)'
@@ -94,9 +94,9 @@ AUTOTHROTTLE_ENABLED = True
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-LOG_ENABLED = True
-LOG_FILE = "spiders.log"
-LOG_LEVEL = "ERROR"
+#LOG_ENABLED = True
+#LOG_FILE = "spiders.log"
+LOG_LEVEL = "DEBUG"
 
 # MYSQL_HOST = '10.8.32.125'
 MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'

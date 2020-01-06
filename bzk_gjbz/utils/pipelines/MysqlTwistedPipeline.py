@@ -5,6 +5,7 @@ from twisted.enterprise import adbapi
 from scrapy.exceptions import DropItem
 import logging
 
+
 class MysqlTwistedPipeline(object):
 
     def __init__(self, dbpool):
@@ -42,47 +43,56 @@ class MysqlTwistedPipeline(object):
 
     def handle_error(self, failure, item, spider):
         # 处理异步插入的异常
-        logging.error("spider {} on itemm failed: {}".format(self.spider.name, str(failure)))
+        logging.error(
+            "spider {} on itemm failed: {}".format(
+                self.spider.name,
+                str(failure)))
 
     def do_insert(self, cursor, item):
         logging.info(self.spider.name + ": " + "insert into mysql........")
         try:
             sql = f'''
-                insert into `topic_info_zhaotoubiao`(
-                `title`,
-                `content`,
-                `appendix`,
-                `category`,
-                `time`,
-                `source`,
-                `website`,
-                `link`,
-                `type`,
-                `region`,
-                `appendix_name`,
-                `spider_name`,
-                `module_name`,
-                `txt`,
-                `create_time`
-                )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s, %s, %s, %s)
-        '''
+                    insert into `international_standard_library`(
+                    `name`,
+                    `code`,
+                    `status`,
+                    `committees`,
+                    `approvalDate`,
+                    `implementationDate`,
+                    `sourceWebsite`,
+                    `ics`,
+                    `pub_lang`,
+                    `pub_organization`,
+                    `replace`,
+                    `replaced`,
+                    `dept_host`,
+                    `scope`,
+                    `create_time`,
+                    `link`,
+                    `spider_name`,
+                    `module_name`
+                    )
+                    values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s,%s,%s, %s, %s, %s, %s)
+                    '''
             parm = (
-                item['title'],
-                item['content'],
-                item['appendix'],
-                item['category'],
-                item['time'],
-                item['source'],
-                item['website'],
+                item['name'],
+                item['code'],
+                item['status'],
+                item['committees'],
+                item['approvalDate'],
+                item['implementationDate'],
+                item['sourceWebsite'],
+                item['ics'],
+                item['pub_lang'],
+                item['pub_organization'],
+                item['replace'],
+                item['replaced'],
+                item['dept_host'],
+                item['scope'],
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                 item['link'],
-                item['type'],
-                item['region'],
-                item['appendix_name'],
                 item['spider_name'],
-                item['module_name'],
-                item['txt'],
-                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                item['module_name']
             )
             cursor.execute(sql, parm)
             logging.info(self.spider.name + ": " + "insert into mysql success")
