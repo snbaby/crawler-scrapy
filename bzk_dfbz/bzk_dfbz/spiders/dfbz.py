@@ -36,33 +36,6 @@ class DfbzSpider(scrapy.Spider):
 
     def start_requests(self):
         script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
             function main(splash, args)
               splash:go(args.url)
               splash:runjs("document.querySelector('.load-more').click()")
@@ -114,7 +87,6 @@ class DfbzSpider(scrapy.Spider):
             for href in response.css('.panel-body a::attr(href)').extract():
                 url = response.urljoin(href)
                 yield SplashRequest(url, callback=self.parse, cb_kwargs={'url': url})
-                return
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -126,7 +98,7 @@ class DfbzSpider(scrapy.Spider):
               splash:wait(1)
               js = string.format("document.querySelector('#gblist > table > tbody > tr:nth-child(%d) > td:nth-child(4) > a').click()", args.num)
               splash:evaljs(js)
-              splash:wait(1)
+              splash:wait(2)
               return splash:html()
             end
             """
