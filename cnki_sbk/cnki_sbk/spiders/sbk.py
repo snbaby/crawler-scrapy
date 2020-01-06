@@ -61,6 +61,7 @@ class SbkSpider(scrapy.Spider):
     def parse_result(self, response):
         page_script = """
                 function main(splash, args)
+                    splash:init_cookies(splash.args.cookies)
                     assert(splash:go(args.url))
                     assert(splash:wait(1))
                     splash:runjs("document.querySelector('#btnSearch').click();")
@@ -69,12 +70,26 @@ class SbkSpider(scrapy.Spider):
                     splash:runjs(js_string)
                     splash:wait(5)
                     splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
-                    return splash:evaljs("iframe()")
+                    
+                    
+                    splash:runjs("document.getElementById('iframeResult').contentDocument.body.getElementsByClassName('fz14')[0].click()")
+                    splash:wait(3)
+                    local ret = splash:evaljs("document.body.innerHTML")
+                    
+                    local iframe_result = splash:evaljs("iframe()")
+                    local entries = splash:history()
+                    local last_response = entries[#entries].response
+                    return {
+                        cookies = splash:get_cookies(),
+                        html = iframe_result,
+                        ret = ret,
+                        headers = last_response.headers,
+                    }
                 end
                 """
         page_num = self.parse_pagenum(response)
         base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
-        for i in range(1, 3):
+        for i in range(1, 2):
             new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CDMD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
@@ -85,6 +100,7 @@ class SbkSpider(scrapy.Spider):
                                     'new_url':new_url,
                                     'iframes': 1,
                                 },
+                                session_id="foo",
                                 callback=self.parse)
 
     def parse_pagenum(self, response):
@@ -101,6 +117,37 @@ class SbkSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response, **kwargs):
+        detail_page_script = """
+                function main(splash, args)
+                    splash:init_cookies(splash.args.cookies)
+                    assert(splash:go(args.url))
+                    assert(splash:wait(1))
+                    return {
+                        cookies = splash:get_cookies(),
+                        html = splash:html(),
+                    }
+                end
+                """
         logging.info("result=" + response.text)
-        
+        logging.info("cookies=" + json.dumps(response.data['cookies']))
+        logging.info("ret=" + response.data['ret'])
+        for item in response.css(".GridTableContent tr:not(.GTContentTitle)"):
+            paper_url = item.css(".fz14::attr(href)").get()
+            paper_url = "http://kns.cnki.net" + paper_url
+            yield SplashRequest(paper_url,
+                                endpoint='execute',
+                                args={
+                                    'url': paper_url,
+                                    'lua_source': detail_page_script,
+                                    'wait': 1,
+                                    'iframes': 1,
+                                },
+                                session_id="foo",
+                                headers=response.data['headers'],
+                                callback=self.parse_end)
+            break
+
+    def parse_end(self, response):
+        with open('paper_detail.html', 'w+') as out:
+            out.write(response.body.decode('utf-8'))
 
