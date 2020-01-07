@@ -9,10 +9,10 @@
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'xtcp'
+BOT_NAME = 'bzk_gwbz'
 
-SPIDER_MODULES = ['xtcp.spiders']
-NEWSPIDER_MODULE = 'xtcp.spiders'
+SPIDER_MODULES = ['bzk_gwbz.spiders']
+NEWSPIDER_MODULE = 'bzk_gwbz.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'haiguanshuju (+http://www.yourdomain.com)'
@@ -109,7 +109,7 @@ MYSQL_DB = 'python'
 MYSQL_PORT = 3306
 MYSQL_CHRSET = 'utf8'
 
-SPLASH_URL = "http://47.106.239.73:8050/"
+SPLASH_URL = "http://39.100.240.19:8050/"
 
 # REDIS_HOST = '10.8.32.123'
 # REDIS_HOST = '127.0.0.1'

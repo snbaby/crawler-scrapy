@@ -45,20 +45,6 @@ class SbkSpider(scrapy.Spider):
 
         try:
             url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
-            # json_body = {
-            #     'js_source': "document.querySelector('#btnSearch').click();",
-            #     'url': url,
-            #     'console': 1,
-            #     'iframes': 1,
-            #     'png': 1,
-            #     'html': 1,
-            #     'wait': 3
-            # }
-            # yield scrapy.Request("http://47.106.239.73:8050/render.json",
-            #                      method='POST',
-            #                      headers={'Content-Type': 'application/json'},
-            #                      body=json.dumps(json_body),
-            #                      callback=self.parse_result)
             yield SplashRequest(url,
                                 endpoint='execute',
                                 args={
@@ -73,80 +59,95 @@ class SbkSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_result(self, response):
-        logging.info("result============{}".format(response.text))
+        page_script = """
+                function main(splash, args)
+                    splash:init_cookies(splash.args.cookies)
+                    assert(splash:go(args.url))
+                    assert(splash:wait(1))
+                    splash:runjs("document.querySelector('#btnSearch').click();")
+                    splash:wait(5)
+                    js_string= "document.getElementById('iframeResult').src='" .. args.new_url .. "'"
+                    splash:runjs(js_string)
+                    splash:wait(5)
+                    splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
+                    
+                    
+                    splash:runjs("document.getElementById('iframeResult').contentDocument.body.getElementsByClassName('fz14')[0].click()")
+                    splash:wait(3)
+                    local ret = splash:evaljs("document.body.innerHTML")
+                    
+                    local iframe_result = splash:evaljs("iframe()")
+                    local entries = splash:history()
+                    local last_response = entries[#entries].response
+                    return {
+                        cookies = splash:get_cookies(),
+                        html = iframe_result,
+                        ret = ret,
+                        headers = last_response.headers,
+                    }
+                end
+                """
+        page_num = self.parse_pagenum(response)
+        base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
+        for i in range(1, 2):
+            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CDMD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
+            yield SplashRequest(base_url,
+                                endpoint='execute',
+                                args={
+                                    'lua_source': page_script,
+                                    'wait': 1,
+                                    'url': base_url,
+                                    'new_url':new_url,
+                                    'iframes': 1,
+                                },
+                                session_id="foo",
+                                callback=self.parse)
 
-    def parse_page(self, response, **kwargs):
-        page_count = self.parse_pagenum(response, kwargs)
-        try:
-            for content in contents:
-                for pagenum in range(page_count):
-                    data = {
-                        "total": 0,
-                        "per_page": 20,
-                        "page": pagenum + 1,
-                        "type": 1,
-                        "scope": "",
-                        "sub_scope": "",
-                        "round": [],
-                        "valuation": [],
-                        "valuations": "",
-                        "ipo_platform": "",
-                        "equity_ratio": "",
-                        "status": "",
-                        "prov": "",
-                        "city": [],
-                        "time": [],
-                        "selected": "",
-                        "location": "",
-                        "hot_city": "",
-                        "currency": [],
-                        "keyword": ""}
-                    yield scrapy.FormRequest(content['url'], cb_kwargs=content, body=json.dumps(data), method='POST', headers=header, callback=self.parse, dont_filter=True)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return 1
+                result_cnt = response.css(".pagerTitleCell::text").extract_first()
+                result_cnt = int(result_cnt.split()[1].replace(",", ""))
+                return int((result_cnt+19)/20)
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
-        investevents = json.loads(response.text)['data']['data']
-        for investevent in investevents:
-            try:
-                item = cnki_sbkItems()
-                item['title'] = investevent['invse_title']
-                item['financers'] = investevent['name']
-                investors = ''
-                for investor in investevent['investor']:
-                    investors = investors + investor['name'] + ','
-                item['investors'] = investors
-                item['amount'] = investevent['money']
-                item['rotation'] = investevent['round']
-                item['time'] = str(investevent['year'])+'-'+str(investevent['month'])+'-'+str(investevent['day'])
-                item['industry'] = investevent['com_scope']
-                item['introduction'] = investevent['com_des']
-                item['website'] = 'IT桔子'
-                item['link'] = 'https://www.itjuzi.com/investevent/'+str(investevent['id'])
-                item['content'] = investevent['invse_des']
-                item['spider_name'] = 'rz'
-                item['module_name'] = 'IT桔子-融资'
-                print(
-                    "===========================>crawled one item" +
-                    response.request.url)
-            except Exception as e:
-                logging.error(
-                    self.name +
-                    " in parse_item: url=" +
-                    response.request.url +
-                    ", exception=" +
-                    e.__str__())
-                logging.exception(e)
-            yield item
+        detail_page_script = """
+                function main(splash, args)
+                    splash:init_cookies(splash.args.cookies)
+                    assert(splash:go(args.url))
+                    assert(splash:wait(1))
+                    return {
+                        cookies = splash:get_cookies(),
+                        html = splash:html(),
+                    }
+                end
+                """
+        logging.info("result=" + response.text)
+        logging.info("cookies=" + json.dumps(response.data['cookies']))
+        logging.info("ret=" + response.data['ret'])
+        for item in response.css(".GridTableContent tr:not(.GTContentTitle)"):
+            paper_url = item.css(".fz14::attr(href)").get()
+            paper_url = "http://kns.cnki.net" + paper_url
+            yield SplashRequest(paper_url,
+                                endpoint='execute',
+                                args={
+                                    'url': paper_url,
+                                    'lua_source': detail_page_script,
+                                    'wait': 1,
+                                    'iframes': 1,
+                                },
+                                session_id="foo",
+                                headers=response.data['headers'],
+                                callback=self.parse_end)
+            break
+
+    def parse_end(self, response):
+        with open('paper_detail.html', 'w+') as out:
+            out.write(response.body.decode('utf-8'))
+
