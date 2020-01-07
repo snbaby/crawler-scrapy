@@ -48,41 +48,47 @@ class MysqlTwistedPipeline(object):
         logging.info(self.spider.name + ": " + "insert into mysql........")
         try:
             sql = f'''
-                insert into `topic_info_zhaotoubiao`(
-                `title`,
-                `content`,
-                `appendix`,
-                `category`,
-                `time`,
-                `source`,
-                `website`,
+                insert into `abroad_standard_library`(
+                `name`,
+                `code`,
+                `status`,
+                `committees`,
+                `approvalDate`,
+                `implementationDate`,
+                `sourceWebsite`,
+                `ics`,
+                `pub_lang`,
+                `pub_organization`,
+                `replace`,
+                `replaced`,
+                `dept_host`,
+                `scope`,
+                `create_time`,
                 `link`,
-                `type`,
-                `region`,
-                `appendix_name`,
                 `spider_name`,
-                `module_name`,
-                `txt`,
-                `create_time`
+                `module_name`
                 )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s, %s, %s, %s)
-        '''
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s,%s,%s, %s, %s, %s, %s)
+                '''
             parm = (
-                item['title'],
-                item['content'],
-                item['appendix'],
-                item['category'],
-                item['time'],
-                item['source'],
-                item['website'],
+                item['name'],
+                item['code'],
+                item['status'],
+                item['committees'],
+                item['approvalDate'],
+                item['implementationDate'],
+                item['sourceWebsite'],
+                item['ics'],
+                item['pub_lang'],
+                item['pub_organization'],
+                item['replace'],
+                item['replaced'],
+                item['dept_host'],
+                item['scope'],
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                 item['link'],
-                item['type'],
-                item['region'],
-                item['appendix_name'],
                 item['spider_name'],
-                item['module_name'],
-                item['txt'],
-                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                item['module_name']
             )
             cursor.execute(sql, parm)
             logging.info(self.spider.name + ": " + "insert into mysql success")
