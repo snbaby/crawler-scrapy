@@ -98,7 +98,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             invest_still = response.xpath('//div[@class="productgk"]/table/tr[4]/td[4]/i/text()').extract_first()
             pro_type = response.xpath('//div[@class="productgk"]/table/tr[2]/td[2]/text()').extract_first()
             money_invest = response.xpath('//div[@class="productgk"]/table/tr[3]/td[2]/text()').extract_first()
-            pre_year_income = response.xpath('//div[@class="productgk"]/table/tr[6]/td[4]/text()').extract_first()
+            pre_year_income = response.xpath('//div[@class="productgk"]/table/tr[6]/td[4]/i/text()').extract_first()
             income_type = response.xpath('//div[@class="productgk"]/table/tr[3]/td[4]/text()').extract_first()
             pay_method = response.xpath('//div[@class="productgk"]/table/tr[5]/td[4]/text()').extract_first()
             pro_state = response.xpath('//em[@class="saleing"]/text()').extract_first()

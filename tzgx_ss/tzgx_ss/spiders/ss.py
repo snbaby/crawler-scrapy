@@ -5,7 +5,7 @@ import json
 import time
 
 from tzgx_ss.items import tzgx_ssItem
-
+from utils.tools.attachment import get_times
 
 class SsSpider(scrapy.Spider):
     name = 'ss'
@@ -127,19 +127,20 @@ class SsSpider(scrapy.Spider):
                 item['investors'] = ''
                 item['time'] = str(investevent['year'])+'-'+str(investevent['month'])+'-'+str(investevent['day'])
                 item['price'] =''
-                item['location'] = investevent['invse_round_name']
+                item['location'] = ''
                 item['circulation'] = ''
                 item['code'] = ''
                 item['supported_vc_pe'] = ''
                 item['website'] = 'IT桔子'
                 item['link'] = 'https://www.itjuzi.com/investevent/'+str(investevent['id'])
-                item['rotation'] = ''
+                item['rotation'] = investevent['invse_round_name']
                 item['inv_money'] = investevent['money']
                 item['equity_ratio'] = '未透露'
                 item['content'] = investevent['invse_des']
                 item['spider_name'] = 'ss'
                 item['module_name'] = 'IT桔子-上市'
                 url = 'https://www.itjuzi.com/api/investevents/'+str(investevent['id'])
+                item['time'] = get_times(item['time'])
                 yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=item, dont_filter=True)
             except Exception as e:
                 logging.error(
