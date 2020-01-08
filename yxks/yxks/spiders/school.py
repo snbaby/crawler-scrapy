@@ -78,11 +78,11 @@ class schoolSpider(scrapy.Spider):
             school_item['website'] = '中国教育在线'
             school_item['major'] = ''
             school_item['sourceWebsite'] = school['site']
-            school_item['link'] = school['name']
+            school_item['link'] = 'https://gkcx.eol.cn/school/' + str(content['school_id'])
             school_item['spider_name'] = 'school'
             school_item['module_name'] = '学校'
             school_item['survey'] = content['content']
-            school['insert_tpye'] = 'school'
+            school_item['insert_tpye'] = 'school'
             print(
                 "===========================>crawled one item:" + school_item['name'])
             yield school_item
