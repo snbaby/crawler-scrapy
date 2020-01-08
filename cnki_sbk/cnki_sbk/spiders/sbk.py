@@ -125,13 +125,24 @@ class SbkSpider(scrapy.Spider):
                 """
         logging.info("result=" + response.text)
         logging.info("cookies=" + json.dumps(response.data['cookies']))
-        for item in response.css(".GridTableContent tr:not(.GTContentTitle)"):
-            paper_url = item.css(".fz14::attr(href)").get()
+
+        for record in response.css(".GridTableContent tr:not(.GTContentTitle)"):
+
+            paper_url = record.css(".fz14::attr(href)").get()
             paper_url = "http://kns.cnki.net" + paper_url
             paper_url = paper_url.replace("/kns/", "/KCMS/")
 
-            item  = cnki_sbkItem()
-            item[]
+            item  = {}
+            item['title_cn'] = record.css(".fz14::text").get()
+            item['author'] = record.css("td.author_flag a::text").extract_first().strip()
+            item['degree'] = record.css("td:nth-child(5)::text").extract_first().strip()
+            item['degree_award_company'] = record.css("td:nth-child(4) a::text").extract_first().strip()
+            item['degree_award_year'] = record.css("td:nth-child(6)::text").extract_first().strip()
+            item['website'] = "中国知网-博硕士"
+            item['link'] = paper_url
+            item['spider_name'] = 'sbk'
+            item['module_name'] = '中国知网-硕博库'
+
             yield SplashRequest(paper_url,
                                 endpoint='execute',
                                 args={
@@ -142,9 +153,15 @@ class SbkSpider(scrapy.Spider):
                                 },
                                 session_id="foo",
                                 headers=response.data['headers'],
-                                callback=self.parse_end, kwargs=item)
+                                callback=self.parse_end, cb_kwargs=item)
             break
 
     def parse_end(self, response, **kwargs):
-
+        sbkItem = cnki_sbkItem()
+        logging.info(response.text)
+        logging.info("intro=" + response.css("span#ChDivSummary::text").get())
+        sbkItem['intro'] = response.css("span#ChDivSummary::text").get()
+        sbkItem['tutor'] = response.css("#mainArea > div.wxmain > div.wxInfo > div.wxBaseinfo > p:nth-child(5)::text").get()
+        sbkItem['type'] = response.css("#mainArea > div.wxmain > div.wxInfo > div.wxBaseinfo > p:nth-child(6)::text").get()
+        yield sbkItem
 
