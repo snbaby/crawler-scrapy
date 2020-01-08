@@ -48,41 +48,63 @@ class MysqlTwistedPipeline(object):
         logging.info(self.spider.name + ": " + "insert into mysql........")
         try:
             sql = f'''
-                insert into `topic_info_zhaotoubiao`(
-                `title`,
-                `content`,
-                `appendix`,
-                `category`,
-                `time`,
-                `source`,
-                `website`,
-                `link`,
-                `type`,
-                `region`,
-                `appendix_name`,
-                `spider_name`,
-                `module_name`,
-                `txt`,
-                `create_time`
-                )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s, %s, %s, %s)
-        '''
+                    insert into `country_standard_library`(
+                    `name`,
+                    `code`,
+                    `status`,
+                    `xiazai`,
+                    `committees`,
+                    `approvalDate`,
+                    `implementationDate`,
+                    `sourceWebsite`,
+                    `ics`,
+                    `ccs`,
+                    `en_name`,
+                    `type`,
+                    `replace`,
+                    `caibiao`,
+                    `caibiao_name`,
+                    `caibiao_level`,
+                    `caibiao_type`,
+                    `dept_host`,
+                    `dept_pub`,
+                    `publish_no`,
+                    `remark`,
+                    `create_time`,
+                    `link`,
+                    `appendix_name`,
+                    `spider_name`,
+                    `module_name`
+                    )
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s,%s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s,%s,%s)
+            '''
             parm = (
-                item['title'],
-                item['content'],
-                item['appendix'],
-                item['category'],
-                item['time'],
-                item['source'],
-                item['website'],
-                item['link'],
+                item['name'],
+                item['code'],
+                item['status'],
+                item['xiazai'],
+                item['committees'],
+                item['approvalDate'],
+                item['implementationDate'],
+                item['sourceWebsite'],
+                item['ics'],
+                item['ccs'],
+                item['en_name'],
                 item['type'],
-                item['region'],
+                item['replace'],
+                item['caibiao'],
+                item['caibiao_name'],
+                item['caibiao_level'],
+                item['caibiao_type'],
+                item['dept_host'],
+                item['dept_pub'],
+                item['publish_no'],
+                item['remark'],
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                item['link'],
                 item['appendix_name'],
                 item['spider_name'],
-                item['module_name'],
-                item['txt'],
-                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                item['module_name']
             )
             cursor.execute(sql, parm)
             logging.info(self.spider.name + ": " + "insert into mysql success")

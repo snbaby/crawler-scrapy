@@ -112,7 +112,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['spider_name'] = 'henan_szfl'
             item['txt'] = "".join(response.xpath('//div[@id="content"]//text()').extract())
             item['appendix_name'] = appendix_name
-            item['link'] = response.request.url
+            item['link'] = kwargs['link']
             item['appendix'] = appendix
             item['time'] = get_times(item['time'])
             print(

@@ -9,10 +9,10 @@
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'bzk_dfbz'
+BOT_NAME = 'zfcgw'
 
-SPIDER_MODULES = ['bzk_dfbz.spiders']
-NEWSPIDER_MODULE = 'bzk_dfbz.spiders'
+SPIDER_MODULES = ['zfcgw.spiders']
+NEWSPIDER_MODULE = 'zfcgw.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'haiguanshuju (+http://www.yourdomain.com)'
@@ -98,18 +98,19 @@ LOG_ENABLED = True
 LOG_FILE = "spiders.log"
 LOG_LEVEL = "ERROR"
 
-# MYSQL_HOST = '10.8.32.125'
-MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'
+
+MYSQL_HOST = '10.8.32.125'
+# MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'
 # MYSQL_HOST = '192.168.43.201'
 MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'Liqin1988'
-# MYSQL_PASSWORD ='yeyang112114'
+#MYSQL_PASSWORD = 'Liqin1988'
+MYSQL_PASSWORD ='Admin123!'
 
-MYSQL_DB = 'python'
+MYSQL_DB = 'engineering-brain'
 MYSQL_PORT = 3306
 MYSQL_CHRSET = 'utf8'
 
-SPLASH_URL = "http://39.100.240.19:8050/"
+SPLASH_URL = "http://localhost:8050/"
 
 # REDIS_HOST = '10.8.32.123'
 # REDIS_HOST = '127.0.0.1'
