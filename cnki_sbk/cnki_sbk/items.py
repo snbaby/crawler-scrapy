@@ -12,7 +12,7 @@ from scrapy.loader.processors import TakeFirst, MapCompose, Join
 
 
 class cnki_sbkItem(scrapy.Item):
-    title = scrapy.Field()
+    title_cn = scrapy.Field()
     financers = scrapy.Field()
     investors = scrapy.Field()
     amount = scrapy.Field()
