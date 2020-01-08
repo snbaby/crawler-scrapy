@@ -59,6 +59,9 @@ class SbkSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_result(self, response):
+        """splash:runjs("document.getElementById('iframeResult').contentDocument.body.getElementsByClassName('fz14')[0].click()")
+                    splash:wait(3)
+                    local ret = splash:evaljs("document.body.innerHTML")"""
         page_script = """
                 function main(splash, args)
                     splash:init_cookies(splash.args.cookies)
@@ -70,11 +73,7 @@ class SbkSpider(scrapy.Spider):
                     splash:runjs(js_string)
                     splash:wait(5)
                     splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
-                    
-                    
-                    splash:runjs("document.getElementById('iframeResult').contentDocument.body.getElementsByClassName('fz14')[0].click()")
-                    splash:wait(3)
-                    local ret = splash:evaljs("document.body.innerHTML")
+
                     
                     local iframe_result = splash:evaljs("iframe()")
                     local entries = splash:history()
@@ -82,7 +81,6 @@ class SbkSpider(scrapy.Spider):
                     return {
                         cookies = splash:get_cookies(),
                         html = iframe_result,
-                        ret = ret,
                         headers = last_response.headers,
                     }
                 end
@@ -130,10 +128,10 @@ class SbkSpider(scrapy.Spider):
                 """
         logging.info("result=" + response.text)
         logging.info("cookies=" + json.dumps(response.data['cookies']))
-        logging.info("ret=" + response.data['ret'])
         for item in response.css(".GridTableContent tr:not(.GTContentTitle)"):
             paper_url = item.css(".fz14::attr(href)").get()
             paper_url = "http://kns.cnki.net" + paper_url
+            paper_url = paper_url.replace("/kns/", "/KCMS/")
             yield SplashRequest(paper_url,
                                 endpoint='execute',
                                 args={
