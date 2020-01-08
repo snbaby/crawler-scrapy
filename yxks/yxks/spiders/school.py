@@ -157,7 +157,7 @@ class schoolSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            num = 1
+            num = 144
             for i in range(num):
                 url = 'https://api.eol.cn/gkcx/api/?access_token=&admissions=&central=&department=&dual_class=&f211=&f985=&is_dual_class=&keyword=&page=' + str(i) + '&province_id=&request_type=1&school_type=&signsafe=&size=20&sort=view_total&type=&uri=apigkcx/api/school/hotlists'
                 print(url)
