@@ -59,9 +59,6 @@ class SbkSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_result(self, response):
-        """splash:runjs("document.getElementById('iframeResult').contentDocument.body.getElementsByClassName('fz14')[0].click()")
-                    splash:wait(3)
-                    local ret = splash:evaljs("document.body.innerHTML")"""
         page_script = """
                 function main(splash, args)
                     splash:init_cookies(splash.args.cookies)
@@ -132,6 +129,9 @@ class SbkSpider(scrapy.Spider):
             paper_url = item.css(".fz14::attr(href)").get()
             paper_url = "http://kns.cnki.net" + paper_url
             paper_url = paper_url.replace("/kns/", "/KCMS/")
+
+            item  = cnki_sbkItem()
+            item[]
             yield SplashRequest(paper_url,
                                 endpoint='execute',
                                 args={
@@ -142,10 +142,9 @@ class SbkSpider(scrapy.Spider):
                                 },
                                 session_id="foo",
                                 headers=response.data['headers'],
-                                callback=self.parse_end)
+                                callback=self.parse_end, kwargs=item)
             break
 
-    def parse_end(self, response):
-        with open('paper_detail.html', 'w+') as out:
-            out.write(response.body.decode('utf-8'))
+    def parse_end(self, response, **kwargs):
+
 
