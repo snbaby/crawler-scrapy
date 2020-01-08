@@ -157,7 +157,7 @@ class schoolSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            num = 144
+            num = 1
             for i in range(num):
                 url = 'https://api.eol.cn/gkcx/api/?access_token=&admissions=&central=&department=&dual_class=&f211=&f985=&is_dual_class=&keyword=&page=' + str(i) + '&province_id=&request_type=1&school_type=&signsafe=&size=20&sort=view_total&type=&uri=apigkcx/api/school/hotlists'
                 print(url)
@@ -205,14 +205,14 @@ class schoolSpider(scrapy.Spider):
             school_item['module_name'] = '学校'
             school_item['survey'] = content['content']
             school_item['insert_tpye'] = 'school'
-            # print(
-            #     "===========================>crawled one item:" + school_item['name'])
-            # yield school_item
-            # schoolRpecialtiesUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/pc_special.json'
-            # yield scrapy.Request(schoolRpecialtiesUrl, callback=self.parse_specialties, dont_filter=True, meta={'name':school['name']})
+            print(
+                "===========================>crawled one item:" + school_item['name'])
+            yield school_item
+            schoolRpecialtiesUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/pc_special.json'
+            yield scrapy.Request(schoolRpecialtiesUrl, callback=self.parse_specialties, dont_filter=True, meta={'name':school['name']})
 
-            # planUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/dic/specialplan.json'
-            # yield scrapy.Request(planUrl, callback=self.parse_plan, dont_filter=True, meta={'name':content['school_id']})
+            planUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/dic/specialplan.json'
+            yield scrapy.Request(planUrl, callback=self.parse_plan, dont_filter=True, meta={'name':content['school_id']})
 
             employmentUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/pc_jobdetail.json'
             yield scrapy.Request(employmentUrl, callback=self.parse_employment, dont_filter=True,
@@ -312,8 +312,8 @@ class schoolSpider(scrapy.Spider):
             for employmentLocal in employmentLocals:
                 item = employmentLocalLibraryItem()
                 item['name'] = response.meta['name']
-                item['local'] = employmentLocal['province'] if ('province' in employmentLocal) else ''
-                item['proportion'] = employmentLocal['rate']  if ('rate' in employmentLocal) else ''
+                item['local'] = employmentLocals[str(employmentLocal)]['province']
+                item['proportion'] = employmentLocals[str(employmentLocal)]['rate']
                 item['website'] = ''
                 item['link'] = ''
                 item['spider_name'] = 'jylx'
