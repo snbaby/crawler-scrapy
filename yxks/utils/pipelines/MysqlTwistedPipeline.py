@@ -92,19 +92,15 @@ class MysqlTwistedPipeline(object):
                     insert into `specialties_in_schools`(
                         `school_name`,
                         `major`,
-                        `website`,
-                        `link`,
                         `create_time`,
                         `spider_name`,
                         `module_name`
                     )
-                    values (%s,%s, %s, %s, %s, %s,%s)
+                    values (%s,%s, %s, %s, %s)
                 '''
                 parm = (
                     item['school_name'],
                     item['major'],
-                    item['website'],
-                    item['link'],
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                     item['spider_name'],
                     item['module_name']
@@ -123,13 +119,11 @@ class MysqlTwistedPipeline(object):
                         `particularYear`,
                         `batch`,
                         `planRecruit`,
-                        `website`,
-                        `link`,
                         `create_time`,
                         `spider_name`,
                         `module_name`
                     )
-                    values (%s,%s, %s, %s, %s, %s,%s,%s,%s, %s, %s, %s, %s,%s)
+                    values (%s,%s, %s, %s, %s, %s,%s,%s,%s, %s, %s, %s)
                 '''
                 parm = (
                     item['name'],
@@ -141,8 +135,6 @@ class MysqlTwistedPipeline(object):
                     item['particularYear'],
                     item['batch'],
                     item['planRecruit'],
-                    item['website'],
-                    item['link'],
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                     item['spider_name'],
                     item['module_name']
@@ -158,13 +150,11 @@ class MysqlTwistedPipeline(object):
                         `RateOfEmployment`,
                         `entrance`,
                         `goingAbroad`,
-                        `website`,
-                        `link`,
                         `create_time`,
                         `spider_name`,
                         `module_name`
                     )
-                    values (%s,%s, %s, %s, %s, %s,%s,%s,%s, %s, %s)
+                    values (%s,%s, %s, %s, %s, %s,%s,%s,%s)
                 '''
                 parm = (
                     item['name'],
@@ -173,8 +163,6 @@ class MysqlTwistedPipeline(object):
                     item['RateOfEmployment'],
                     item['entrance'],
                     item['goingAbroad'],
-                    item['website'],
-                    item['link'],
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                     item['spider_name'],
                     item['module_name']
@@ -187,20 +175,16 @@ class MysqlTwistedPipeline(object):
                         `name`,
                         `local`,
                         `proportion`,
-                        `website`,
-                        `link`,
                         `create_time`,
                         `spider_name`,
                         `module_name`
                     )
-                    values (%s,%s, %s, %s, %s, %s,%s,%s)
+                    values (%s,%s, %s, %s, %s, %s)
                 '''
                 parm = (
                     item['name'],
                     item['local'],
                     item['proportion'],
-                    item['website'],
-                    item['link'],
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                     item['spider_name'],
                     item['module_name']
