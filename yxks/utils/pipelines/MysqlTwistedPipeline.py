@@ -64,7 +64,7 @@ class MysqlTwistedPipeline(object):
                         `link`,
                         `create_time`,
                         `spider_name`,
-                        `module_name`,
+                        `module_name`
                     )
                     values (%s,%s, %s, %s, %s, %s,%s, %s, %s,%s,%s, %s, %s, %s, %s)
                 '''
@@ -96,13 +96,109 @@ class MysqlTwistedPipeline(object):
                         `link`,
                         `create_time`,
                         `spider_name`,
-                        `module_name`,
+                        `module_name`
                     )
                     values (%s,%s, %s, %s, %s, %s,%s)
                 '''
                 parm = (
                     item['school_name'],
                     item['major'],
+                    item['website'],
+                    item['link'],
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                    item['spider_name'],
+                    item['module_name']
+                )
+                cursor.execute(sql, parm)
+                logging.info(self.spider.name + ": " + "insert into mysql success")
+            elif item['insert_tpye'] == 'zhaosheng':
+                sql = f'''
+                    insert into `recruit_plan_library`(
+                        `name`,
+                        `major`,
+                        `secondLevel`,
+                        `subject`,
+                        `local`,
+                        `majorType`,
+                        `particularYear`,
+                        `batch`,
+                        `planRecruit`,
+                        `website`,
+                        `link`,
+                        `create_time`,
+                        `spider_name`,
+                        `module_name`
+                    )
+                    values (%s,%s, %s, %s, %s, %s,%s,%s,%s, %s, %s, %s, %s,%s)
+                '''
+                parm = (
+                    item['name'],
+                    item['major'],
+                    item['secondLevel'],
+                    item['subject'],
+                    item['local'],
+                    item['majorType'],
+                    item['particularYear'],
+                    item['batch'],
+                    item['planRecruit'],
+                    item['website'],
+                    item['link'],
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                    item['spider_name'],
+                    item['module_name']
+                )
+                cursor.execute(sql, parm)
+                logging.info(self.spider.name + ": " + "insert into mysql success")
+            elif item['insert_tpye'] == 'employment':
+                sql = f'''
+                    insert into `school_employment_library`(
+                        `name`,
+                        `maleRatio`,
+                        `womanRatio`,
+                        `RateOfEmployment`,
+                        `entrance`,
+                        `goingAbroad`,
+                        `website`,
+                        `link`,
+                        `create_time`,
+                        `spider_name`,
+                        `module_name`
+                    )
+                    values (%s,%s, %s, %s, %s, %s,%s,%s,%s, %s, %s)
+                '''
+                parm = (
+                    item['name'],
+                    item['maleRatio'],
+                    item['womanRatio'],
+                    item['RateOfEmployment'],
+                    item['entrance'],
+                    item['goingAbroad'],
+                    item['website'],
+                    item['link'],
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                    item['spider_name'],
+                    item['module_name']
+                )
+                cursor.execute(sql, parm)
+                logging.info(self.spider.name + ": " + "insert into mysql success")
+            elif item['insert_tpye'] == 'employment_local':
+                sql = f'''
+                    insert into `employment_local_library`(
+                        `name`,
+                        `local`,
+                        `proportion`,
+                        `website`,
+                        `link`,
+                        `create_time`,
+                        `spider_name`,
+                        `module_name`
+                    )
+                    values (%s,%s, %s, %s, %s, %s,%s,%s)
+                '''
+                parm = (
+                    item['name'],
+                    item['local'],
+                    item['proportion'],
                     item['website'],
                     item['link'],
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
