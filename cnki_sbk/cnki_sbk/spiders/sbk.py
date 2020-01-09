@@ -84,7 +84,8 @@ class SbkSpider(scrapy.Spider):
                 """
         page_num = self.parse_pagenum(response)
         base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
-        for i in range(1, 2):
+        # 网站最大支持爬取300页内容
+        for i in range(1, 300+1):
             new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CDMD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
@@ -150,7 +151,6 @@ class SbkSpider(scrapy.Spider):
                                 session_id="foo",
                                 headers=response.data['headers'],
                                 callback=self.parse_end, cb_kwargs=item)
-            break
 
     def parse_end(self, response, **kwargs):
         sbkItem = cnki_sbkItem()
