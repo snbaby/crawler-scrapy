@@ -48,7 +48,7 @@ class MysqlTwistedPipeline(object):
         logging.info(self.spider.name + ": " + "insert into mysql........")
         try:
             sql = f'''
-                insert into `topic_info_touziguanxi_tzsj`(
+                insert into `topic_info_zscq_thurber_thesis`(
                     `title_cn`,
                     `author`,
                     `degree`,

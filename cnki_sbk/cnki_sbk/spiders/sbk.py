@@ -123,11 +123,7 @@ class SbkSpider(scrapy.Spider):
                     }
                 end
                 """
-        logging.info("result=" + response.text)
-        logging.info("cookies=" + json.dumps(response.data['cookies']))
-
         for record in response.css(".GridTableContent tr:not(.GTContentTitle)"):
-
             paper_url = record.css(".fz14::attr(href)").get()
             paper_url = "http://kns.cnki.net" + paper_url
             paper_url = paper_url.replace("/kns/", "/KCMS/")
