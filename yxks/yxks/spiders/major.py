@@ -150,5 +150,6 @@ class schoolSpider(scrapy.Spider):
                 school_item['colleges_name'] = school['name']
                 school_item['spider_name'] = 'ksyx'
                 school_item['module_name'] = '开设院校'
+                school_item['insert_tpye'] = 'school_in_major'
                 yield school_item
 
