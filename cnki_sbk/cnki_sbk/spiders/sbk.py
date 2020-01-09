@@ -158,10 +158,18 @@ class SbkSpider(scrapy.Spider):
 
     def parse_end(self, response, **kwargs):
         sbkItem = cnki_sbkItem()
-        logging.info(response.text)
-        logging.info("intro=" + response.css("span#ChDivSummary::text").get())
-        sbkItem['intro'] = response.css("span#ChDivSummary::text").get()
-        sbkItem['tutor'] = response.css("#mainArea > div.wxmain > div.wxInfo > div.wxBaseinfo > p:nth-child(5)::text").get()
-        sbkItem['type'] = response.css("#mainArea > div.wxmain > div.wxInfo > div.wxBaseinfo > p:nth-child(6)::text").get()
+        sbkItem['title_cn'] = kwargs['title_cn']
+        sbkItem['author'] = kwargs['author']
+        sbkItem['degree'] = kwargs['degree']
+        sbkItem['degree_award_company'] = kwargs['degree_award_company']
+        sbkItem['degree_award_year'] = kwargs['degree_award_year']
+        sbkItem['website'] = kwargs['website']
+        sbkItem['link'] = kwargs['link']
+        sbkItem['spider_name'] = kwargs['spider_name']
+        sbkItem['module_name'] = kwargs['module_name']
+
+        sbkItem['intro'] = response.css("div.wxBaseinfo span#ChDivSummary::text").get("").strip()
+        sbkItem['tutor'] = response.css("label#catalog_TUTOR")[0].xpath('following-sibling::text()[1]').get("").strip()
+        sbkItem['type'] = response.css("label#catalog_ZTCLS")[0].xpath('following-sibling::text()[1]').get("").strip()
         yield sbkItem
 

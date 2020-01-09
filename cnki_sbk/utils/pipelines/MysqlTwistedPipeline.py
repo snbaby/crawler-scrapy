@@ -49,36 +49,34 @@ class MysqlTwistedPipeline(object):
         try:
             sql = f'''
                 insert into `topic_info_touziguanxi_tzsj`(
-                    `title`,
-                    `financers`,
-                    `investors`,
-                    `amount`,
-                    `rotation`,
-                    `time`,
-                    `industry`,
-                    `introduction`,
+                    `title_cn`,
+                    `author`,
+                    `degree`,
+                    `degree_award_company`,
+                    `degree_award_year`,
                     `website`,
                     `link`,
+                    `intro`,
+                    `tutor`,
+                    `type`,
                     `create_time`,
-                    `content`,
                     `spider_name`,
                     `module_name`
                 )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s,%s,%s, %s, %s, %s)
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s,%s, %s)
         '''
             parm = (
-                item['title'],
-                item['financers'],
-                item['investors'],
-                item['amount'],
-                item['rotation'],
-                item['time'],
-                item['industry'],
-                item['introduction'],
+                item['title_cn'],
+                item['author'],
+                item['degree'],
+                item['degree_award_company'],
+                item['degree_award_year'],
                 item['website'],
                 item['link'],
+                item['intro'],
+                item['tutor'],
+                item['type'],
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-                item['content'],
                 item['spider_name'],
                 item['module_name']
             )
