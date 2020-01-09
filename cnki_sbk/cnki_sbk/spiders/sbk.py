@@ -84,7 +84,8 @@ class SbkSpider(scrapy.Spider):
                 """
         page_num = self.parse_pagenum(response)
         base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
-        for i in range(1, 2):
+        # 网站最大支持爬取300页内容
+        for i in range(1, 300+1):
             new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CDMD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
@@ -123,15 +124,22 @@ class SbkSpider(scrapy.Spider):
                     }
                 end
                 """
-        logging.info("result=" + response.text)
-        logging.info("cookies=" + json.dumps(response.data['cookies']))
-        for item in response.css(".GridTableContent tr:not(.GTContentTitle)"):
-            paper_url = item.css(".fz14::attr(href)").get()
+        for record in response.css(".GridTableContent tr:not(.GTContentTitle)"):
+            paper_url = record.css(".fz14::attr(href)").get()
             paper_url = "http://kns.cnki.net" + paper_url
             paper_url = paper_url.replace("/kns/", "/KCMS/")
 
-            item  = cnki_sbkItem()
-            item[]
+            item  = {}
+            item['title_cn'] = record.css(".fz14::text").get()
+            item['author'] = record.css("td.author_flag a::text").extract_first().strip()
+            item['degree'] = record.css("td:nth-child(5)::text").extract_first().strip()
+            item['degree_award_company'] = record.css("td:nth-child(4) a::text").extract_first().strip()
+            item['degree_award_year'] = record.css("td:nth-child(6)::text").extract_first().strip()
+            item['website'] = "中国知网-博硕士"
+            item['link'] = paper_url
+            item['spider_name'] = 'sbk'
+            item['module_name'] = '中国知网-硕博库'
+
             yield SplashRequest(paper_url,
                                 endpoint='execute',
                                 args={
@@ -142,9 +150,22 @@ class SbkSpider(scrapy.Spider):
                                 },
                                 session_id="foo",
                                 headers=response.data['headers'],
-                                callback=self.parse_end, kwargs=item)
-            break
+                                callback=self.parse_end, cb_kwargs=item)
 
     def parse_end(self, response, **kwargs):
+        sbkItem = cnki_sbkItem()
+        sbkItem['title_cn'] = kwargs['title_cn']
+        sbkItem['author'] = kwargs['author']
+        sbkItem['degree'] = kwargs['degree']
+        sbkItem['degree_award_company'] = kwargs['degree_award_company']
+        sbkItem['degree_award_year'] = kwargs['degree_award_year']
+        sbkItem['website'] = kwargs['website']
+        sbkItem['link'] = kwargs['link']
+        sbkItem['spider_name'] = kwargs['spider_name']
+        sbkItem['module_name'] = kwargs['module_name']
 
+        sbkItem['intro'] = response.css("div.wxBaseinfo span#ChDivSummary::text").get("").strip()
+        sbkItem['tutor'] = response.css("label#catalog_TUTOR")[0].xpath('following-sibling::text()[1]').get("").strip()
+        sbkItem['type'] = response.css("label#catalog_ZTCLS")[0].xpath('following-sibling::text()[1]').get("").strip()
+        yield sbkItem
 
