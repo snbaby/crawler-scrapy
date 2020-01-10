@@ -125,16 +125,23 @@ class SbkRenyuanSpider(scrapy.Spider):
                 end
                 """
         for record in response.css(".GridTableContent tr:not(.GTContentTitle)"):
-            debug=record.css("td.author_flag a.KnowledgeNetLink")
-            tmp_url = "http://kns.cnki.net" + record.css("td.author_flag a.KnowledgeNetLink::attr(href)").get("")
+            tmp_url = "http://kns.cnki.net" + record.css("td.author_flag a.KnowledgeNetLink").get("")
+            logging.info("tmp_url="+tmp_url)
             import urllib.parse as urlparse
             from urllib.parse import parse_qs
             tmp_url_parsed = urlparse.urlparse(tmp_url)
 
             talent_url = "http://kns.cnki.net/kcms/detail/knetsearch.aspx?dbcode=CDFD&sfield=au&skey=&code="
-            talent_url = "http://kns.cnki.net" + talent_url
-            talent_url.replace("skey=", "skey="+parse_qs(tmp_url_parsed.query)['skey'][0])
-            talent_url.replace("code=", "code="+parse_qs(tmp_url_parsed.query)['scode'][0])
+            talent_url = talent_url.replace("skey=", "skey="+parse_qs(tmp_url_parsed.query)['skey'][0])
+
+            if 'scode' not in parse_qs(tmp_url_parsed.query).keys():
+                continue
+
+            code = parse_qs(tmp_url_parsed.query)['scode'][0]
+
+            if not code:
+                continue
+            talent_url = talent_url.replace("code=", "code="+ code)
 
             item  = {}
             item['name'] = record.css("td.author_flag a::text").extract_first().strip()
