@@ -33,8 +33,8 @@ class SsSpider(scrapy.Spider):
     def start_requests(self):
         try:
             data = {
-                "account": "18502828078",
-                "password": "123456",
+                "account": "18702809717",
+                "password": "111111",
                 "type": "pswd"}
 
             header = {

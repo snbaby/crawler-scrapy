@@ -98,18 +98,18 @@ AUTOTHROTTLE_ENABLED = True
 #LOG_FILE = "spiders.log"
 LOG_LEVEL = "DEBUG"
 
-# MYSQL_HOST = '10.8.32.125'
-MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'
+MYSQL_HOST = '10.8.32.125'
+# MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'
 # MYSQL_HOST = '192.168.43.201'
 MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'Liqin1988'
-# MYSQL_PASSWORD ='yeyang112114'
+#MYSQL_PASSWORD = 'Liqin1988'
+MYSQL_PASSWORD ='Admin123!'
 
-MYSQL_DB = 'python'
+MYSQL_DB = 'engineering-brain'
 MYSQL_PORT = 3306
 MYSQL_CHRSET = 'utf8'
 
-SPLASH_URL = "http://47.106.239.73:8050/"
+SPLASH_URL = "http://localhost:8050/"
 
 # REDIS_HOST = '10.8.32.123'
 # REDIS_HOST = '127.0.0.1'

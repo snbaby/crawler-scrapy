@@ -33,8 +33,8 @@ class TzgsSpider(scrapy.Spider):
     def start_requests(self):
         try:
             data = {
-                "account": "18502828078",
-                "password": "123456",
+                "account": "15608066050",
+                "password": "111111",
                 "type": "pswd"}
 
             header = {

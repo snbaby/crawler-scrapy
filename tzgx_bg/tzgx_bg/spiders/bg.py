@@ -33,8 +33,8 @@ class BgSpider(scrapy.Spider):
     def start_requests(self):
         try:
             data = {
-                "account": "18502828078",
-                "password": "123456",
+                "account": "17716154415",
+                "password": "ly123456",
                 "type": "pswd"}
 
             header = {
