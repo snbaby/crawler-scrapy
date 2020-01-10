@@ -191,6 +191,120 @@ class MysqlTwistedPipeline(object):
                 )
                 cursor.execute(sql, parm)
                 logging.info(self.spider.name + ": " + "insert into mysql success")
+            elif item['insert_tpye'] == 'major_info_library':
+                sql = f'''
+                    insert into `major_info_library`(
+                        `majorName`,
+                        `majorCode`,
+                        `majorPopularity`,
+                        `AcademicDegree`,
+                        `studyYear`,
+                        `subjectType`,
+                        `majorType`,
+                        `arrangement`,
+                        `maleRatio`,
+                        `womanRatio`,
+                        `detail`,
+                        `FirstImpression`,
+                        `sourceWebsite`,
+                        `link`,
+                        `create_time`,
+                        `txt`,
+                        `spider_name`,
+                        `module_name`
+                    )
+                    values (%s,%s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s)
+                '''
+                parm = (
+                    item['majorName'],
+                    item['majorCode'],
+                    item['majorPopularity'],
+                    item['AcademicDegree'],
+                    item['studyYear'],
+                    item['subjectType'],
+                    item['majorType'],
+                    item['arrangement'],
+                    item['maleRatio'],
+                    item['womanRatio'],
+                    item['detail'],
+                    item['FirstImpression'],
+                    item['sourceWebsite'],
+                    item['link'],
+                    item['txt'],
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                    item['spider_name'],
+                    item['module_name']
+                )
+                cursor.execute(sql, parm)
+                logging.info(self.spider.name + ": " + "insert into mysql success")
+            elif item['insert_tpye'] == 'major_local_library':
+                sql = f'''
+                    insert into `major_local_library`(
+                        `majorName`,
+                        `majorCode`,
+                        `local`,
+                        `proportion`,
+                        `create_time`,
+                        `spider_name`,
+                        `module_name`
+                    )
+                    values (%s,%s, %s, %s, %s, %s, %s)
+                '''
+                parm = (
+                    item['majorName'],
+                    item['majorCode'],
+                    item['local'],
+                    item['proportion'],
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                    item['spider_name'],
+                    item['module_name']
+                )
+                cursor.execute(sql, parm)
+                logging.info(self.spider.name + ": " + "insert into mysql success")
+            elif item['insert_tpye'] == 'major_obtain_library':
+                sql = f'''
+                    insert into `major_obtain_library`(
+                        `majorName`,
+                        `majorCode`,
+                        `particularYear`,
+                        `rateOfEmployment`,
+                        `create_time`,
+                        `spider_name`,
+                        `module_name`
+                    )
+                    values (%s,%s, %s, %s, %s, %s, %s)
+                '''
+                parm = (
+                    item['majorName'],
+                    item['majorCode'],
+                    item['particularYear'],
+                    item['rateOfEmployment'],
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                    item['spider_name'],
+                    item['module_name']
+                )
+                cursor.execute(sql, parm)
+                logging.info(self.spider.name + ": " + "insert into mysql success")
+            elif item['insert_tpye'] == 'school_in_major':
+                sql = f'''
+                    insert into `school_in_major`(
+                        `major_name`,
+                        `colleges_name`,
+                        `create_time`,
+                        `spider_name`,
+                        `module_name`
+                    )
+                    values (%s,%s, %s, %s, %s)
+                '''
+                parm = (
+                    item['major_name'],
+                    item['colleges_name'],
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                    item['spider_name'],
+                    item['module_name']
+                )
+                cursor.execute(sql, parm)
+                logging.info(self.spider.name + ": " + "insert into mysql success")
         except Exception as e:
             logging.error("Spider insert item failed: {}, {}".format(e, e.args))
             raise DropItem("Duplicate item found: %s" % item)

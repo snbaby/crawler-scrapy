@@ -69,3 +69,48 @@ class employmentLocalLibraryItem(scrapy.Field):
     link = scrapy.Field()
     spider_name = scrapy.Field()
     module_name = scrapy.Field()
+
+class majorInfoLibraryItem(scrapy.Field):
+    majorName = scrapy.Field()
+    majorCode = scrapy.Field()
+    majorPopularity = scrapy.Field()
+    AcademicDegree = scrapy.Field()
+    studyYear = scrapy.Field()
+    subjectType = scrapy.Field()
+    majorType = scrapy.Field()
+    arrangement = scrapy.Field()
+    maleRatio = scrapy.Field()
+    womanRatio = scrapy.Field()
+    detail = scrapy.Field()
+    FirstImpression = scrapy.Field()
+    sourceWebsite = scrapy.Field()
+    link = scrapy.Field()
+    create_time = scrapy.Field()
+    txt = scrapy.Field()
+    spider_name = scrapy.Field()
+    module_name = scrapy.Field()
+
+class majorLocalLibraryItem(scrapy.Field):
+    majorName = scrapy.Field()
+    majorCode = scrapy.Field()
+    local = scrapy.Field()
+    proportion = scrapy.Field()
+    create_time = scrapy.Field()
+    spider_name = scrapy.Field()
+    module_name = scrapy.Field()
+
+class majorObtainLibraryItem(scrapy.Field):
+    majorName = scrapy.Field()
+    majorCode = scrapy.Field()
+    particularYear = scrapy.Field()
+    rateOfEmployment = scrapy.Field()
+    create_time = scrapy.Field()
+    spider_name = scrapy.Field()
+    module_name = scrapy.Field()
+
+class schoolInMajorItem(scrapy.Field):
+    major_name = scrapy.Field()
+    colleges_name = scrapy.Field()
+    create_time = scrapy.Field()
+    spider_name = scrapy.Field()
+    module_name = scrapy.Field()
