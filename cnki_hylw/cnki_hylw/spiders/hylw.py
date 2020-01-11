@@ -4,12 +4,12 @@ import logging
 import json
 import time
 
-from cnki_chengguo.items import cnki_chengguoItem
+from cnki_hylw.items import hylwItem
 from scrapy_splash import SplashRequest
 
 
-class ChengguoSpider(scrapy.Spider):
-    name = 'chengguo'
+class HylwSpider(scrapy.Spider):
+    name = 'hylw'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -44,7 +44,7 @@ class ChengguoSpider(scrapy.Spider):
         """
 
         try:
-            url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=SNAD"
+            url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CIPD"
             yield SplashRequest(url,
                                 endpoint='execute',
                                 args={
@@ -83,10 +83,10 @@ class ChengguoSpider(scrapy.Spider):
                 end
                 """
         page_num = self.parse_pagenum(response)
-        base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=SNAD"
+        base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CIPD"
         # 网站最大支持爬取300页内容
         for i in range(1, 300+1):
-            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=SNAD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
+            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'2&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CIPD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=1&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
                                 args={
@@ -125,18 +125,18 @@ class ChengguoSpider(scrapy.Spider):
                 end
                 """
         for record in response.css(".GridTableContent tr:not(.GTContentTitle)"):
-            #dest_url = http://dbpub.cnki.net/grid2008/dbpub/detail.aspx?dbcode=SNAD&dbname=SNAD&filename=SNAD000000000021
-            #tmp_url = /kns/detail/detail.aspx?QueryID=0&CurRec=21&dbcode=SNAD&dbname=SNAD&filename=SNAD000000000021
+            #dest_url = http://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFDTEMP&filename=DISE202001001007
+            #tmp_url = /kns/detail/detail.aspx?QueryID=0&CurRec=21&DbCode=CPFD&dbname=CPFDTEMP&filename=DISE202001001023
             tmp_url = record.css(".fz14::attr(href)").get()
-            tmp_url = "http://dbpub.cnki.net" + tmp_url
+            tmp_url = "http://kns.cnki.net" + tmp_url
             import urllib.parse as urlparse
             from urllib.parse import parse_qs
             tmp_url_parsed = urlparse.urlparse(tmp_url)
 
-            talent_url = "http://dbpub.cnki.net/grid2008/dbpub/detail.aspx?"
+            talent_url = "http://kns.cnki.net/KCMS/detail/detail.aspx?"
             from urllib.parse import urlencode
             query_str = urlencode({
-                'dbcode': parse_qs(tmp_url_parsed.query)['dbcode'][0],
+                'dbcode': parse_qs(tmp_url_parsed.query)['DbCode'][0],
                 'dbname': parse_qs(tmp_url_parsed.query)['dbname'][0],
                 'filename': parse_qs(tmp_url_parsed.query)['filename'][0],
             })
@@ -156,19 +156,19 @@ class ChengguoSpider(scrapy.Spider):
                                 callback=self.parse_end, cb_kwargs=item)
 
     def parse_end(self, response, **kwargs):
-        sbkItem = cnki_chengguoItem()
-        sbkItem['name'] = response.css("body > table:nth-child(3) > tbody > tr > td:nth-child(2) > strong::text").get("").strip()
-        sbkItem['accomplish_person'] = response.css("#box > tbody > tr:nth-child(1) > td.checkItem::text").get("").strip()
-        sbkItem['first_accomplish_company'] = response.css("#box > tbody > tr:nth-child(2) > td.checkItem::text").get("").strip()
-        sbkItem['keyword'] = response.css("#box > tbody > tr:nth-child(3) > td.checkItem::text").get("").strip()
-        sbkItem['zt_type'] = response.css("#box > tbody > tr:nth-child(4) > td.checkItem::text").get("").strip()
-        sbkItem['xk_type'] = response.css("#box > tbody > tr:nth-child(5) > td.checkItem::text").get("").strip()
-        sbkItem['intro'] =  response.css("#cgjj::text").get("").strip()
-        sbkItem['type'] = response.css("#box > tbody > tr:nth-child(7) > td.checkItem::text").get("").strip()
-        sbkItem['time'] = response.css("#box > tbody > tr:nth-child(11) > td.checkItem::text").get("").strip()
-        sbkItem['website'] = '中国知网-成果'
+        sbkItem = hylwItem()
+        sbkItem['title'] = response.css("#mainArea > div.wxmain > div.wxTitle > h2::text").get("").strip()
+        author_list = response.css("#mainArea > div.wxmain > div.wxTitle > div.author a::text").extract()
+        sbkItem['author'] = ' '.join([str(elem) for elem in author_list])
+        sbkItem['organization'] = response.css("#mainArea > div.wxmain > div.wxTitle > div.orgn > span > a::text").get("").strip()
+        sbkItem['name'] = response.xpath("//label[@id='catalog_HY_NAME']/../text()").get("").strip()
+        sbkItem['time'] = response.xpath("//label[@id='catalog_DATE']/../text()").get("").strip()
+        sbkItem['intro'] = response.css("#ChDivSummary::text").get("").strip()
+        sbkItem['address'] =  response.xpath("//label[@id='catalog_ADDR']/../text()").get("").strip()
+        sbkItem['type'] = response.xpath("//label[@id='catalog_ZTCLS']/../text()").get("").strip()
+        sbkItem['website'] = '中国知网-会议'
         sbkItem['link'] = kwargs['link']
         sbkItem['spider_name'] = self.name
-        sbkItem['module_name'] = '中国知网-成果库'
+        sbkItem['module_name'] = '中国知网-会议库'
         yield sbkItem
 
