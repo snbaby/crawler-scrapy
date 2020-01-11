@@ -230,8 +230,8 @@ class MysqlTwistedPipeline(object):
                     item['FirstImpression'],
                     item['sourceWebsite'],
                     item['link'],
-                    item['txt'],
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                    item['txt'],
                     item['spider_name'],
                     item['module_name']
                 )
