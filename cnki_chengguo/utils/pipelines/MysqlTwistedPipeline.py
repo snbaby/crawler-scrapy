@@ -58,13 +58,14 @@ class MysqlTwistedPipeline(object):
                     `intro`,
                     `type`,
                     `time`,
+                    `research_time`,
                     `website`,
                     `link`,
                     `create_time`,
                     `spider_name`,
                     `module_name`
                 )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s,%s, %s, %s)
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s,%s, %s, %s, %s)
         '''
             parm = (
                 item['name'],
@@ -76,6 +77,7 @@ class MysqlTwistedPipeline(object):
                 item['intro'],
                 item['type'],
                 item['time'],
+                item['research_time'],
                 item['website'],
                 item['link'],
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),

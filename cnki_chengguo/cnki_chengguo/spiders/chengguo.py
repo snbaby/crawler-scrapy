@@ -85,7 +85,7 @@ class ChengguoSpider(scrapy.Spider):
         page_num = self.parse_pagenum(response)
         base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=SNAD"
         # 网站最大支持爬取300页内容
-        for i in range(1, 2+1):
+        for i in range(1, 300+1):
             new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=SNAD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
@@ -166,6 +166,7 @@ class ChengguoSpider(scrapy.Spider):
         sbkItem['intro'] =  response.css("#cgjj::text").get("").strip()
         sbkItem['type'] = response.css("#box > tbody > tr:nth-child(7) > td.checkItem::text").get("").strip()
         sbkItem['time'] = response.css("#box > tbody > tr:nth-child(11) > td.checkItem::text").get("").strip()
+        sbkItem['research_time'] = response.css("#box > tbody > tr:nth-child(9) > td.checkItem::text").get("").strip()
         sbkItem['website'] = '中国知网-成果'
         sbkItem['link'] = kwargs['link']
         sbkItem['spider_name'] = self.name

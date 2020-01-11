@@ -48,35 +48,37 @@ class MysqlTwistedPipeline(object):
         logging.info(self.spider.name + ": " + "insert into mysql........")
         try:
             sql = f'''
-                insert into `topic_info_zscq_newspaper`(
+                insert into `topic_info_zscq_meeting`(
                     `title`,
                     `author`,
+                    `organization`,
                     `name`,
-                    `date`,
-                    `sub_title`,
+                    `time`,
                     `intro`,
-                    `version`,
+                    `address`,
+                    `type`,
                     `website`,
                     `link`,
                     `create_time`,
                     `spider_name`,
                     `module_name`
                 )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s, %s)
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s,%s, %s)
         '''
             parm = (
                 item['title'],
                 item['author'],
+                item['organization'],
                 item['name'],
-                item['date'],
-                item['sub_title'],
+                item['time'],
                 item['intro'],
-                item['version'],
+                item['address'],
+                item['type'],
                 item['website'],
                 item['link'],
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                 item['spider_name'],
-                item['module_name']
+                item['module_name'],
             )
             cursor.execute(sql, parm)
             logging.info(self.spider.name + ": " + "insert into mysql success")

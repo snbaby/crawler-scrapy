@@ -11,17 +11,15 @@ import scrapy
 from scrapy.loader.processors import TakeFirst, MapCompose, Join
 
 
-class cnki_chengguoItem(scrapy.Item):
+class hylwItem(scrapy.Item):
+    title = scrapy.Field()
+    author = scrapy.Field()
+    organization = scrapy.Field()
     name = scrapy.Field()
-    accomplish_person = scrapy.Field()
-    first_accomplish_company = scrapy.Field()
-    keyword = scrapy.Field()
-    zt_type = scrapy.Field()
-    xk_type = scrapy.Field()
-    intro = scrapy.Field()
-    type = scrapy.Field()
     time = scrapy.Field()
-    research_time = scrapy.Field()
+    intro = scrapy.Field()
+    address = scrapy.Field()
+    type = scrapy.Field()
     website = scrapy.Field()
     link = scrapy.Field()
     create_time = scrapy.Field()
