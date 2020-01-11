@@ -11,8 +11,8 @@ from scrapy_splash import SplashRequest
 class BzkSpider(scrapy.Spider):
     name = 'bzk'
     custom_settings = {
-        'CONCURRENT_REQUESTS': 5,
-        'CONCURRENT_REQUESTS_PER_DOMAIN': 5,
+        'CONCURRENT_REQUESTS': 1,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
         'CONCURRENT_REQUESTS_PER_IP': 0,
         'DOWNLOAD_DELAY': 1,
         'SPIDER_MIDDLEWARES': {
@@ -126,9 +126,9 @@ class BzkSpider(scrapy.Spider):
             paper_url = paper_url.replace("/kns/", "/KCMS/")
             item = {}
             item['title'] = record.css('.fz14::text').extract_first()
-            item['author'] = record.css(".author_flag::text").extract_first()
-            item['name'] = record.css("td:nth-child(4)::text").extract_first()
-            item['date'] = record.css("td:nth-child(5)::text").extract_first()
+            item['author'] = record.css(".author_flag::text").extract_first().strip()
+            item['name'] = record.css("td:nth-child(4) a::text").extract_first().strip()
+            item['date'] = record.css("td:nth-child(5)::text").extract_first().strip()
             item['website'] = "中国知网-报纸库"
             item['link'] = paper_url
             item['spider_name'] = 'bzk'
