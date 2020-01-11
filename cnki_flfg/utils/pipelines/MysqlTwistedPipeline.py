@@ -48,34 +48,38 @@ class MysqlTwistedPipeline(object):
         logging.info(self.spider.name + ": " + "insert into mysql........")
         try:
             sql = f'''
-                insert into `topic_info_zscq_thurber_thesis`(
-                    `title_cn`,
-                    `author`,
-                    `degree`,
-                    `degree_award_company`,
-                    `degree_award_year`,
+                insert into `topic_info_zscq_laws_regulations`(
+                    `title`,
+                    `source`,
+                    `pub_time`,
+                    `pub_org`,
+                    `implement_date`,
+                    `pub_wordsize`,
+                    `keyword`,
+                    `intro`,
+                    `potency_level`,
+                    `timeliness`,
                     `website`,
                     `link`,
-                    `intro`,
-                    `tutor`,
-                    `type`,
                     `create_time`,
                     `spider_name`,
                     `module_name`
                 )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s,%s, %s)
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s,%s, %s, %s, %s)
         '''
             parm = (
-                item['title_cn'],
-                item['author'],
-                item['degree'],
-                item['degree_award_company'],
-                item['degree_award_year'],
+                item['title'],
+                item['source'],
+                item['pub_time'],
+                item['pub_org'],
+                item['implement_date'],
+                item['pub_wordsize'],
+                item['keyword'],
+                item['intro'],
+                item['potency_level'],
+                item['timeliness'],
                 item['website'],
                 item['link'],
-                item['intro'],
-                item['tutor'],
-                item['type'],
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                 item['spider_name'],
                 item['module_name']

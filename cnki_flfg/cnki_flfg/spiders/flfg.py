@@ -4,12 +4,12 @@ import logging
 import json
 import time
 
-from cnki_chengguo.items import cnki_flfg
+from cnki_flfg.items import cnki_flfgItem
 from scrapy_splash import SplashRequest
 
 
-class ChengguoSpider(scrapy.Spider):
-    name = 'chengguo'
+class FlfgSpider(scrapy.Spider):
+    name = 'flfg'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -86,8 +86,7 @@ class ChengguoSpider(scrapy.Spider):
         base_url = "http://kns.cnki.net/kns/brief/result.aspx?dbPrefix=CLKD"
         # 网站最大支持爬取300页内容
         for i in range(1, 2 + 1):
-            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' + str(
-                i) + '&RecordsPerPage=20&QueryID=4&ID=&turnpage=1&tpagemode=L&dbPrefix=CLKD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
+            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' + str(i) + '&RecordsPerPage=20&QueryID=4&ID=&turnpage=1&tpagemode=L&dbPrefix=CLKD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
                                 args={
@@ -157,23 +156,20 @@ class ChengguoSpider(scrapy.Spider):
                                 callback=self.parse_end, cb_kwargs=item)
 
     def parse_end(self, response, **kwargs):
-        sbkItem = cnki_chengguoItem()
-        sbkItem['name'] = response.css("body > table:nth-child(3) > tbody > tr > td:nth-child(2) > strong::text").get(
-            "").strip()
-        sbkItem['accomplish_person'] = response.css("#box > tbody > tr:nth-child(1) > td.checkItem::text").get(
-            "").strip()
-        sbkItem['first_accomplish_company'] = response.css("#box > tbody > tr:nth-child(2) > td.checkItem::text").get(
-            "").strip()
-        sbkItem['keyword'] = response.css("#box > tbody > tr:nth-child(3) > td.checkItem::text").get("").strip()
-        sbkItem['zt_type'] = response.css("#box > tbody > tr:nth-child(4) > td.checkItem::text").get("").strip()
-        sbkItem['xk_type'] = response.css("#box > tbody > tr:nth-child(5) > td.checkItem::text").get("").strip()
-        sbkItem['intro'] = response.css("#cgjj::text").get("").strip()
-        sbkItem['type'] = response.css("#box > tbody > tr:nth-child(7) > td.checkItem::text").get("").strip()
-        sbkItem['time'] = response.css("#box > tbody > tr:nth-child(11) > td.checkItem::text").get("").strip()
-        sbkItem['research_time'] = response.css("#box > tbody > tr:nth-child(9) > td.checkItem::text").get("").strip()
-        sbkItem['website'] = '中国知网-成果'
+        sbkItem = cnki_flfgItem()
+        sbkItem['title'] = response.css("span#chTitle::text").get("").strip()
+        sbkItem['source'] = "中国法律知识资源总库法律法规库"
+        sbkItem['pub_time'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > div.author > p:nth-child(2)::text").get("").strip()
+        sbkItem['pub_org'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > div.author > p:nth-child(1) > a::text").get("").strip()
+        sbkItem['implement_date'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > div.author > p:nth-child(3)::text").get("").strip()
+        sbkItem['pub_wordsize'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > div.author > p:nth-child(4)::text").get("").strip()
+        sbkItem['keyword'] = response.css("#ChDivKeyWord > a::text").get("").strip()
+        sbkItem['intro'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > p:nth-child(3)::text").get("").strip()
+        sbkItem['potency_level'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > p:nth-child(4)::text").get("").strip()
+        sbkItem['timeliness'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > p:nth-child(5)::text").get("").strip()
+        sbkItem['website'] = '中国知网-法律法规'
         sbkItem['link'] = kwargs['link']
         sbkItem['spider_name'] = self.name
-        sbkItem['module_name'] = '中国知网-成果库'
+        sbkItem['module_name'] = '中国知网-法律库'
         yield sbkItem
 
