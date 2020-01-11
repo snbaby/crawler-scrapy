@@ -4,12 +4,12 @@ import logging
 import json
 import time
 
-from cnki_sbk_renyuan.items import  cnki_sbk_renyuanItem
+from cnki_chengguo.items import cnki_chengguoItem
 from scrapy_splash import SplashRequest
 
 
-class SbkRenyuanSpider(scrapy.Spider):
-    name = 'sbk_renyuan'
+class ChengguoSpider(scrapy.Spider):
+    name = 'chengguo'
     custom_settings = {
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
@@ -44,7 +44,7 @@ class SbkRenyuanSpider(scrapy.Spider):
         """
 
         try:
-            url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
+            url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=SNAD"
             yield SplashRequest(url,
                                 endpoint='execute',
                                 args={
@@ -83,10 +83,10 @@ class SbkRenyuanSpider(scrapy.Spider):
                 end
                 """
         page_num = self.parse_pagenum(response)
-        base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
+        base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=SNAD"
         # 网站最大支持爬取300页内容
-        for i in range(1, 300+1):
-            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CDMD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
+        for i in range(1, 2+1):
+            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=SNAD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
                                 args={
@@ -125,32 +125,24 @@ class SbkRenyuanSpider(scrapy.Spider):
                 end
                 """
         for record in response.css(".GridTableContent tr:not(.GTContentTitle)"):
-            tmp_url = "http://kns.cnki.net" + record.css("td.author_flag a.KnowledgeNetLink").get("")
+            #dest_url = http://dbpub.cnki.net/grid2008/dbpub/detail.aspx?dbcode=SNAD&dbname=SNAD&filename=SNAD000000000021
+            #tmp_url = /kns/detail/detail.aspx?QueryID=0&CurRec=21&dbcode=SNAD&dbname=SNAD&filename=SNAD000000000021
+            tmp_url = record.css(".fz14::attr(href)").get()
+            tmp_url = "http://dbpub.cnki.net" + tmp_url
             import urllib.parse as urlparse
             from urllib.parse import parse_qs
             tmp_url_parsed = urlparse.urlparse(tmp_url)
 
-            talent_url = "http://kns.cnki.net/kcms/detail/knetsearch.aspx?dbcode=CDFD&sfield=au&skey=&code="
-            talent_url = talent_url.replace("skey=", "skey="+parse_qs(tmp_url_parsed.query)['skey'][0])
-
-            # 这里取不到scode
-            # if 'scode' not in parse_qs(tmp_url_parsed.query).keys():
-            #     continue
-            #
-            # code = parse_qs(tmp_url_parsed.query)['scode'][0]
-            #
-            # if not code:
-            #     continue
-            # talent_url = talent_url.replace("code=", "code="+ code)
-
-            item  = {}
-            item['name'] = record.css("td.author_flag a::text").extract_first().strip()
-            item['organization'] = record.css("td:nth-child(4) a::text").extract_first().strip()
-            item['website'] = "中国知网-博硕士"
-            item['link'] = talent_url
-            item['spider_name'] = self.name
-            item['module_name'] = '中国知网-硕博库'
-
+            talent_url = "http://dbpub.cnki.net/grid2008/dbpub/detail.aspx?"
+            from urllib.parse import urlencode
+            query_str = urlencode({
+                'dbcode': parse_qs(tmp_url_parsed.query)['dbcode'][0],
+                'dbname': parse_qs(tmp_url_parsed.query)['dbname'][0],
+                'filename': parse_qs(tmp_url_parsed.query)['filename'][0],
+            })
+            talent_url = talent_url + query_str
+            item = {}
+            item["link"] = talent_url
             yield SplashRequest(talent_url,
                                 endpoint='execute',
                                 args={
@@ -162,24 +154,21 @@ class SbkRenyuanSpider(scrapy.Spider):
                                 session_id="foo",
                                 headers=response.data['headers'],
                                 callback=self.parse_end, cb_kwargs=item)
-            break
-    def get_attention(self, response):
-        logging.info(response.text)
-        info = response.css("div.listcont ul.col8 li a::text").extract()
-        logging.info("info="+ json.dumps(info))
 
     def parse_end(self, response, **kwargs):
-        #self.get_attention(response)
-
-        sbkItem = cnki_sbk_renyuanItem()
-        sbkItem['name'] = kwargs['name']
-        sbkItem['organization'] = kwargs['organization'] #kwargs['organization']
-        sbkItem['subject'] = "" #response.css("div.baseInfo div.info p.doma::text").get("")
-        sbkItem['attention_territory'] = "" #response.css("")
-        sbkItem['website'] = kwargs['website']
+        sbkItem = cnki_chengguoItem()
+        sbkItem['name'] = response.css("body > table:nth-child(3) > tbody > tr > td:nth-child(2) > strong::text").get("").strip()
+        sbkItem['accomplish_person'] = response.css("#box > tbody > tr:nth-child(1) > td.checkItem::text").get("").strip()
+        sbkItem['first_accomplish_company'] = response.css("#box > tbody > tr:nth-child(2) > td.checkItem::text").get("").strip()
+        sbkItem['keyword'] = response.css("#box > tbody > tr:nth-child(3) > td.checkItem::text").get("").strip()
+        sbkItem['zt_type'] = response.css("#box > tbody > tr:nth-child(4) > td.checkItem::text").get("").strip()
+        sbkItem['xk_type'] = response.css("#box > tbody > tr:nth-child(5) > td.checkItem::text").get("").strip()
+        sbkItem['intro'] =  response.css("#cgjj::text").get("").strip()
+        sbkItem['type'] = response.css("#box > tbody > tr:nth-child(7) > td.checkItem::text").get("").strip()
+        sbkItem['time'] = response.css("#box > tbody > tr:nth-child(11) > td.checkItem::text").get("").strip()
+        sbkItem['website'] = '中国知网-成果'
         sbkItem['link'] = kwargs['link']
-        sbkItem['spider_name'] = kwargs['spider_name']
-        sbkItem['module_name'] = kwargs['module_name']
-
+        sbkItem['spider_name'] = self.name
+        sbkItem['module_name'] = '中国知网-成果库'
         yield sbkItem
 
