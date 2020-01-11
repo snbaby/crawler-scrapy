@@ -6,11 +6,22 @@ from zfcgw.items import ztbkItem
 from utils.tools.attachment import get_attachments,get_times
 from scrapy_splash import SplashRequest
 
+regions = {
+    '内蒙古':'内蒙古自治区',
+    '新疆':'新疆维吾尔自治区',
+    '广西':'广西壮族自治区',
+    '宁夏':'宁夏回族自治区',
+    '西藏':'西藏自治区',
+    '北京':'北京市',
+    '天津':'天津市',
+    '上海':'上海市',
+    '重庆':'重庆市'
+}
 
 url = 'http://r.cnki.net/KNS/request/SearchHandler.ashx'
 data = {
     "curpage": "1",
-    "RecordsPerPage": "5000",
+    "RecordsPerPage": "2000",
     "turnpage": "1",
     "tpagemode": "U",
     "dbPrefix": "CGXX",
@@ -18,7 +29,8 @@ data = {
     "PageName": "ASP.brief_result_aspx",
     "tokenstr": "RmoleHoqaiJV7W6wm9WfR8JH7GpdOlKsR426DHEq64ejonl264dA4K607TzgO/++KqRhB7n/tw1AkEBDFjsnnu9sXcSUQXbxFKkdc69IN8b+oZ3xCpF0a3pHny97f7QOjGjgceoO8xsaivN2wiLLMpwKc/0X+bj2QaDMuMRI6m0+XJyCIRJAiPAyEQnyqh3+4ObN8pW6/J8lPfmNJROnHPsOLFP0mPzWLqtHM5fVcLWMOiRfu1AIKOrNpBCAekl/",
     "sortcode": "43476",
-    "sortorder": "desc"
+    "sortorder": "desc",
+    "__": "Sat Jan 11 2020 23:15:04 GMT+0800 (中国标准时间)"
 }
 header = {
     'Content-Type': 'application/x-www-form-urlencoded'
@@ -55,7 +67,7 @@ class ZwcgSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            for num in range(1900):
+            for num in range(4800):
                 data['curpage'] = str(num)
                 yield scrapy.FormRequest(url, formdata=data,
                      headers=header,
@@ -80,7 +92,6 @@ class ZwcgSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_item(self, response):
-        print(response.xpath('//span[@id="chTitle"]/text()').extract_first())
         try:
             appendix, appendix_name = get_attachments(response)
             title = response.meta['title']
@@ -101,11 +112,12 @@ class ZwcgSpider(scrapy.Spider):
             item['content'] = "".join(response.xpath('//div[@class="vF_detail_content"]').extract())
             item['appendix'] = appendix
             item['category'] = category
-            item['source'] = '中国知网'
+            item['source'] = response.xpath('//div[@class="rp-subtitle"]/span/a/label/text()').extract_first()
             item['website'] = '中国知网'
             item['link'] = response.request.url
             item['type'] = '2'
-            item['region'] = response.meta['region'].replace('省份：','')
+            region = response.meta['region'].replace('省份：', '').strip()
+            item['region'] = regions[region] if (region in regions) else region + '省'
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'zgzwcg'
             item['txt'] = "".join(response.xpath('//div[@class="vF_detail_content"]//text()').extract())

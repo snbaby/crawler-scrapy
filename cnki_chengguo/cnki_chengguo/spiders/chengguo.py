@@ -166,6 +166,7 @@ class ChengguoSpider(scrapy.Spider):
         sbkItem['intro'] =  response.css("#cgjj::text").get("").strip()
         sbkItem['type'] = response.css("#box > tbody > tr:nth-child(7) > td.checkItem::text").get("").strip()
         sbkItem['time'] = response.css("#box > tbody > tr:nth-child(11) > td.checkItem::text").get("").strip()
+        sbkItem['research_time'] = response.css("#box > tbody > tr:nth-child(9) > td.checkItem::text").get("").strip()
         sbkItem['website'] = '中国知网-成果'
         sbkItem['link'] = kwargs['link']
         sbkItem['spider_name'] = self.name

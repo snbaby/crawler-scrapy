@@ -21,6 +21,7 @@ class cnki_chengguoItem(scrapy.Item):
     intro = scrapy.Field()
     type = scrapy.Field()
     time = scrapy.Field()
+    research_time = scrapy.Field()
     website = scrapy.Field()
     link = scrapy.Field()
     create_time = scrapy.Field()

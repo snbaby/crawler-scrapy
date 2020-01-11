@@ -86,31 +86,25 @@ class KjbgSpider(scrapy.Spider):
             item['title'] = response.meta['title']
             item['article_link'] = response.xpath('//a[@class="link-url"]/@href').extract_first()
             item['ask_num'] = response.meta['ask_num'].replace('索取号：','').strip()
-            item['author'] = item['title']
             item['pub_year'] = response.meta['pub_year'].replace('发表年度：','').strip()
-            item['org_name'] = item['title']
-            item['keyword'] = item['title']
             item['type'] = response.meta['type'].replace('报告类型：','').strip()
-            item['page_num'] = item['title']
-            item['pub_address'] = item['title']
-            item['org_cooperation'] = item['title']
-            item['pub_num'] = item['title']
-            item['intro'] = item['title']
             for selor in response.xpath('//table[@class="mc_table1 mc_table1_kjbg"]/tr'):
-                if selor.xpath('./td[1]').extract_first() == '【作者】':
+                if selor.xpath('./td[1]/text()').extract_first() == '【作者】':
                     item['author'] = selor.xpath('./td[2]/text()').extract_first()
-                elif selor.xpath('./td[1]').extract_first() == '【机构来源】':
+                elif selor.xpath('./td[1]/text()').extract_first() == '【机构来源】':
                     item['org_name'] = selor.xpath('./td[2]/text()').extract_first()
-                elif selor.xpath('./td[1]').extract_first() == '【关键词】':
+                elif selor.xpath('./td[1]/text()').extract_first() == '【关键词】':
                     item['keyword'] = selor.xpath('./td[2]/text()').extract_first()
-                elif selor.xpath('./td[1]').extract_first() == '【页数】':
+                elif selor.xpath('./td[1]/text()').extract_first() == '【页数】':
                     item['page_num'] = selor.xpath('./td[2]/text()').extract_first()
-                elif selor.xpath('./td[1]').extract_first() == '【出版地】':
+                elif selor.xpath('./td[1]/text()').extract_first() == '【出版地】':
                     item['pub_address'] = selor.xpath('./td[2]/text()').extract_first()
-                elif selor.xpath('./td[1]').extract_first() == '【发行号】':
+                elif selor.xpath('./td[1]/text()').extract_first() == '【发行号】':
                     item['pub_num'] = selor.xpath('./td[2]/text()').extract_first()
-                elif selor.xpath('./td[1]').extract_first() == '【摘要】':
+                elif selor.xpath('./td[1]/text()').extract_first() == '【摘要】':
                     item['intro'] = selor.xpath('./td[2]//text()').extract_first()
+                elif selor.xpath('./td[1]/text()').extract_first() == '【合作机构】':
+                    item['org_cooperation'] = selor.xpath('./td[2]//text()').extract_first()
             item['website'] = '中国知网'
             item['link'] = response.request.url
             item['spider_name'] = 'kjbg'
