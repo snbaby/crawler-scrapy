@@ -85,12 +85,12 @@ class KjbgSpider(scrapy.Spider):
             item = cnkiKjbgItem()
             item['title'] = response.meta['title']
             item['article_link'] = response.xpath('//a[@class="link-url"]/@href').extract_first()
-            item['ask_num'] = response.meta['ask_num'].replace('索取号：','')
+            item['ask_num'] = response.meta['ask_num'].replace('索取号：','').strip()
             item['author'] = item['title']
-            item['pub_year'] = response.meta['pub_year'].replace('发表年度：','')
+            item['pub_year'] = response.meta['pub_year'].replace('发表年度：','').strip()
             item['org_name'] = item['title']
             item['keyword'] = item['title']
-            item['type'] = response.meta['type'].replace('报告类型：','')
+            item['type'] = response.meta['type'].replace('报告类型：','').strip()
             item['page_num'] = item['title']
             item['pub_address'] = item['title']
             item['org_cooperation'] = item['title']
