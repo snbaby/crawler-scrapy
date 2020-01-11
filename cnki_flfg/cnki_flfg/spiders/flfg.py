@@ -4,19 +4,13 @@ import logging
 import json
 import time
 
-from cnki_flfg.items import cnki_flfgItem
+from cnki_chengguo.items import cnki_flfg
 from scrapy_splash import SplashRequest
 
-class FlfgSpider(scrapy.Spider):
-    name = 'flfg'
+
+class ChengguoSpider(scrapy.Spider):
+    name = 'chengguo'
     custom_settings = {
-        'CONCURRENT_REQUESTS': 1,
-        'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
-        'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 1,
-        'SPIDER_MIDDLEWARES': {
-            'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -50,7 +44,7 @@ class FlfgSpider(scrapy.Spider):
         """
 
         try:
-            url = "http://law1.cnki.net/law/brief/result.aspx?dbPrefix=CLKLP"
+            url = "http://kns.cnki.net/kns/brief/result.aspx?dbPrefix=CLKD"
             yield SplashRequest(url,
                                 endpoint='execute',
                                 args={
@@ -66,34 +60,34 @@ class FlfgSpider(scrapy.Spider):
 
     def parse_result(self, response):
         page_script = """
-            function main(splash, args)
-                splash:init_cookies(splash.args.cookies)
-                assert(splash:go(args.url))
-                assert(splash:wait(1))
-                splash:runjs("document.querySelector('#btnSearch').click();")
-                splash:wait(5)
-                js_string= "document.getElementById('iframeResult').src='" .. args.new_url .. "'"
-                splash:runjs(js_string)
-                splash:wait(5)
-                splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
+                function main(splash, args)
+                    splash:init_cookies(splash.args.cookies)
+                    assert(splash:go(args.url))
+                    assert(splash:wait(1))
+                    splash:runjs("document.querySelector('#btnSearch').click();")
+                    splash:wait(5)
+                    js_string= "document.getElementById('iframeResult').src='" .. args.new_url .. "'"
+                    splash:runjs(js_string)
+                    splash:wait(5)
+                    splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
 
 
-                local iframe_result = splash:evaljs("iframe()")
-                local entries = splash:history()
-                local last_response = entries[#entries].response
-                return {
-                    cookies = splash:get_cookies(),
-                    html = iframe_result,
-                    headers = last_response.headers,
-                }
-            end
-            """
+                    local iframe_result = splash:evaljs("iframe()")
+                    local entries = splash:history()
+                    local last_response = entries[#entries].response
+                    return {
+                        cookies = splash:get_cookies(),
+                        html = iframe_result,
+                        headers = last_response.headers,
+                    }
+                end
+                """
         page_num = self.parse_pagenum(response)
-        page_num = 3
-        base_url = "http://law1.cnki.net/law/brief/result.aspx?dbPrefix=CLKLP"
+        base_url = "http://kns.cnki.net/kns/brief/result.aspx?dbPrefix=CLKD"
         # 网站最大支持爬取300页内容
-        for i in range(page_num):
-            new_url = "http://law1.cnki.net/law/brief/brief.aspx?curpage="+str(i+1)+"&RecordsPerPage=10&QueryID=1&ID=&turnpage=1&dbPrefix=CLKLP&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&sKuaKuID=1"
+        for i in range(1, 2 + 1):
+            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' + str(
+                i) + '&RecordsPerPage=20&QueryID=4&ID=&turnpage=1&tpagemode=L&dbPrefix=CLKD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
                                 args={
@@ -111,59 +105,75 @@ class FlfgSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return 300
+                result_cnt = response.css(".pagerTitleCell::text").extract_first()
+                result_cnt = int(result_cnt.split()[1].replace(",", ""))
+                return int((result_cnt + 19) / 20)
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response, **kwargs):
+        detail_page_script = """
+                function main(splash, args)
+                    splash:init_cookies(splash.args.cookies)
+                    assert(splash:go(args.url))
+                    assert(splash:wait(1))
+                    return {
+                        cookies = splash:get_cookies(),
+                        html = splash:html(),
+                    }
+                end
+                """
         for record in response.css(".GridTableContent tr:not(.GTContentTitle)"):
-            print(record.css('td:nth-child(2) a::text').extract_first())
-            # paper_url = record.css(".fz14::attr(href)").get()
-            # paper_url = "http://kns.cnki.net" + paper_url
-            # paper_url = paper_url.replace("/kns/", "/KCMS/")
-            # item = {}
-            # item['title'] = record.css('.fz14::text').extract_first()
-            # item['author'] = record.css(".author_flag::text").extract_first().strip()
-            # item['name'] = record.css("td:nth-child(4) a::text").extract_first().strip()
-            # item['date'] = record.css("td:nth-child(5)::text").extract_first().strip()
-            # item['website'] = "中国知网-报纸库"
-            # item['link'] = paper_url
-            # item['spider_name'] = 'bzk'
-            # item['module_name'] = '中国知网-报纸库'
-            #
-            # yield scrapy.Request(paper_url, callback=self.parse_end,
-            #                      dont_filter=True, cb_kwargs=item)
+            # dest_url = http://law1.cnki.net/law/detail/detail.aspx?dbcode=CLKLP&dbname=CLKL&filename=la201912241737
+            # tmp_url = /kns/detail/detail.aspx?QueryID=4&CurRec=161&dbcode=CLKLP&dbname=CLKL&filename=la201912241737
+            tmp_url = record.css(".fz14::attr(href)").get()
+            tmp_url = "http://law1.cnki.net" + tmp_url
+            import urllib.parse as urlparse
+            from urllib.parse import parse_qs
+            tmp_url_parsed = urlparse.urlparse(tmp_url)
+
+            talent_url = "http://law1.cnki.net/law/detail/detail.aspx?"
+            from urllib.parse import urlencode
+            query_str = urlencode({
+                'dbcode': parse_qs(tmp_url_parsed.query)['dbcode'][0],
+                'dbname': parse_qs(tmp_url_parsed.query)['dbname'][0],
+                'filename': parse_qs(tmp_url_parsed.query)['filename'][0],
+            })
+            talent_url = talent_url + query_str
+            item = {}
+            item["link"] = talent_url
+            yield SplashRequest(talent_url,
+                                endpoint='execute',
+                                args={
+                                    'url': talent_url,
+                                    'lua_source': detail_page_script,
+                                    'wait': 1,
+                                    'iframes': 1,
+                                },
+                                session_id="foo",
+                                headers=response.data['headers'],
+                                callback=self.parse_end, cb_kwargs=item)
 
     def parse_end(self, response, **kwargs):
-        try:
-            item = cnki_flfgItem()
-            item['title'] = kwargs['title']
-            item['author'] = kwargs['author']
-            item['name'] = kwargs['name']
-            result = response.css('.wxBaseinfo *::text').extract()
-            item['sub_title'] = ''
-            item['intro'] = ''
-            item['version'] = ''
-            for i in range(len(result)):
-                if result[i] == '正文快照：':
-                    item['intro'] = result[i + 1]
-                if result[i] == '副标题：':
-                    item['sub_title'] = result[i + 1]
-                if result[i] == '版号：':
-                    item['version'] = result[i + 1]
-            item['date'] = kwargs['date']
-            item['website'] = kwargs['website']
-            item['link'] = kwargs['link']
-            item['spider_name'] = kwargs['spider_name']
-            item['module_name'] = kwargs['module_name']
-            yield item
-        except Exception as e:
-            logging.error(
-                self.name +
-                " in parse_item: url=" +
-                response.request.url +
-                ", exception=" +
-                e.__str__())
-            logging.exception(e)
+        sbkItem = cnki_chengguoItem()
+        sbkItem['name'] = response.css("body > table:nth-child(3) > tbody > tr > td:nth-child(2) > strong::text").get(
+            "").strip()
+        sbkItem['accomplish_person'] = response.css("#box > tbody > tr:nth-child(1) > td.checkItem::text").get(
+            "").strip()
+        sbkItem['first_accomplish_company'] = response.css("#box > tbody > tr:nth-child(2) > td.checkItem::text").get(
+            "").strip()
+        sbkItem['keyword'] = response.css("#box > tbody > tr:nth-child(3) > td.checkItem::text").get("").strip()
+        sbkItem['zt_type'] = response.css("#box > tbody > tr:nth-child(4) > td.checkItem::text").get("").strip()
+        sbkItem['xk_type'] = response.css("#box > tbody > tr:nth-child(5) > td.checkItem::text").get("").strip()
+        sbkItem['intro'] = response.css("#cgjj::text").get("").strip()
+        sbkItem['type'] = response.css("#box > tbody > tr:nth-child(7) > td.checkItem::text").get("").strip()
+        sbkItem['time'] = response.css("#box > tbody > tr:nth-child(11) > td.checkItem::text").get("").strip()
+        sbkItem['research_time'] = response.css("#box > tbody > tr:nth-child(9) > td.checkItem::text").get("").strip()
+        sbkItem['website'] = '中国知网-成果'
+        sbkItem['link'] = kwargs['link']
+        sbkItem['spider_name'] = self.name
+        sbkItem['module_name'] = '中国知网-成果库'
+        yield sbkItem
+

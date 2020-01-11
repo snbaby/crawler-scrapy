@@ -12,16 +12,14 @@ from scrapy.loader.processors import TakeFirst, MapCompose, Join
 
 
 class cnki_flfgItem(scrapy.Item):
-    title = scrapy.Field()
-    source = scrapy.Field()
-    pub_time = scrapy.Field()
-    pub_org = scrapy.Field()
-    implement_date = scrapy.Field()
-    pub_wordsize = scrapy.Field()
-    keyword = scrapy.Field()
+    title_cn = scrapy.Field()
     intro = scrapy.Field()
-    potency_level = scrapy.Field()
-    timeliness = scrapy.Field()
+    author = scrapy.Field()
+    degree = scrapy.Field()
+    degree_award_company = scrapy.Field()
+    degree_award_year = scrapy.Field()
+    tutor = scrapy.Field()
+    type = scrapy.Field()
     website = scrapy.Field()
     link = scrapy.Field()
     create_time = scrapy.Field()
