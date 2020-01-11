@@ -39,7 +39,10 @@ class FlfgSpider(scrapy.Spider):
             splash:runjs("document.querySelector('#btnSearch').click();")
             splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
             splash:wait(5)
-            return splash:evaljs("iframe()")
+            return {
+                pageurl = splash:evaljs()
+                html = splash:evaljs("iframe()")
+            }
         end
         """
 
@@ -86,7 +89,7 @@ class FlfgSpider(scrapy.Spider):
         base_url = "http://kns.cnki.net/kns/brief/result.aspx?dbPrefix=CLKD"
         # 网站最大支持爬取300页内容
         for i in range(1, 2 + 1):
-            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' + str(i) + '&RecordsPerPage=20&QueryID=4&ID=&turnpage=1&tpagemode=L&dbPrefix=CLKD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
+            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' +str(i)  + '&RecordsPerPage=20&QueryID=1&ID=&turnpage=1&tpagemode=L&dbPrefix=CLKD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
                                 args={
@@ -127,6 +130,8 @@ class FlfgSpider(scrapy.Spider):
         for record in response.css(".GridTableContent tr:not(.GTContentTitle)"):
             # dest_url = http://law1.cnki.net/law/detail/detail.aspx?dbcode=CLKLP&dbname=CLKL&filename=la201912241737
             # tmp_url = /kns/detail/detail.aspx?QueryID=4&CurRec=161&dbcode=CLKLP&dbname=CLKL&filename=la201912241737
+            logging.info("got record="+record.css("a.fz14::text").get())
+            continue
             tmp_url = record.css(".fz14::attr(href)").get()
             tmp_url = "http://law1.cnki.net" + tmp_url
             import urllib.parse as urlparse
@@ -142,6 +147,8 @@ class FlfgSpider(scrapy.Spider):
             })
             talent_url = talent_url + query_str
             item = {}
+            logging.info("tmp_url=" + tmp_url)
+            logging.info("talent_url="+ talent_url)
             item["link"] = talent_url
             yield SplashRequest(talent_url,
                                 endpoint='execute',
@@ -156,8 +163,11 @@ class FlfgSpider(scrapy.Spider):
                                 callback=self.parse_end, cb_kwargs=item)
 
     def parse_end(self, response, **kwargs):
+        return
         sbkItem = cnki_flfgItem()
         sbkItem['title'] = response.css("span#chTitle::text").get("").strip()
+        logging.info("link=" + kwargs['link'])
+        return
         sbkItem['source'] = "中国法律知识资源总库法律法规库"
         sbkItem['pub_time'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > div.author > p:nth-child(2)::text").get("").strip()
         sbkItem['pub_org'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > div.author > p:nth-child(1) > a::text").get("").strip()
