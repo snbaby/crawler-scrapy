@@ -94,7 +94,8 @@ class KjbgSpider(scrapy.Spider):
                 elif selor.xpath('./td[1]/text()').extract_first() == '【机构来源】':
                     item['org_name'] = selor.xpath('./td[2]/text()').extract_first()
                 elif selor.xpath('./td[1]/text()').extract_first() == '【关键词】':
-                    item['keyword'] = selor.xpath('./td[2]/text()').extract_first()
+                    print(''.join(selor.xpath('./td[2]//text()').extract()))
+                    item['keyword'] = ''.join(selor.xpath('./td[2]//text()').extract())
                 elif selor.xpath('./td[1]/text()').extract_first() == '【页数】':
                     item['page_num'] = selor.xpath('./td[2]/text()').extract_first()
                 elif selor.xpath('./td[1]/text()').extract_first() == '【出版地】':
