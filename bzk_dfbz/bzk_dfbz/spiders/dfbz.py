@@ -10,10 +10,10 @@ from utils.tools.attachment import get_attachments, get_times
 class DfbzSpider(scrapy.Spider):
     name = 'dfbz'
     custom_settings = {
-        'CONCURRENT_REQUESTS': 10,
-        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS': 1,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOAD_DELAY': 1,
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,

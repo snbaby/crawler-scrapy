@@ -8,10 +8,10 @@ from bzk_gjbz.items import bzk_gjbzItem
 class GjbzSpider(scrapy.Spider):
     name = 'gjbz'
     custom_settings = {
-        'CONCURRENT_REQUESTS': 10,
-        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS': 1,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOAD_DELAY': 1,
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -154,7 +154,7 @@ class GjbzSpider(scrapy.Spider):
             item['code'] = response.css('#standard_code::text').extract_first().strip()
             item['status'] = response.css('#content > div.detailedinfo-main > div:nth-child(1) > ul > li:nth-child(4) > span::text').extract_first().strip()
             item['committees'] = response.css('#content > div.detailedinfo-main > div:nth-child(6) > ul > li:nth-child(6) > span::text').extract_first().strip()
-            item['approvalDate'] = ''
+            item['approvalDate'] = response.css('#content > div.detailedinfo-main > div:nth-child(1) > ul > li:nth-child(5) > span::text').extract_first().strip()
             item['implementationDate'] = response.css('#content > div.detailedinfo-main > div:nth-child(1) > ul > li:nth-child(6) > span::text').extract_first()
             item['sourceWebsite'] = '中国标准在线服务网'
             item['ics'] = response.css('#content > div.detailedinfo-main > div:nth-child(2) > ul > li:nth-child(1) > span::text').extract_first().strip()
@@ -162,7 +162,7 @@ class GjbzSpider(scrapy.Spider):
             item['pub_organization'] = response.css('#content > div.detailedinfo-main > div:nth-child(6) > ul > li:nth-child(8) > span::text').extract_first()
             item['replace'] = response.css("#a461::text").extract_first()
             item['replaced'] = response.css("#a461::text").extract_first()
-            item['dept_host'] = ''
+            item['dept_host'] = response.css('#content > div.detailedinfo-main > div:nth-child(6) > ul > li:nth-child(8) > span::text').extract_first().strip()
             item['scope'] = response.css('#content > div.detailedinfo-top > div.stand-detail-description > div.detailedinfo-text::text').extract_first()
             item['link'] = kwargs['url']
             item['module_name'] = '标准库-国际标准'
