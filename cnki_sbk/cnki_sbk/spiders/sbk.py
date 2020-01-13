@@ -167,5 +167,9 @@ class SbkSpider(scrapy.Spider):
         sbkItem['intro'] = response.css("div.wxBaseinfo span#ChDivSummary::text").get("").strip()
         sbkItem['tutor'] = response.css("label#catalog_TUTOR")[0].xpath('following-sibling::text()[1]').get("").strip()
         sbkItem['type'] = response.css("label#catalog_ZTCLS")[0].xpath('following-sibling::text()[1]').get("").strip()
+        sbkItem['keyword'] = ''.join(response.css(".wxBaseinfo > p > a *::text").extract())
+        sbkItem['fund_name'] = ''
+        sbkItem['doi'] = response.xpath('//*[@id="mainArea"]/div[2]/div[2]/div[1]/p[4]/text()').extract_first()
+        sbkItem['province'] = response.css('#func608 > div.sourinfo > p:nth-child(3)::text').extract_first()
         yield sbkItem
 
