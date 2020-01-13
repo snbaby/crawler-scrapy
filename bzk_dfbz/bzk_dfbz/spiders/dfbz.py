@@ -136,7 +136,7 @@ class DfbzSpider(scrapy.Spider):
                 '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(5) > td:nth-child(2)::text').extract_first())
             item['implementationDate'] = get_times(response.css(
                 '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(5) > td:nth-child(4)::text').extract_first())
-            item['sourceWebsite'] = ''
+            item['sourceWebsite'] = '国家标准信息查询'
             item['ics'] = response.css(
                 '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(10) > td:nth-child(2)::text').extract_first()
             item['ccs'] = response.css(
@@ -160,10 +160,9 @@ class DfbzSpider(scrapy.Spider):
                 '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(11) > td:nth-child(2)::text').extract_first()
 
             item['publish_no'] = response.css(
-                '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(13) > td:nth-child(2)::text').extract_first()
+                '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(13) > td:nth-child(2) a::text').extract_first()
 
             item['link'] = kwargs['url']
-
             item['appendix_name'] = ''
             item['spider_name'] = 'dfbz'
             item['module_name'] = '标准库-地方标准'
