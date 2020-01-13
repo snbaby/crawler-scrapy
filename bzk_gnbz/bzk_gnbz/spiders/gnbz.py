@@ -6,6 +6,7 @@ from scrapy_splash import SplashRequest
 from bzk_gnbz.items import bzk_gnbzItem
 from utils.tools.attachment import get_attachments, get_times
 
+
 class GnbzSpider(scrapy.Spider):
     name = 'gnbz'
     custom_settings = {
@@ -94,9 +95,9 @@ class GnbzSpider(scrapy.Spider):
                                         'lua_source': script,
                                         'wait': 1,
                                         'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    cb_kwargs=content)
+                },
+                    callback=self.parse_page,
+                    cb_kwargs=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -131,16 +132,24 @@ class GnbzSpider(scrapy.Spider):
                                         'wait': 1,
                                         'num': num + 1,
                                         'url': kwargs['url'],
-                                    },
-                                    callback=self.parse_item,
-                                    cb_kwargs=kwargs)
+                },
+                    callback=self.parse_item,
+                    dont_filter=True,
+                    cb_kwargs=kwargs)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response, **kwargs):
+        script = """
+        function main(splash, args)
+          splash:go(args.url)
+          splash:wait(2)
+          return splash:html()
+        end
+        """
         try:
-            item = bzk_gnbzItem()
+            item = {}
             item['name'] = response.css(
                 '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(2) > td:nth-child(2)::text').extract_first()
             item['code'] = response.css(
@@ -153,7 +162,7 @@ class GnbzSpider(scrapy.Spider):
                 '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(4) > td:nth-child(2)::text').extract_first())
             item['implementationDate'] = get_times(response.css(
                 '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(4) > td:nth-child(4)::text').extract_first())
-            item['sourceWebsite'] = ''
+            item['sourceWebsite'] = '国家标准信息查询'
             item['ics'] = response.css(
                 '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(9) > td:nth-child(2)::text').extract_first()
             item['ccs'] = response.css(
@@ -182,19 +191,26 @@ class GnbzSpider(scrapy.Spider):
             item['dept_pub'] = ''
 
             item['publish_no'] = response.css(
-                '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(13) > td:nth-child(2)::text').extract_first()
-
+                '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(13) > td:nth-child(2) a::text').extract_first()
 
             item['remark'] = ''
-            item['link'] = kwargs['url']
+            item['link'] = response.css(
+                '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(1) > td:nth-child(2) > a::attr(href)').extract_first()
 
             item['appendix_name'] = ''
             item['spider_name'] = 'gnbz'
             item['module_name'] = '标准库-国内标准'
 
-            print(
-                "===========================>crawled one item" +
-                response.request.url)
+            yield SplashRequest(item['link'],
+                                endpoint='execute',
+                                args={
+                                    'lua_source': script,
+                                    'wait': 1,
+                                    'url': item['link'],
+                                },
+                                callback=self.parse_end,
+                                dont_filter=True,
+                                cb_kwargs=item)
         except Exception as e:
             logging.error(
                 self.name +
@@ -203,4 +219,39 @@ class GnbzSpider(scrapy.Spider):
                 ", exception=" +
                 e.__str__())
             logging.exception(e)
+
+    def parse_end(self, response, **kwargs):
+        item = bzk_gnbzItem()
+        item['name'] = kwargs['name']
+        item['code'] = kwargs['code']
+        item['status'] = kwargs['status']
+        if len(response.css(
+            'body > div.repbg1 > div > div > div > div > table.tdlist > tbody > tr:nth-child(4) > td > button.btn.ck_btn.btn-sm.btn-primary::attr(data-value)').extract())>0:
+            item['xiazai'] = 'http://c.gb688.cn/bzgk/gb/showGb?type=online&hcno=' + str(response.css(
+                'body > div.repbg1 > div > div > div > div > table.tdlist > tbody > tr:nth-child(4) > td > button.btn.ck_btn.btn-sm.btn-primary::attr(data-value)').extract_first())
+        else:
+            item['xiazai'] = ''
+        item['committees'] = kwargs['committees']
+        item['approvalDate'] = kwargs['approvalDate']
+        item['implementationDate'] = kwargs['implementationDate']
+        item['sourceWebsite'] = kwargs['sourceWebsite']
+        item['ics'] = kwargs['ics']
+        item['ccs'] = kwargs['ccs']
+        item['en_name'] = kwargs['en_name']
+        item['type'] = kwargs['type']
+        item['replace'] = kwargs['replace']
+        item['caibiao'] = kwargs['caibiao']
+        item['caibiao_name'] = kwargs['caibiao_name']
+        item['caibiao_level'] = kwargs['caibiao_level']
+        item['caibiao_type'] = kwargs['caibiao_type']
+        item['dept_host'] = kwargs['dept_host']
+        item['dept_pub'] = response.css(
+            'body > div.repbg1 > div > div > div > div > div:nth-child(7) > div.col-xs-12.col-md-10.content::text').extract_first()
+        item['publish_no'] = kwargs['publish_no']
+        item['remark'] = response.css(
+            'body > div.repbg1 > div > div > div > div > div:nth-child(8) > div.col-xs-12.col-md-10.content::text').extract_first()
+        item['link'] = kwargs['link']
+        item['appendix_name'] = kwargs['appendix_name']
+        item['spider_name'] = kwargs['spider_name']
+        item['module_name'] = kwargs['module_name']
         yield item
