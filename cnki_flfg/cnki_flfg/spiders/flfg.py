@@ -146,7 +146,7 @@ class FlfgSpider(scrapy.Spider):
             'div.author > p:nth-child(4)::text').extract_first().strip().replace('【发文字号】', '')
         item['keyword'] = ''.join(
             response.css('#ChDivKeyWord *::text').extract())
-        item['intro'] = ''.join(response.css(".summary *::text").extract())
+        item['intro'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > p:nth-child(3)::text").extract_first().strip().replace('【正文快照】', '')
         item['potency_level'] = response.css(
             '#main > div:nth-child(1) > div.summary.pad10 > p:nth-child(4)::text').extract_first().strip().replace('【效力级别】', '')
         item['timeliness'] = kwargs['timeliness']
