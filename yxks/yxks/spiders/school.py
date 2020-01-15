@@ -197,9 +197,9 @@ class schoolSpider(scrapy.Spider):
             school_item['education'] = school['level_name']
             school_item['email'] = school['email']
             school_item['phone'] = school['phone']
-            school_item['website'] = '中国教育在线'
+            school_item['website'] = school['site']
             school_item['major'] = ''
-            school_item['sourceWebsite'] = school['site']
+            school_item['sourceWebsite'] = '中国教育在线'
             school_item['link'] = 'https://gkcx.eol.cn/school/' + str(content['school_id'])
             school_item['spider_name'] = 'school'
             school_item['module_name'] = '学校'
