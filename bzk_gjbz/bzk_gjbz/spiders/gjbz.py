@@ -78,7 +78,7 @@ class GjbzSpider(scrapy.Spider):
             ]
 
             if not self.add_pagenum:
-                pagenum = 30
+                pagenum = 3886
             else:
                 pagenum = self.add_pagenum
             for url in urls:
