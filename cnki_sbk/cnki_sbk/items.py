@@ -25,3 +25,7 @@ class cnki_sbkItem(scrapy.Item):
     create_time = scrapy.Field()
     spider_name = scrapy.Field()
     module_name = scrapy.Field()
+    keyword = scrapy.Field()
+    fund_name = scrapy.Field()
+    doi = scrapy.Field()
+    province = scrapy.Field()

@@ -11,10 +11,10 @@ from utils.tools.attachment import get_attachments, get_times
 class HybzSpider(scrapy.Spider):
     name = 'hybz'
     custom_settings = {
-        'CONCURRENT_REQUESTS': 10,
-        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS': 1,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOAD_DELAY': 1,
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -174,7 +174,7 @@ class HybzSpider(scrapy.Spider):
                 result = {
                     'code': tr.css('td:nth-child(2)::text').extract_first(),
                     'name': tr.css('td:nth-child(3) a::text').extract_first(),
-                    'industryClassification': tr.css('td:nth-child(4)::text').extract_first(),
+                    'industry': tr.css('td:nth-child(4)::text').extract_first(),
                     'status': tr.css('td:nth-child(5) span::text').extract_first(),
                     'approvalDate': tr.css('td:nth-child(6)::text').extract_first(),
                     'implementationDate': tr.css('td:nth-child(7)::text').extract_first(),
@@ -195,11 +195,11 @@ class HybzSpider(scrapy.Spider):
             item['code'] = kwargs['code']
             item['status'] = kwargs['status']
             item['xiazai'] = appendix
-            item['industryClassification'] = kwargs['industryClassification']
+            item['industryClassification'] = response.css('body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(10)::text').extract_first()
             if len(response.css(
-                    'body > div.container.main-body > div > div > div > p:nth-child(14)').extract()) > 0:
+                    'body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(6)').extract()) > 0:
                 item['committees'] = response.css(
-                    'body > div.container.main-body > div > div > div > p:nth-child(14)::text').extract_first()
+                    'body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(6)::text').extract_first()
             else:
                 item['committees'] = ''
             item['approvalDate'] = kwargs['approvalDate']
@@ -226,13 +226,8 @@ class HybzSpider(scrapy.Spider):
             else:
                 item['type'] = ''
 
-            if len(response.css(
-                    'body > div.container.main-body > div > div > div > div.page-header > div > span.s-status.label.label-info').extract()) > 0:
-                item['industry'] = response.css(
-                    'body > div.container.main-body > div > div > div > div.page-header > div > span.s-status.label.label-info::text').extract_first()
-            else:
-                item['industry'] = ''
-            item['replace'] = ''
+            item['industry'] = kwargs['industry']
+            item['replace'] = response.css('body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-left > dd:nth-child(10)::text').extract_first()
             if len(response.css(
                     'body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(8)').extract()) > 0:
                 item['dept_pub'] = response.css(
@@ -240,7 +235,7 @@ class HybzSpider(scrapy.Spider):
             else:
                 item['dept_pub'] = ''
 
-            item['publish_no'] = ''
+            item['publish_no'] = response.css('body > div.container.main-body > div > div > div > p:nth-child(9) > a::text').extract_first()
 
             if len(response.css(
                     'body > div.container.main-body > div > div > div > p:nth-child(12)').extract()) > 0:

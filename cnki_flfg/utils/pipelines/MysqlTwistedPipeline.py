@@ -65,7 +65,7 @@ class MysqlTwistedPipeline(object):
                     `spider_name`,
                     `module_name`
                 )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s,%s,%s, %s, %s, %s, %s)
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s,%s, %s, %s, %s)
         '''
             parm = (
                 item['title'],

@@ -61,9 +61,13 @@ class MysqlTwistedPipeline(object):
                     `type`,
                     `create_time`,
                     `spider_name`,
-                    `module_name`
+                    `module_name`,
+                    `keyword`,
+                    `fund_name`,
+                    `doi`,
+                    `province`
                 )
-                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s,%s, %s)
+                values (%s,%s, %s, %s, %s, %s,%s, %s, %s, %s,%s,%s, %s, %s,%s,%s, %s)
         '''
             parm = (
                 item['title_cn'],
@@ -78,7 +82,11 @@ class MysqlTwistedPipeline(object):
                 item['type'],
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
                 item['spider_name'],
-                item['module_name']
+                item['module_name'],
+                item['keyword'],
+                item['fund_name'],
+                item['doi'],
+                item['province']
             )
             cursor.execute(sql, parm)
             logging.info(self.spider.name + ": " + "insert into mysql success")
