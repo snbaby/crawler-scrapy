@@ -103,7 +103,7 @@ class MysqlTwistedPipeline(object):
             cursor.execute(sql, parm)
             logging.info(self.spider.name + ": " + "insert into mysql success")
         except Exception as e:
-            logging.info("Spider insert item failed: {}, {}".format(e, e.args))
+            logging.error("Spider insert item failed: {}, {}".format(e, e.args))
             raise DropItem("Duplicate item found: %s" % item)
 
     def close_spider(self, spider):
