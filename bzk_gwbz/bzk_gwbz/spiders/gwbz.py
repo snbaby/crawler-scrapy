@@ -65,22 +65,31 @@ class GwbzSpider(scrapy.Spider):
                 function main(splash, args)
                   splash:go(args.url)
                   wait_for_element(splash, "#ISO_list")
-                  splash:runjs("submit('不限','','1','国外标准', 'GW')")
+                  splash:runjs("submit('不限','','2','国际标准', 'ISO')")
+                  splash:wait(5)
                   wait_for_element(splash, ".pages")
-                  splash:wait(1)
+                  splash:runjs(args.js)
+                  splash:wait(5)
                   return splash:html()
                 end
                 """
             urls = [
                 'https://www.spc.org.cn/basicsearch'
             ]
+            if not self.add_pagenum:
+                pagenum = 14814
+            else:
+                pagenum = self.add_pagenum
             for url in urls:
-                yield SplashRequest(url,
+                for num in range(pagenum):
+                    js = "submitIndexPage('" + str(num) + "')"
+                    yield SplashRequest(url,
                                     endpoint='execute',
                                     args={
                                         'lua_source': script,
                                         'wait': 1,
                                         'url': url,
+                                        'js': js
                                     },
                                     callback=self.parse,
                                     cb_kwargs={
