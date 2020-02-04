@@ -77,7 +77,7 @@ class GwbzSpider(scrapy.Spider):
                 'https://www.spc.org.cn/basicsearch'
             ]
             if not self.add_pagenum:
-                pagenum = 14814
+                pagenum = 30
             else:
                 pagenum = self.add_pagenum
             for url in urls:
