@@ -27,7 +27,7 @@ class LgwSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-         'SPLASH_URL': "http://localhost:8050/"}
+         'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -96,12 +96,12 @@ class LgwSpider(scrapy.Spider):
                                             'url': content['url'],
                                         },
                                         callback=self.parse,
-                                        cb_kwargs=content)
+                                        meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         script = """
         function main(splash, args)
           assert(splash:go(args.url))
@@ -121,12 +121,12 @@ class LgwSpider(scrapy.Spider):
                         'url': href,
                     },
                     callback=self.parse_item,
-                    cb_kwargs={'url':href})
+                    meta={'url':href})
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             if response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()'):
                 item = zpksItem()
@@ -139,7 +139,7 @@ class LgwSpider(scrapy.Spider):
                 item['salary'] = response.xpath('//*[@class="salary"]/text()').extract_first()
                 item['time'] = datetime.date.today()
                 item['website'] = '拉勾网'
-                item['link'] = kwargs['url']
+                item['link'] = response.meta['url']
                 item['type'] = '4'
                 item['source'] = '拉勾网'
                 item['content'] = ''.join(response.xpath('//*[@class="job-detail"]').extract())

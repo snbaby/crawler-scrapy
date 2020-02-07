@@ -73,7 +73,7 @@ class GuangdongSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,7 +87,7 @@ class GuangdongSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         page_count = int(self.parse_pagenum(response))
         print(page_count)
         for n in range(page_count):
@@ -116,16 +116,16 @@ class GuangdongSpider(scrapy.Spider):
             item['time'] = record['infodateformat']
             try:
                 print(item['link'])
-                yield scrapy.Request('http://jsggzy.jszwfw.gov.cn' + record['linkurl'], callback=self.parse_item, dont_filter=True,cb_kwargs=item)
+                yield scrapy.Request('http://jsggzy.jszwfw.gov.cn' + record['linkurl'], callback=self.parse_item, dont_filter=True,meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response,**kwargs):
+    def parse_item(self, response):
         try:
             appendix, appendix_name = get_attachments(response)
             category = '其他';
-            title = kwargs['title']
+            title = response.meta['title']
             if title.find('招标') >= 0:
                 category = '招标'
             elif title.find('中标') >= 0:
@@ -147,7 +147,7 @@ class GuangdongSpider(scrapy.Spider):
             item['category'] = category
             item['type'] = '2'
             item['region'] = '江苏省'
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['website'] = '江苏省公共资源交易服务平台'
             item['module_name'] = '江苏省-公共交易平台'
             item['spider_name'] = 'jiangsu_ggjypt'

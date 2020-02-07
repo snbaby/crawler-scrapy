@@ -38,7 +38,7 @@ class hunanSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -58,19 +58,19 @@ class hunanSzfwjSpider(scrapy.Spider):
                 url = href.extract()
                 url = url.replace('window.location=\'','').replace('\'','')
                 print(url)
-                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,cb_kwargs={'url':url})
+                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,meta={'url':url})
 
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_page(self, response,**kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                temUrl = kwargs['url'].replace('.jhtml', '')+'_'
+                temUrl = response.meta['url'].replace('.jhtml', '')+'_'
                 url = temUrl + \
-                      str(pagenum) + ".jhtml" if pagenum > 0 else kwargs['url']
+                      str(pagenum) + ".jhtml" if pagenum > 0 else response.meta['url']
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -96,7 +96,7 @@ class hunanSzfwjSpider(scrapy.Spider):
                 item['time'] = selector.xpath('./div/text()').extract_first()
                 url = selector.xpath('./a/@href').extract_first()
                 print('url=============='+url)
-                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -104,12 +104,12 @@ class hunanSzfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         if response.text:
             try:
                 appendix, appendix_name = get_attachments(response)
                 category = '其他';
-                title = kwargs['title']
+                title = response.meta['title']
                 if title.find('招标') >= 0:
                     category = '招标'
                 elif title.find('中标') >= 0:
@@ -127,7 +127,7 @@ class hunanSzfwjSpider(scrapy.Spider):
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '湖南省'
-                item['time'] = kwargs['time']
+                item['time'] = response.meta['time']
                 item['website'] = '湖南省公共资源交易服务平台'
                 item['module_name'] = '湖南省-公共交易平台'
                 item['spider_name'] = 'hunan_ggjypt'

@@ -25,7 +25,7 @@ class ZgxtdjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,25 +40,25 @@ class ZgxtdjSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield scrapy.Request(content['url'], callback=self.parse_page,headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}, cb_kwargs=content, dont_filter=True)
+                yield scrapy.Request(content['url'], callback=self.parse_page,headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}, meta=content, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
-        page_count = int(self.parse_pagenum(response, kwargs))
+    def parse_page(self, response):
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
-                    url = kwargs['url']
+                    url = response.meta['url']
                 else:
-                    url = kwargs['url'].replace('.html',str(pagenum+1)+'.html')
-                yield scrapy.Request(url, callback=self.parse,headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}, cb_kwargs=kwargs, dont_filter=True)
+                    url = response.meta['url'].replace('.html',str(pagenum+1)+'.html')
+                yield scrapy.Request(url, callback=self.parse,headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}, meta=response.meta, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
@@ -69,16 +69,16 @@ class ZgxtdjSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for href in response.css('.news-main-list a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
-                yield scrapy.Request(url, callback=self.parse_item,headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}, cb_kwargs={'url': url}, dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse_item,headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}, meta={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = hyzxItem()
             item['title'] = response.css('title::text').extract_first().replace(' - 中国信托登记有限责任公司','').strip()
@@ -86,7 +86,7 @@ class ZgxtdjSpider(scrapy.Spider):
             item['resource'] = response.css('.news-detail-time::text').extract_first().split('时间：')[0].split('来源：')[1].replace('来源：','').strip()
             item['content'] = response.css('.ueditor_content_parse').extract_first()
             item['website'] = '中国信托登记有限责任公司'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['spider_name'] = 'zgxtdj'
             item['txt'] = ''.join(response.css('.ueditor_content_parse *::text').extract())
             item['module_name'] = '信托融资一行业资讯-中国信托登记有限责任公司'

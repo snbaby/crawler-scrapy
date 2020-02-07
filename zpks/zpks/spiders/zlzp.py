@@ -26,7 +26,7 @@ class ZlzpSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-         'SPLASH_URL': "http://localhost:8050/"}
+         'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -123,21 +123,21 @@ class ZlzpSpider(scrapy.Spider):
                         'url': obj['positionURL'],
                     },
                     callback=self.parse_item,
-                    cb_kwargs=item)
+                    meta=item)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         print(response.text)
         try:
-            kwargs['website'] = '智联招聘'
-            kwargs['type'] = '3'
-            kwargs['source'] = '智联招聘'
+            response.meta['website'] = '智联招聘'
+            response.meta['type'] = '3'
+            response.meta['source'] = '智联招聘'
             print(response.xpath('//*[@class="describtion__detail-content"]').extract())
-            kwargs['content'] = ''.join(response.xpath('//*[@class="describtion__detail-content"]').extract())
-            kwargs['spider_name'] = 'zlzp'
-            kwargs['module_name'] = '智联招聘'
+            response.meta['content'] = ''.join(response.xpath('//*[@class="describtion__detail-content"]').extract())
+            response.meta['spider_name'] = 'zlzp'
+            response.meta['module_name'] = '智联招聘'
             print(
                 "===========================>crawled one item" +
                 response.request.url)

@@ -24,9 +24,8 @@ class GansuZfcgwSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
+        }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -86,12 +85,12 @@ class GansuZfcgwSpider(scrapy.Spider):
                                         'url': content['url'],
                                     },
                                     callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         script = """
         function wait_for_element(splash, css, maxwait)
           -- Wait until a selector matches an element
@@ -134,10 +133,10 @@ class GansuZfcgwSpider(scrapy.Spider):
           return splash:html()
         end
         """
-        page_count = int(self.parse_pagenum(response, kwargs))
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url']
+                url = response.meta['url']
                 yield SplashRequest(url,
                                     endpoint='execute',
                                     args={
@@ -147,12 +146,12 @@ class GansuZfcgwSpider(scrapy.Spider):
                                         'url': url,
                                     },
                                     callback=self.parse,
-                                    cb_kwargs=kwargs)
+                                    meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
@@ -163,19 +162,19 @@ class GansuZfcgwSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for href in response.css('.Expand_SearchSLisi a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
                 result = {
                     'url': url
                 }
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse_item, meta=result, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             appendix, appendix_name = get_attachments(response)
             title = response.css('.title::text').extract_first()
@@ -199,7 +198,7 @@ class GansuZfcgwSpider(scrapy.Spider):
             item['time'] = response.css('.property span:nth-child(2)::text').extract_first().replace('发布时间：','')
             item['source'] = response.css('.property span:nth-child(1)::text').extract_first().replace('文章来源：','')
             item['website'] = '甘肃政府采购网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '2'
             item['region'] = '甘肃省'
             item['appendix_name'] = appendix_name

@@ -70,7 +70,7 @@ class GjypSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -94,28 +94,28 @@ class GjypSpider(scrapy.Spider):
                         'url': content['url'],
                     },
                     callback=self.parse_page,
-                    cb_kwargs=content)
+                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         print(page_count)
         try:
             for pagenum in range(page_count):
                 print(pagenum)
                 if pagenum > 0:
-                    yield SplashRequest(kwargs['url'],
+                    yield SplashRequest(response.meta['url'],
                         endpoint='execute',
                         args={
                             'lua_source': script,
                             'wait': 1,
                             'page': pagenum,
-                            'url': kwargs['url'],
+                            'url': response.meta['url'],
                         },
                         callback=self.parse,
-                        cb_kwargs=kwargs)
+                        meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -129,7 +129,7 @@ class GjypSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for selector in response.xpath('//*[@id="content"]/table[2]/tbody/tr/td/p/a/@href'):
             try:
                 href = selector.re(r'([1-9]\d*\.?\d*)')[2]

@@ -82,7 +82,7 @@ class GansuSpider(scrapy.Spider):
         },
         # 'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -105,23 +105,23 @@ class GansuSpider(scrapy.Spider):
                         'url': content['url'],
                     },
                     callback=self.parse_page,
-                    cb_kwargs=content)
+                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 if pagenum > 1:
-                    yield SplashRequest(kwargs['url'],
+                    yield SplashRequest(response.meta['url'],
                         endpoint='execute',
                         args={
                             'lua_source': script,
                             'wait': 1,
                             'page': pagenum,
-                            'url': kwargs['url']
+                            'url': response.meta['url']
                         },
                         callback=self.parse)
         except Exception as e:
@@ -145,18 +145,18 @@ class GansuSpider(scrapy.Spider):
                 item['time'] = selector.xpath('./td[5]/text()').extract_first().strip()
                 item['article_num'] = selector.xpath('./td[3]/text()').extract_first().strip()
                 href = selector.xpath('./td[2]/div/a/@href').extract_first()
-                yield scrapy.Request(href,callback=self.parse_item,dont_filter=True,cb_kwargs=item)
+                yield scrapy.Request(href,callback=self.parse_item,dont_filter=True,meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = kwargs['title']
-            item['article_num'] =  kwargs['article_num']
-            item['time'] = kwargs['time']
+            item['title'] = response.meta['title']
+            item['article_num'] =  response.meta['article_num']
+            item['time'] = response.meta['time']
             item['content'] = "".join(response.xpath('//div[@class="Custom_UnionStyle"]').extract())
             item['source'] = ''
             item['province'] = '吉林省'

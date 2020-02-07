@@ -25,7 +25,7 @@ class schoolSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        'SPLASH_URL': 'http://47.106.239.73:8050/'}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,7 +41,7 @@ class schoolSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         try:
             datas = json.loads(response.text)
             if len(datas['data']['item']) > 0:
@@ -57,7 +57,7 @@ class schoolSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_major(self, response, **kwargs):
+    def parse_major(self, response):
         try:
             majorHeat = json.loads(response.text)
             majorHeat['level2_name'] = response.meta['level2_name']
@@ -66,7 +66,7 @@ class schoolSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_major_info(self, response, **kwargs):
+    def parse_major_info(self, response):
         try:
             majorHeat = response.meta
             majorInfo = json.loads(response.text)

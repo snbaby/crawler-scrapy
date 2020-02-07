@@ -27,7 +27,7 @@ class heilongjiangZfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -86,12 +86,12 @@ class heilongjiangZfwjSpider(scrapy.Spider):
                                         'url': content['url'],
                                     },
                                     callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         script = """
         function wait_for_element(splash, css, maxwait)
           -- Wait until a selector matches an element
@@ -141,7 +141,7 @@ class heilongjiangZfwjSpider(scrapy.Spider):
                                             'url': url,
                                         },
                                         callback=self.parse,
-                                        cb_kwargs=kwargs)
+                                        meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -157,7 +157,7 @@ class heilongjiangZfwjSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         script = """
         function main(splash, args)
           assert(splash:go(args.url))
@@ -180,22 +180,22 @@ class heilongjiangZfwjSpider(scrapy.Spider):
                     print('url==='+url)
                     yield SplashRequest(url, endpoint='execute',
                                         args={'lua_source': script, 'wait': 1, 'url': url},
-                                        callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                                        callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
-            if kwargs['title']:
+            if response.meta['title']:
                 appendix, appendix_name = get_attachments(response)
                 item = rmzfzcItem()
-                item['title'] = kwargs['title']
-                item['article_num'] = kwargs['article_num']
+                item['title'] = response.meta['title']
+                item['article_num'] = response.meta['article_num']
                 item['content'] = "".join(response.xpath('//*[@class="zwnr"]').extract())
                 item['appendix'] = appendix
-                item['source'] = kwargs['source']
-                item['time'] = kwargs['time']
+                item['source'] = response.meta['source']
+                item['time'] = response.meta['time']
                 item['province'] = '黑龙江省'
                 item['city'] = ''
                 item['area'] = ''
@@ -204,7 +204,7 @@ class heilongjiangZfwjSpider(scrapy.Spider):
                 item['spider_name'] = 'heilongjiang_zfwj'
                 item['txt'] = "".join(response.xpath('//*[@class="zwnr"]//text()').extract())
                 item['appendix_name'] = appendix_name
-                item['link'] = kwargs['url']
+                item['link'] = response.meta['url']
                 item['time'] = get_times(item['time'])
                 print("===========================>crawled one item" +
                     response.request.url)

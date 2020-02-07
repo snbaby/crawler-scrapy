@@ -29,7 +29,7 @@ class HybzSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,12 +87,12 @@ class HybzSpider(scrapy.Spider):
                 },
                     dont_filter=True,
                     callback=self.parse_page,
-                    cb_kwargs=content)
+                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         script = """
             function wait_for_element(splash, css, maxwait)
               -- Wait until a selector matches an element
@@ -135,13 +135,13 @@ class HybzSpider(scrapy.Spider):
               return splash:html()
             end
             """
-        page_count = self.parse_pagenum(response, kwargs)
+        page_count = self.parse_pagenum(response)
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
                     self.parse(response)
                 else:
-                    url = kwargs['url']
+                    url = response.meta['url']
                     yield SplashRequest(url,
                                         endpoint='execute',
                                         args={
@@ -152,12 +152,12 @@ class HybzSpider(scrapy.Spider):
                                         },
                                         dont_filter=True,
                                         callback=self.parse,
-                                        cb_kwargs=kwargs)
+                                        meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
@@ -168,7 +168,7 @@ class HybzSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for tr in response.css('#hbtable tbody tr'):
             try:
                 result = {
@@ -182,18 +182,18 @@ class HybzSpider(scrapy.Spider):
                     'url': response.urljoin(
                         tr.css('a::attr(href)').extract_first())}
                 yield scrapy.Request(response.urljoin(tr.css('a::attr(href)').extract_first()), callback=self.parse_item,
-                                     cb_kwargs=result, dont_filter=True)
+                                     meta=result, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = bzk_hybzItem()
             appendix, appendix_name = get_attachments(response)
-            item['name'] = kwargs['name']
-            item['code'] = kwargs['code']
-            item['status'] = kwargs['status']
+            item['name'] = response.meta['name']
+            item['code'] = response.meta['code']
+            item['status'] = response.meta['status']
             item['xiazai'] = appendix
             item['industryClassification'] = response.css('body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(10)::text').extract_first()
             if len(response.css(
@@ -202,8 +202,8 @@ class HybzSpider(scrapy.Spider):
                     'body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(6)::text').extract_first()
             else:
                 item['committees'] = ''
-            item['approvalDate'] = kwargs['approvalDate']
-            item['implementationDate'] = kwargs['implementationDate']
+            item['approvalDate'] = response.meta['approvalDate']
+            item['implementationDate'] = response.meta['implementationDate']
             item['sourceWebsite'] = '行业标准信息平台'
             if len(response.css(
                     'body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(4)').extract()) > 0:
@@ -218,7 +218,7 @@ class HybzSpider(scrapy.Spider):
                     'body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(2)::text').extract_first()
             else:
                 item['ccs'] = ''
-            item['beian'] = kwargs['beian']
+            item['beian'] = response.meta['beian']
             if len(response.css(
                     'body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(12)').extract()) > 0:
                 item['type'] = response.css(
@@ -226,7 +226,7 @@ class HybzSpider(scrapy.Spider):
             else:
                 item['type'] = ''
 
-            item['industry'] = kwargs['industry']
+            item['industry'] = response.meta['industry']
             item['replace'] = response.css('body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-left > dd:nth-child(10)::text').extract_first()
             if len(response.css(
                     'body > div.container.main-body > div > div > div > div.basic-info.cmn-clearfix > dl.basicInfo-block.basicInfo-right > dd:nth-child(8)').extract()) > 0:
@@ -258,7 +258,7 @@ class HybzSpider(scrapy.Spider):
             else:
                 item['scope'] = ''
 
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'hybz'
             item['module_name'] = '标准库-行业标准'

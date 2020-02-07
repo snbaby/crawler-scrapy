@@ -37,7 +37,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        'SPLASH_URL': 'http://47.106.239.73:8050/'}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -85,7 +85,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['article_num'] = selector.xpath('./div/p[7]/span[2]/text()').extract_first()
                 href = selector.xpath('./a/@href').extract_first()
                 url = response.urljoin(href)
-                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -93,15 +93,15 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = kwargs['title']
-            item['article_num'] = kwargs['article_num']
+            item['title'] = response.meta['title']
+            item['article_num'] = response.meta['article_num']
             item['content'] = "".join(response.xpath('//div[@class="info_box "]').extract())
-            item['source'] = kwargs['source']
-            item['time'] = kwargs['time']
+            item['source'] = response.meta['source']
+            item['time'] = response.meta['time']
             item['province'] = '宁夏回族自治区'
             item['city'] = ''
             item['area'] = ''

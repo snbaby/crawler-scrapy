@@ -86,7 +86,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
                 item['title'] = selector.xpath('./a/text()').extract_first()
                 item['time'] = selector.xpath('./span/text()').extract_first()
                 href = selector.xpath('./a/@href').extract_first()
-                yield scrapy.Request(href, callback=self.parse_item, dont_filter=True,cb_kwargs=item)
+                yield scrapy.Request(href, callback=self.parse_item, dont_filter=True,meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -94,11 +94,11 @@ class QuanguoZuixinSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response,**kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = kwargs['title']
+            item['title'] = response.meta['title']
             item['article_num'] = response.xpath('//table[@class="bd1"]/tbody/tr[4]/td[2]/text()').extract_first()
             item['content'] = "".join(response.xpath('//*[@id="UCAP-CONTENT"]').extract())
             item['appendix'] = appendix
@@ -111,7 +111,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
             item['spider_name'] = 'quanguo_zuixin'
             item['txt'] = "".join(response.xpath('//div[@id="UCAP-CONTENT"]//text()').extract())
             item['appendix_name'] = appendix_name
-            item['time'] = get_times(kwargs['time'])
+            item['time'] = get_times(response.meta['time'])
             item['link'] = response.request.url
         except Exception as e:
             logging.error(self.name + " in parse_item: url=" + response.request.url + ", exception=" + e.__str__())

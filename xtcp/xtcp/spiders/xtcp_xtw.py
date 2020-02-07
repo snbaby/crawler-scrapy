@@ -38,7 +38,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,7 +87,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['pro_state'] = selector.xpath('./li[8]/text()').extract_first()
                 url = response.urljoin(selector.xpath('./li[2]/a/@href').extract_first())
                 print(url)
-                yield SplashRequest(url,callback=self.parse_item, dont_filter=True,cb_kwargs=item)
+                yield SplashRequest(url,callback=self.parse_item, dont_filter=True,meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -96,7 +96,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse_item(self, response,**kwargs):
-        if kwargs['name']:
+        if response.meta['name']:
             try:
                 item = xtcpItem()
                 pro_address = response.xpath('//span[@id="p_szd"]/text()').extract_first()
@@ -113,7 +113,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 pro_highlight = response.xpath('//span[@class="head_advantage"]/text()').extract_first()
                 pro_plan = response.xpath('//span[@id="p_jindu"]/text()').extract_first()
 
-                item['name'] = kwargs['name'] #产品名称
+                item['name'] = response.meta['name'] #产品名称
                 item['issure'] = issure #发行机构
                 item['issue_date'] = get_times(issue_date) #发行时间
                 item['pro_address'] = pro_address.replace('\xa0','') if pro_address else '' #项目所在地
@@ -125,14 +125,14 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['tj_end_time'] = '' #推介截止日
                 item['establish_date'] = '' #成立日期
                 item['deadline_date'] = '' #截止日期
-                item['invest_still'] = kwargs['invest_still'] #投资门槛
+                item['invest_still'] = response.meta['invest_still'] #投资门槛
                 item['income_deadline'] = '' #收益期限
-                item['pro_state'] = kwargs['pro_state'] #产品状态
+                item['pro_state'] = response.meta['pro_state'] #产品状态
                 item['pro_type'] = pro_type.replace('\xa0','') if pro_type else '' #产品类型
                 item['invest_method'] = '' #投资方式
-                item['money_invest'] = kwargs['money_invest'] #资金投向
+                item['money_invest'] = response.meta['money_invest'] #资金投向
                 item['money_use'] = money_use.replace('\xa0','') if money_use else '' #资金运用
-                item['pre_year_income'] = kwargs['pre_year_income'] #预期年收益率
+                item['pre_year_income'] = response.meta['pre_year_income'] #预期年收益率
                 item['real_year_income'] = '' #实际年收益率
                 item['income_type'] = '' #收益类型
                 item['income_explane'] = income_explane #收益说明

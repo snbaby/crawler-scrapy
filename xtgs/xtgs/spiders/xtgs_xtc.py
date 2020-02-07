@@ -38,7 +38,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -89,7 +89,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['legal_person'] = selector.xpath('./td[6]/text()').extract_first()
                 item['address'] = selector.xpath('./td[7]/text()').extract_first()
                 item['create_date'] = selector.xpath('./td[8]/text()').extract_first()
-                yield SplashRequest(url,callback=self.parse_item, dont_filter=True,cb_kwargs=item)
+                yield SplashRequest(url,callback=self.parse_item, dont_filter=True,meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -98,7 +98,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse_item(self, response,**kwargs):
-        print(kwargs)
+        print(response.meta)
         try:
             item = xtgsItem()
             name = response.xpath('//div[@class="gsxq-table"]/table/tr[2]/td[2]/span/text()').extract_first()
@@ -106,12 +106,12 @@ class TianJinSzfwjSpider(scrapy.Spider):
             dongshizhang = response.xpath('//div[@class="gsxq-table"]/table/tr[4]/td[4]/span/text()').extract_first()
             shareholder = response.xpath('//div[@class="gsxq-table"]/table/tr[6]/td[2]/span/text()').extract_first()
             general_manager = response.xpath('//div[@class="gsxq-table"]/table/tr[5]/td[2]/span/text()').extract_first()
-            simple_name = kwargs['simple_name']
-            create_date = kwargs['create_date']
-            registe_money = kwargs['registe_money']
-            address = kwargs['address']
-            legal_person = kwargs['legal_person']
-            partner_bg = kwargs['partner_bg']
+            simple_name = response.meta['simple_name']
+            create_date = response.meta['create_date']
+            registe_money = response.meta['registe_money']
+            address = response.meta['address']
+            legal_person = response.meta['legal_person']
+            partner_bg = response.meta['partner_bg']
             print(create_date)
             item['name'] = name  # 公司名称
             item['simple_name'] = simple_name  # 公司简称
@@ -130,8 +130,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['shareholder'] = shareholder  # 大股东
             item['general_manager'] = general_manager  # 总经理
             item['aum'] = response.xpath('//div[@class="gsxq_top"]/ul/li[4]/h2/text()').extract_first()  # 资产管理规模
-            item['avg_yield'] = kwargs['avg_yield']  # 平均收益率
-            item['pro_hold_rate'] = kwargs['pro_hold_rate']   # 产品兑付比例
+            item['avg_yield'] = response.meta['avg_yield']  # 平均收益率
+            item['pro_hold_rate'] = response.meta['pro_hold_rate']   # 产品兑付比例
             item['company_website'] = ''  # 公司网址
             item['telephone'] = ''  # 电话
             item['fax'] = ''  # 传真

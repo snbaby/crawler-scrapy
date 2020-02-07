@@ -25,8 +25,7 @@ class GwbzSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,14 +91,14 @@ class GwbzSpider(scrapy.Spider):
                                         'js': js
                                     },
                                     callback=self.parse,
-                                    cb_kwargs={
+                                    meta={
                                         'url': url
                                     })
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         script = """
                 function wait_for_element(splash, css, maxwait)
                   -- Wait until a selector matches an element
@@ -146,7 +145,7 @@ class GwbzSpider(scrapy.Spider):
                                     },
                                     callback=self.parse_item,
                                     dont_filter=True,
-                                    cb_kwargs={
+                                    meta={
                                         'url': url
                                     })
             except Exception as e:
@@ -156,7 +155,7 @@ class GwbzSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)\
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = bzk_gwbzItem()
             item['name'] = response.css('#standard_name::text').extract_first().strip()
@@ -180,7 +179,7 @@ class GwbzSpider(scrapy.Spider):
             item['dept_host'] = ''
             item['scope'] = response.css(
                 '#content > div.detailedinfo-top > div.stand-detail-description > div.detailedinfo-text::text').extract_first()
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['module_name'] = '标准库-国外标准'
             item['spider_name'] = 'gwbz'
             print("===========================>crawled one item" + response.request.url)

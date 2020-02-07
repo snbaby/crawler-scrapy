@@ -37,7 +37,7 @@ class BeijingZfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        'SPLASH_URL': 'http://47.106.239.73:8050/'}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -83,16 +83,16 @@ class BeijingZfwjSpider(scrapy.Spider):
                 href = selector.xpath('./a/@href').extract_first()
                 if href.startswith('./'):
                     yield scrapy.Request("http://xxgk.jl.gov.cn/szf/zcjd" + href[1:],
-                                         callback=self.parse_item,dont_filter=True,cb_kwargs=item)
+                                         callback=self.parse_item,dont_filter=True,meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = kwargs['title']
+            item['title'] = response.meta['title']
             article_num = ''
             if response.xpath('//table[@class="bd1"]/tbody/tr[4]/td[2]'):
                 article_num = response.xpath('//table[@class="bd1"]/tbody/tr[4]/td[2]/text()').extract_first()
@@ -104,7 +104,7 @@ class BeijingZfwjSpider(scrapy.Spider):
             elif response.xpath('//div[@class="mqj_xbbjtyst_xxnry_fbt"]/p'):
                 article_num = response.xpath('//div[@class="mqj_xbbjtyst_xxnry_fbt"]/p/text()').extract_first()
             item['article_num'] = article_num
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['content'] = "".join(response.xpath('//div[@id="xx_conter1023"]').extract())
             item['source'] = ''
             item['province'] = '吉林省'

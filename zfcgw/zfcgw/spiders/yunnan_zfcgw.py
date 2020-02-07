@@ -25,9 +25,8 @@ class YunnanZfcgwSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
+        }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -91,7 +90,7 @@ class YunnanZfcgwSpider(scrapy.Spider):
                                         'url': content['url'],
                                         },
                                         callback=self.parse_page,
-                                        cb_kwargs={
+                                        meta={
                                             'url': content['url'],
                                             'topic': content['topic'],
                                             'sign': sign
@@ -100,7 +99,7 @@ class YunnanZfcgwSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         script = """
         function wait_for_element(splash, css, maxwait)
           -- Wait until a selector matches an element
@@ -150,26 +149,26 @@ class YunnanZfcgwSpider(scrapy.Spider):
         end
         """
 
-        page_count = int(self.parse_pagenum(response, kwargs))
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url']
+                url = response.meta['url']
                 yield SplashRequest(url,
                                     endpoint='execute',
                                     args={
                                         'lua_source': script,
                                         'wait': 1,
                                         'pagenum': pagenum + 1,
-                                        'sign': kwargs['sign'],
+                                        'sign': response.meta['sign'],
                                         'url': url,
                                     },
                                     callback=self.parse,
-                                    cb_kwargs=kwargs)
+                                    meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
@@ -185,7 +184,7 @@ class YunnanZfcgwSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         script = """
         function main(splash, args)
           splash:go(args.url)
@@ -209,7 +208,7 @@ class YunnanZfcgwSpider(scrapy.Spider):
                         bulletin_id,
                         bulletinclass,
                         tabletype,
-                        kwargs['sign']))
+                        response.meta['sign']))
                 result = {
                     'title': title,
                     'time': time,
@@ -224,7 +223,7 @@ class YunnanZfcgwSpider(scrapy.Spider):
                                         'url': url,
                                     },
                                     callback=self.parse_item,
-                                    cb_kwargs=result)
+                                    meta=result)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -243,10 +242,10 @@ class YunnanZfcgwSpider(scrapy.Spider):
             return "/bulletin_zz.do?method=showBulletin&bulletin_id=" + \
                 bulletin_id + "&bulletinclass=" + bulletinclass
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             appendix, appendix_name = get_attachments(response)
-            title = kwargs['title']
+            title = response.meta['title']
             if title.find('招标') >= 0:
                 category = '招标'
             elif title.find('中标') >= 0:
@@ -265,10 +264,10 @@ class YunnanZfcgwSpider(scrapy.Spider):
                 response.css('.col-xs-10-sm').extract())
             item['appendix'] = appendix
             item['category'] = category
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['source'] = ''
             item['website'] = '云南政府采购网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '2'
             item['region'] = '云南省'
             item['appendix_name'] = appendix_name

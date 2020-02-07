@@ -37,7 +37,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,26 +66,26 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for href in response.xpath('//a[@class="more f14"]/@href'):
             try:
                 url = response.urljoin(href.extract())
-                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,cb_kwargs={'url':url})
+                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,meta={'url':url})
 
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
 
-    def parse_page(self, response,**kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
-        print('url=====' + kwargs['url'])
+        print('url=====' + response.meta['url'])
         print('page_count=====' + str(page_count))
         try:
             if page_count > 1 :
                 for pagenum in range(page_count):
-                    temUrl = kwargs['url'].replace('.html','')
+                    temUrl = response.meta['url'].replace('.html','')
                     url = temUrl + \
-                          str(pagenum) + ".html" if pagenum > 0 else kwargs['url']
+                          str(pagenum) + ".html" if pagenum > 0 else response.meta['url']
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
                 else :
-                    yield SplashRequest(kwargs['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse,
+                    yield SplashRequest(response.meta['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse,
                                         dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())

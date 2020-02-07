@@ -38,7 +38,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,7 +52,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response,**kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response)) + 1
         try:
             for pagenum in range(page_count):
@@ -83,7 +83,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['title'] = selector.xpath('./a/text()').extract_first()
                 item['time'] = selector.xpath('./span[@class="date"]/text()').extract_first()
                 url = response.urljoin(selector.xpath('./a/@href').extract_first())
-                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -91,12 +91,12 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         if response.text:
             try:
                 appendix, appendix_name = get_attachments(response)
                 category = '其他';
-                title = kwargs['title']
+                title = response.meta['title']
                 if title.find('招标') >= 0:
                     category = '招标'
                 elif title.find('中标') >= 0:
@@ -114,7 +114,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '黑龙江省'
-                item['time'] = kwargs['time'].strip()
+                item['time'] = response.meta['time'].strip()
                 item['website'] = '黑龙江省公共资源交易服务平台'
                 item['module_name'] = '黑龙江省-公共交易平台'
                 item['spider_name'] = 'heilongjiang_ggjypt'

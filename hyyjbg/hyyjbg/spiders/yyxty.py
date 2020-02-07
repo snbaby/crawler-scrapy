@@ -27,7 +27,7 @@ class YyxtySpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,14 +48,14 @@ class YyxtySpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield scrapy.FormRequest(content['url'], cb_kwargs=content, formdata=data, method='POST',
+                yield scrapy.FormRequest(content['url'], meta=content, formdata=data, method='POST',
                                          headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
                                          callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         data = json.loads(response.text.replace('pageIndex', '"pageIndex"'))
         for obj in data['result']:
             try:
@@ -66,20 +66,20 @@ class YyxtySpider(scrapy.Spider):
                     "title": obj['C_TITLE'],
                     "time": obj['C_ADDTIME']
                 }
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse_item, meta=result, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = hyyjbgItem()
-            item['title'] = kwargs['title']
-            item['date'] = kwargs['time']
+            item['title'] = response.meta['title']
+            item['date'] = response.meta['time']
             item['resource'] = ''
             item['content'] = response.css('.article-con').extract_first()
             item['website'] = '用益信托易'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['spider_name'] = 'yyxty'
             item['txt'] = ''.join(response.css('.article-con *::text').extract())
             item['module_name'] = '信托融资一行业基本报告-用益信托易'

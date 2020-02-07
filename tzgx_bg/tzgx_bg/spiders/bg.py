@@ -24,7 +24,7 @@ class BgSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,15 +52,15 @@ class BgSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield scrapy.FormRequest(content['url'], cb_kwargs=content, body=json.dumps(data), method='POST',
+                yield scrapy.FormRequest(content['url'], meta=content, body=json.dumps(data), method='POST',
                                          headers=header,
                                          callback=self.parse_page, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
-        page_count = self.parse_pagenum(response, kwargs)
+    def parse_page(self, response):
+        page_count = self.parse_pagenum(response)
         try:
             header = {
                 ':authority': 'www.itjuzi.com',
@@ -122,13 +122,13 @@ class BgSpider(scrapy.Spider):
                         "hot_city": "",
                         "currency": [],
                         "keyword": ""}
-                    yield scrapy.FormRequest(content['url'], cb_kwargs={'topic': 'hb', 'authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data), method='POST', headers=header, callback=self.parse, dont_filter=True)
-                    yield scrapy.FormRequest(content['url'], cb_kwargs={'topic': 'sg', 'authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data1), method='POST', headers=header, callback=self.parse, dont_filter=True)
+                    yield scrapy.FormRequest(content['url'], meta={'topic': 'hb', 'authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data), method='POST', headers=header, callback=self.parse, dont_filter=True)
+                    yield scrapy.FormRequest(content['url'], meta={'topic': 'sg', 'authorization': json.loads(response.text)['data']['token']}, body=json.dumps(data1), method='POST', headers=header, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
@@ -139,11 +139,11 @@ class BgSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         investevents = json.loads(response.text)['data']['data']
         for investevent in investevents:
             try:
-                if kwargs['topic'] == 'hb':
+                if response.meta['topic'] == 'hb':
                     acquirer = investevent['merger_rel_invst'][0]['name']
                     acquirerd = investevent['merger_rel_invst'][1]['name']
                     status = investevent['status']
@@ -168,9 +168,9 @@ class BgSpider(scrapy.Spider):
                         'content-type': 'application/json;charset=UTF-8',
                         'accept': 'application/json, text/plain, */*',
                         'accept-language': 'zh-CN,zh;q=0.9',
-                        'authorization': kwargs['authorization']
+                        'authorization': response.meta['authorization']
                     }
-                    yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_hb, cb_kwargs=result, dont_filter=True)
+                    yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_hb, meta=result, dont_filter=True)
                 else:
                     acquirer = investevent['acquirer'][0]['name']
                     acquirerd = investevent['merger_name']
@@ -195,9 +195,9 @@ class BgSpider(scrapy.Spider):
                         'content-type': 'application/json;charset=UTF-8',
                         'accept': 'application/json, text/plain, */*',
                         'accept-language': 'zh-CN,zh;q=0.9',
-                        'authorization': kwargs['authorization']
+                        'authorization': response.meta['authorization']
                     }
-                    yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_sg, cb_kwargs=result, dont_filter=True)
+                    yield scrapy.FormRequest(link, headers=header, method='GET', callback=self.parse_sg, meta=result, dont_filter=True)
             except Exception as e:
                 logging.error(
                     self.name +
@@ -207,23 +207,23 @@ class BgSpider(scrapy.Spider):
                     e.__str__())
                 logging.exception(e)
 
-    def parse_hb(self, response, **kwargs):
+    def parse_hb(self, response):
         data = json.loads(response.text)['data']
         print(data)
         try:
             item = tzgx_bgItem()
             item['title'] = data['merger_title']
-            item['acquirer'] = kwargs['acquirer']
-            item['acquirerd'] = kwargs['acquirerd']
-            item['status'] = kwargs['status']
-            item['industry'] = kwargs['industry']
+            item['acquirer'] = response.meta['acquirer']
+            item['acquirerd'] = response.meta['acquirerd']
+            item['status'] = response.meta['status']
+            item['industry'] = response.meta['industry']
             item['involving_equity'] = ''
             start_time = str(data['prev_id']['merger_show_year']) + '-' + str(data['prev_id']['merger_show_month']) + '-' + str(data['prev_id']['merger_show_day'])
             item['start_time'] = get_times(start_time)
             item['end_time'] = ''
             item['supported_vc_pe'] = ''
             item['website'] = 'IT桔子'
-            item['link'] = kwargs['link']
+            item['link'] = response.meta['link']
             item['content'] = data['merger_des']
             item['spider_name'] = 'bg'
             item['module_name'] = 'IT桔子-并购'
@@ -240,23 +240,23 @@ class BgSpider(scrapy.Spider):
             logging.exception(e)
         yield item
 
-    def parse_sg(self, response, **kwargs):
+    def parse_sg(self, response):
         data = json.loads(response.text)['data']
         try:
             item = tzgx_bgItem()
             item['title'] = data['merger_title']
-            item['acquirer'] = kwargs['acquirer']
-            item['acquirerd'] = kwargs['acquirerd']
-            item['status'] = kwargs['status']
-            item['industry'] = kwargs['industry']
-            item['involving_equity'] = kwargs['involving_equity']
+            item['acquirer'] = response.meta['acquirer']
+            item['acquirerd'] = response.meta['acquirerd']
+            item['status'] = response.meta['status']
+            item['industry'] = response.meta['industry']
+            item['involving_equity'] = response.meta['involving_equity']
             start_time = str(data['prev_id']['merger_show_year']) + '-' + str(
                 data['prev_id']['merger_show_month']) + '-' + str(data['prev_id']['merger_show_day'])
             item['start_time'] = get_times(start_time)
             item['end_time'] = ''
             item['supported_vc_pe'] = ''
             item['website'] = 'IT桔子'
-            item['link'] = kwargs['link']
+            item['link'] = response.meta['link']
             item['content'] = data['merger_des']
             item['spider_name'] = 'bg'
             item['module_name'] = 'IT桔子-并购'

@@ -37,7 +37,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,7 +56,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             try:
                 url1 = 'http://www.cq.gov.cn' + href.extract()
                 print(url1)
-                yield SplashRequest(url1,callback=self.parse_page, dont_filter=True,cb_kwargs={'url':url1})
+                yield SplashRequest(url1,callback=self.parse_page, dont_filter=True,meta={'url':url1})
 
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -64,15 +64,15 @@ class TianJinSzfwjSpider(scrapy.Spider):
         url = response.xpath('//a[@class="more"]/@href').extract_first()
         url = 'http://www.cq.gov.cn' + url
         item = {'url': url}
-        yield SplashRequest(url, callback=self.parse_page, dont_filter=True, cb_kwargs=item)
-    def parse_page(self, response,**kwargs):
+        yield SplashRequest(url, callback=self.parse_page, dont_filter=True, meta=item)
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             page_count = page_count + 1
             if page_count > 0 :
                 for pagenum in range(page_count):
-                    temUrl = kwargs['url'] + '_'
-                    url = temUrl + str(pagenum) if pagenum > 1 else kwargs['url']
+                    temUrl = response.meta['url'] + '_'
+                    url = temUrl + str(pagenum) if pagenum > 1 else response.meta['url']
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -97,22 +97,22 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['time'] = selector.xpath('./span/text()').extract_first()
                 url = 'http://www.cq.gov.cn' + selector.xpath('./a/@href').extract_first()
                 if url:
-                    yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                    yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
-        if kwargs['title']:
+    def parse_item(self, response):
+        if response.meta['title']:
             try:
                 appendix, appendix_name = get_attachments(response)
                 source = response.xpath('//div[@class="fl"]/span/text()').extract_first()
                 item = rmzfzcItem()
-                item['title'] = kwargs['title']
+                item['title'] = response.meta['title']
                 item['article_num'] = ''
                 item['content'] = "".join(response.xpath('//div[@class="conTxt"]').extract())
                 item['source'] = source.replace('来源：','') if source else '重庆市人民政府'
-                item['time'] = kwargs['time']
+                item['time'] = response.meta['time']
                 item['province'] = '重庆市'
                 item['city'] = ''
                 item['area'] = ''

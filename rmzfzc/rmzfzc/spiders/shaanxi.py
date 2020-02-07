@@ -40,7 +40,7 @@ class ShaanxiSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,17 +64,17 @@ class ShaanxiSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url'] + '&cur_page=' + str(pagenum + 1)
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs)
+                url = response.meta['url'] + '&cur_page=' + str(pagenum + 1)
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -90,20 +90,20 @@ class ShaanxiSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
-        if kwargs['topic'] == 'szfwj':
+    def parse(self, response):
+        if response.meta['topic'] == 'szfwj':
             for href in response.css('.gk_list_table a[title]::attr(href)').extract():
                 try:
                     url = response.urljoin(href)
-                    yield scrapy.Request(url, callback=self.parse_szfwj, cb_kwargs={'url': url}, dont_filter=True)
+                    yield scrapy.Request(url, callback=self.parse_szfwj, meta={'url': url}, dont_filter=True)
                 except Exception as e:
                     logging.error(self.name + ": " + e.__str__())
                     logging.exception(e)
-        elif kwargs['topic'] == 'gfxwj':
+        elif response.meta['topic'] == 'gfxwj':
             for href in response.css('.gk_list_table a[title]::attr(href)').extract():
                 try:
                     url = response.urljoin(href)
-                    yield scrapy.Request(url, callback=self.parse_gfxwj, cb_kwargs={'url': url}, dont_filter=True)
+                    yield scrapy.Request(url, callback=self.parse_gfxwj, meta={'url': url}, dont_filter=True)
                 except Exception as e:
                     logging.error(self.name + ": " + e.__str__())
                     logging.exception(e)
@@ -111,12 +111,12 @@ class ShaanxiSpider(scrapy.Spider):
             for href in response.css('.jd-tp-ul a::attr(href)').extract():
                 try:
                     url = response.urljoin(href)
-                    yield scrapy.Request(url, callback=self.parse_szfcwhy, cb_kwargs={'url': url}, dont_filter=True)
+                    yield scrapy.Request(url, callback=self.parse_szfcwhy, meta={'url': url}, dont_filter=True)
                 except Exception as e:
                     logging.error(self.name + ": " + e.__str__())
                     logging.exception(e)
 
-    def parse_szfwj(self, response, **kwargs):
+    def parse_szfwj(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -130,7 +130,7 @@ class ShaanxiSpider(scrapy.Spider):
             item['city'] = ''
             item['area'] = ''
             item['website'] = '陕西省人民政府'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['txt'] = ''.join(response.css('#info_content *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '陕西省人民政府'
@@ -149,7 +149,7 @@ class ShaanxiSpider(scrapy.Spider):
             logging.exception(e)
         yield item
 
-    def parse_gfxwj(self, response, **kwargs):
+    def parse_gfxwj(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -163,7 +163,7 @@ class ShaanxiSpider(scrapy.Spider):
             item['city'] = ''
             item['area'] = ''
             item['website'] = '陕西省人民政府'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['txt'] = ''.join(response.css('#info_content *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '陕西省人民政府'
@@ -182,7 +182,7 @@ class ShaanxiSpider(scrapy.Spider):
             logging.exception(e)
         yield item
 
-    def parse_szfcwhy(self, response, **kwargs):
+    def parse_szfcwhy(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -196,7 +196,7 @@ class ShaanxiSpider(scrapy.Spider):
             item['city'] = ''
             item['area'] = ''
             item['website'] = '陕西省人民政府'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['txt'] = ''.join(response.css('#info-cont *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '陕西省人民政府'

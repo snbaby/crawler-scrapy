@@ -45,7 +45,7 @@ class AnhuiSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,12 +67,12 @@ class AnhuiSpider(scrapy.Spider):
             for content in contents:
                 yield scrapy.FormRequest(url, formdata=content['data'],
                                          headers={'Content-Type': 'application/x-www-form-urlencoded'},
-                                         callback=self.parse_page,cb_kwargs=content)
+                                         callback=self.parse_page,meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         text = response.text.replace('<![CDATA[', '').replace(']]>','').replace(
             '<datastore>', '').replace('<nextgroup>', '').replace('<recordset>', '').replace('</recordset>','').replace('</datastore>','').replace(
             '<record>', '').replace('</nextgroup>', '')
@@ -80,12 +80,12 @@ class AnhuiSpider(scrapy.Spider):
         for href in sel.xpath('//*[@class="msg_listcon_list_title"]/a/@href').extract():
             try:
                 yield scrapy.Request('http://www.nmg.gov.cn' + href, callback=self.parse_item,
-                                     dont_filter=True, cb_kwargs=kwargs)
+                                     dont_filter=True, meta=response.meta)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)

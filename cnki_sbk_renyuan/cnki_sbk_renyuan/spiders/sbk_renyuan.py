@@ -25,7 +25,7 @@ class SbkRenyuanSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -112,7 +112,7 @@ class SbkRenyuanSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         detail_page_script = """
                 function main(splash, args)
                     splash:init_cookies(splash.args.cookies)
@@ -161,25 +161,25 @@ class SbkRenyuanSpider(scrapy.Spider):
                                 },
                                 session_id="foo",
                                 headers=response.data['headers'],
-                                callback=self.parse_end, cb_kwargs=item)
+                                callback=self.parse_end, meta=item)
             break
     def get_attention(self, response):
         logging.info(response.text)
         info = response.css("div.listcont ul.col8 li a::text").extract()
         logging.info("info="+ json.dumps(info))
 
-    def parse_end(self, response, **kwargs):
+    def parse_end(self, response):
         #self.get_attention(response)
 
         sbkItem = cnki_sbk_renyuanItem()
-        sbkItem['name'] = kwargs['name']
-        sbkItem['organization'] = kwargs['organization'] #kwargs['organization']
+        sbkItem['name'] = response.meta['name']
+        sbkItem['organization'] = response.meta['organization'] #response.meta['organization']
         sbkItem['subject'] = "" #response.css("div.baseInfo div.info p.doma::text").get("")
         sbkItem['attention_territory'] = "" #response.css("")
-        sbkItem['website'] = kwargs['website']
-        sbkItem['link'] = kwargs['link']
-        sbkItem['spider_name'] = kwargs['spider_name']
-        sbkItem['module_name'] = kwargs['module_name']
+        sbkItem['website'] = response.meta['website']
+        sbkItem['link'] = response.meta['link']
+        sbkItem['spider_name'] = response.meta['spider_name']
+        sbkItem['module_name'] = response.meta['module_name']
 
         yield sbkItem
 

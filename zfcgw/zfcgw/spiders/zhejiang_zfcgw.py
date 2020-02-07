@@ -25,9 +25,8 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
+        }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -84,12 +83,12 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
                                         'url': content['url'],
                 },
                     callback=self.parse_page,
-                    cb_kwargs=content)
+                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_type(self, response, **kwargs):
+    def parse_type(self, response):
         script = """
         function wait_for_element(splash, css, maxwait)
           -- Wait until a selector matches an element
@@ -134,24 +133,24 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
             #         '#accordion li[data-num]::attr(data-num)').extract():
             #     print(num)
             num = '9003'
-            yield SplashRequest(kwargs['url'],
+            yield SplashRequest(response.meta['url'],
                                 endpoint='execute',
                                 args={
                                     'lua_source': script,
                                     'wait': 1,
                                     'num': num,
-                                    'url': kwargs['url'],
+                                    'url': response.meta['url'],
             },
                 callback=self.parse_page,
-                cb_kwargs={
-                                    "url": kwargs['url'],
+                meta={
+                                    "url": response.meta['url'],
                                     'num': num
             })
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         script = """
         function wait_for_element(splash, css, maxwait)
           -- Wait until a selector matches an element
@@ -192,10 +191,10 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
           return splash:html()
         end
         """
-        page_count = int(self.parse_pagenum(response, kwargs))
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url']
+                url = response.meta['url']
                 yield SplashRequest(url,
                                     endpoint='execute',
                                     args={
@@ -205,12 +204,12 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
                                         'url': url,
                                     },
                                     callback=self.parse,
-                                    cb_kwargs=kwargs)
+                                    meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
@@ -222,7 +221,7 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         script = """
         function main(splash, args)
           splash:go(args.url)
@@ -245,15 +244,15 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
                                         'url': result['url'],
                                     },
                                     callback=self.parse_item,
-                                    cb_kwargs=result)
+                                    meta=result)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             appendix, appendix_name = get_attachments(response)
-            title = kwargs['title']
+            title = response.meta['title']
             if title.find('招标') >= 0:
                 category = '招标'
             elif title.find('中标') >= 0:
@@ -273,14 +272,14 @@ class ZhejiangZfcgwSpider(scrapy.Spider):
             item['category'] = category
             item['source'] = ''
             item['website'] = '浙江政府采购网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '2'
             item['region'] = '浙江省'
             item['appendix_name'] = appendix_name
             item['spider_name'] = 'zhejiang_zfcgw'
             item['txt'] = "".join(response.xpath('//div[@id="iframe_box"]//text()').extract())
             item['module_name'] = '浙江-政府采购网'
-            item['time'] = get_times(kwargs['time'])
+            item['time'] = get_times(response.meta['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)

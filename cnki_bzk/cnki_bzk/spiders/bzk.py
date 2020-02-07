@@ -23,16 +23,12 @@ class BzkSpider(scrapy.Spider):
             'scrapy_splash.SplashMiddleware': 725,
             'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
         },
-        'SPIDER_MIDDLEWARES': {
-            'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -118,7 +114,7 @@ class BzkSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for record in response.css(
                 ".GridTableContent tr:not(.GTContentTitle)"):
             paper_url = record.css(".fz14::attr(href)").get()
@@ -135,14 +131,14 @@ class BzkSpider(scrapy.Spider):
             item['module_name'] = '中国知网-报纸库'
 
             yield scrapy.Request(paper_url, callback=self.parse_end,
-                                 dont_filter=True, cb_kwargs=item)
+                                 dont_filter=True, meta=item)
 
-    def parse_end(self, response, **kwargs):
+    def parse_end(self, response):
         try:
             item = cnki_bzkItem()
-            item['title'] = kwargs['title']
-            item['author'] = kwargs['author']
-            item['name'] = kwargs['name']
+            item['title'] = response.meta['title']
+            item['author'] = response.meta['author']
+            item['name'] = response.meta['name']
             result = response.css('.wxBaseinfo *::text').extract()
             item['sub_title'] = ''
             item['intro'] = ''
@@ -154,11 +150,11 @@ class BzkSpider(scrapy.Spider):
                     item['sub_title'] = result[i+1]
                 if result[i] == '版号：':
                     item['version'] = result[i+1]
-            item['date'] = kwargs['date']
-            item['website'] = kwargs['website']
-            item['link'] = kwargs['link']
-            item['spider_name'] = kwargs['spider_name']
-            item['module_name'] = kwargs['module_name']
+            item['date'] = response.meta['date']
+            item['website'] = response.meta['website']
+            item['link'] = response.meta['link']
+            item['spider_name'] = response.meta['spider_name']
+            item['module_name'] = response.meta['module_name']
             yield item
         except Exception as e:
             logging.error(

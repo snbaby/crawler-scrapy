@@ -25,7 +25,7 @@ class ChengguoSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -112,7 +112,7 @@ class ChengguoSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         detail_page_script = """
                 function main(splash, args)
                     splash:init_cookies(splash.args.cookies)
@@ -153,9 +153,9 @@ class ChengguoSpider(scrapy.Spider):
                                 },
                                 session_id="foo",
                                 headers=response.data['headers'],
-                                callback=self.parse_end, cb_kwargs=item)
+                                callback=self.parse_end, meta=item)
 
-    def parse_end(self, response, **kwargs):
+    def parse_end(self, response):
         sbkItem = cnki_chengguoItem()
         sbkItem['name'] = response.css("body > table:nth-child(3) > tbody > tr > td:nth-child(2) > strong::text").get("").strip()
         sbkItem['accomplish_person'] = response.css("#box > tbody > tr:nth-child(1) > td.checkItem::text").get("").strip()
@@ -168,7 +168,7 @@ class ChengguoSpider(scrapy.Spider):
         sbkItem['time'] = response.css("#box > tbody > tr:nth-child(11) > td.checkItem::text").get("").strip()
         sbkItem['research_time'] = response.css("#box > tbody > tr:nth-child(9) > td.checkItem::text").get("").strip()
         sbkItem['website'] = '中国知网-成果'
-        sbkItem['link'] = kwargs['link']
+        sbkItem['link'] = response.meta['link']
         sbkItem['spider_name'] = self.name
         sbkItem['module_name'] = '中国知网-成果库'
         yield sbkItem

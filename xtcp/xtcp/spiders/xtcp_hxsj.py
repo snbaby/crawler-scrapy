@@ -38,7 +38,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,7 +56,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for href in response.xpath('//div[@class="box stockData mtno"]/table/tr/td/a/@href'):
             try:
                 url = response.urljoin(href.extract())
-                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,cb_kwargs={'url':url})
+                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,meta={'url':url})
 
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -66,8 +66,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                temUrl = kwargs['url'] + '&index=0&order=1&page=' if kwargs['url'].find('fundsinvest') > -1 else kwargs['url'] + '?&investmode=1&index=0&order=1&page='
-                url = temUrl + str(pagenum) if pagenum > 0 else kwargs['url']
+                temUrl = response.meta['url'] + '&index=0&order=1&page=' if response.meta['url'].find('fundsinvest') > -1 else response.meta['url'] + '?&investmode=1&index=0&order=1&page='
+                url = temUrl + str(pagenum) if pagenum > 0 else response.meta['url']
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -98,7 +98,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['money_invest'] = selector.xpath('./td[10]/text()').extract_first()
                 item['pre_year_income'] = selector.xpath('./td[11]/text()').extract_first()
                 url = response.urljoin(selector.xpath('./td[3]/a/@href').extract_first())
-                yield SplashRequest(url,callback=self.parse_item, dont_filter=True,cb_kwargs=item)
+                yield SplashRequest(url,callback=self.parse_item, dont_filter=True,meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -107,7 +107,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse_item(self, response,**kwargs):
-        if kwargs['name']:
+        if response.meta['name']:
             try:
                 item = xtcpItem()
                 pro_address = response.xpath('//table[@class="jibenxinxi"]/tr[13]/td[4]/text()').extract_first()
@@ -120,26 +120,26 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 real_year_income = response.xpath('//table[@class="jibenxinxi"]/tr[7]/td[4]/text()').extract_first()
                 income_type = response.xpath('//table[@class="jibenxinxi"]/tr[11]/td[2]/text()').extract_first()
 
-                item['name'] = kwargs['name']
-                item['issure'] = kwargs['issure']
-                item['issue_date'] = '20' + get_times(kwargs['issue_date']) if kwargs['issue_date']!='null' else ''
+                item['name'] = response.meta['name']
+                item['issure'] = response.meta['issure']
+                item['issue_date'] = '20' + get_times(response.meta['issue_date']) if response.meta['issue_date']!='null' else ''
                 item['pro_address'] = pro_address.replace('\xa0','') if pro_address else ''
                 item['pre_scale'] = ''
-                item['real_scale'] = kwargs['real_scale']
+                item['real_scale'] = response.meta['real_scale']
                 item['deadline_type'] = deadline_type.replace('\xa0','') if deadline_type else ''
-                item['pro_deadline'] = kwargs['pro_deadline']
+                item['pro_deadline'] = response.meta['pro_deadline']
                 item['tj_start_time'] = ''
                 item['tj_end_time'] = ''
                 item['establish_date'] = get_times(establish_date.replace('\xa0','') if establish_date else '')
                 item['deadline_date'] = get_times(deadline_date.replace('\xa0','') if deadline_date else '')
-                item['invest_still'] = kwargs['invest_still']
+                item['invest_still'] = response.meta['invest_still']
                 item['income_deadline'] = ''
                 item['pro_state'] = pro_state.replace('\xa0','') if pro_state else ''
                 item['pro_type'] = pro_type.replace('\xa0','') if pro_type else ''
-                item['invest_method'] = kwargs['invest_method']
-                item['money_invest'] = kwargs['money_invest']
+                item['invest_method'] = response.meta['invest_method']
+                item['money_invest'] = response.meta['money_invest']
                 item['money_use'] = money_use.replace('\xa0','') if money_use else ''
-                item['pre_year_income'] = kwargs['pre_year_income']
+                item['pre_year_income'] = response.meta['pre_year_income']
                 item['real_year_income'] = real_year_income.replace('\xa0','') if real_year_income else ''
                 item['income_type'] = income_type.replace('\xa0','') if income_type else ''
                 item['income_explane'] = ''

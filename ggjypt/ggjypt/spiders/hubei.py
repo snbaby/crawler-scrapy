@@ -38,7 +38,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -58,45 +58,45 @@ class hubeiSzfwjSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_type,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_type(self, response, **kwargs):
-        if kwargs['topic'] == 'dzzb':
+    def parse_type(self, response):
+        if response.meta['topic'] == 'dzzb':
             for href in response.xpath('//*[@class="ewb-sub-tree"]/li/a/@href'):
                 try:
                     url = response.urljoin(href.extract())
                     print(url)
-                    yield SplashRequest(url, callback=self.parse_page, dont_filter=True, cb_kwargs={'url': url})
+                    yield SplashRequest(url, callback=self.parse_page, dont_filter=True, meta={'url': url})
 
                 except Exception as e:
                     logging.error(self.name + ": " + e.__str__())
                     logging.exception(e)
-        elif kwargs['topic'] == 'jzcg':
-            print(kwargs['url'])
-            yield SplashRequest(kwargs['url'], callback=self.parse_page1, dont_filter=True, cb_kwargs={'url': kwargs['url']})
-        elif kwargs['topic'] == 'pmjy':
-            print(kwargs['url'])
-            yield SplashRequest(kwargs['url'], callback=self.parse_page2, dont_filter=True,
-                                cb_kwargs={'url': kwargs['url']})
+        elif response.meta['topic'] == 'jzcg':
+            print(response.meta['url'])
+            yield SplashRequest(response.meta['url'], callback=self.parse_page1, dont_filter=True, meta={'url': response.meta['url']})
+        elif response.meta['topic'] == 'pmjy':
+            print(response.meta['url'])
+            yield SplashRequest(response.meta['url'], callback=self.parse_page2, dont_filter=True,
+                                meta={'url': response.meta['url']})
 
-    def parse_page(self, response,**kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response, '0'))
         print('page_count' + str(page_count))
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
-                    temUrl = kwargs['url'].replace('moreinfo_jyxx.html', '')
+                    temUrl = response.meta['url'].replace('moreinfo_jyxx.html', '')
                     url = temUrl + \
-                          str(pagenum) + ".html" if pagenum > 1 else kwargs['url']
+                          str(pagenum) + ".html" if pagenum > 1 else response.meta['url']
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page1(self, response, **kwargs):
+    def parse_page1(self, response):
         print(response)
         page_count = int(self.parse_pagenum(response, '1'))
         print('page_count' + str(page_count))
@@ -106,13 +106,13 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 if pagenum > 0:
                     temUrl = 'http://www.hbyxjzcg.cn/drug/0-'
                     url = temUrl + \
-                          str(pagenum) + ".html" if pagenum > 1 else kwargs['url']
+                          str(pagenum) + ".html" if pagenum > 1 else response.meta['url']
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse1,
                                         dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
-    def parse_page2(self, response, **kwargs):
+    def parse_page2(self, response):
         print(response)
         page_count = int(self.parse_pagenum(response, '2'))
         print('page_count' + str(page_count))
@@ -162,7 +162,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 item['time'] = selector.xpath('./span/text()').extract_first().strip()
                 url = selector.xpath('./a/@href').extract_first()
                 print('url=============='+url)
-                yield scrapy.Request(response.urljoin(url),callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                yield scrapy.Request(response.urljoin(url),callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -179,7 +179,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 item['time'] = selector.xpath('./span/text()').extract_first().strip()
                 url = selector.xpath('./a/@href').extract_first()
                 print('url=============='+url)
-                yield scrapy.Request(response.urljoin(url),callback=self.parse_item1, dont_filter=True, cb_kwargs=item)
+                yield scrapy.Request(response.urljoin(url),callback=self.parse_item1, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -195,7 +195,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 item['time'] = selector.xpath('./span/text()').extract_first().strip()
                 url = selector.xpath('./a/@href').extract_first()
                 print('url=============='+url)
-                yield scrapy.Request(response.urljoin(url),callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                yield scrapy.Request(response.urljoin(url),callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -203,11 +203,11 @@ class hubeiSzfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         if response.text:
             try:
                 category = '其他';
-                title = kwargs['title']
+                title = response.meta['title']
                 if title.find('招标') >= 0:
                     category = '招标'
                 elif title.find('中标') >= 0:
@@ -231,7 +231,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '湖北省'
-                item['time'] = kwargs['time']
+                item['time'] = response.meta['time']
                 item['website'] = '湖北省公共资源交易服务平台'
                 item['module_name'] = '湖北省-公共交易平台'
                 item['spider_name'] = 'hubei_ggjypt'
@@ -252,12 +252,12 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 logging.exception(e)
             yield item
 
-    def parse_item1(self, response, **kwargs):
+    def parse_item1(self, response):
         if response.text:
             try:
                 appendix, appendix_name = get_attachments(response)
                 category = '其他';
-                title = kwargs['title']
+                title = response.meta['title']
                 if title.find('招标') >= 0:
                     category = '招标'
                 elif title.find('中标') >= 0:
@@ -281,7 +281,7 @@ class hubeiSzfwjSpider(scrapy.Spider):
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '湖北省'
-                item['time'] = kwargs['time']
+                item['time'] = response.meta['time']
                 item['website'] = '湖北省公共资源交易服务平台'
                 item['module_name'] = '湖北省-公共交易平台'
                 item['spider_name'] = 'hubei_ggjypt'

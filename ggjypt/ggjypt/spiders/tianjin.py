@@ -38,7 +38,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -58,20 +58,20 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 url = href.extract()
                 url = url.replace('window.location=\'','').replace('\'','')
                 print(url)
-                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,cb_kwargs={'url':url})
+                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,meta={'url':url})
 
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_page(self, response,**kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         print('url'+str(page_count))
         try:
             for pagenum in range(page_count):
-                temUrl = kwargs['url'].replace('.jhtml', '')+'_'
+                temUrl = response.meta['url'].replace('.jhtml', '')+'_'
                 url = temUrl + \
-                      str(pagenum) + ".jhtml" if pagenum > 0 else kwargs['url']
+                      str(pagenum) + ".jhtml" if pagenum > 0 else response.meta['url']
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())

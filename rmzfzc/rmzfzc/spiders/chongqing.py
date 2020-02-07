@@ -52,7 +52,7 @@ class AnhuiSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -115,12 +115,12 @@ class AnhuiSpider(scrapy.Spider):
             for content in contents:
                 yield scrapy.FormRequest(url, formdata={'partialViewName': '市政府文件', 'parameters': str(content['data'])},
                      headers={'Content-Type': 'application/x-www-form-urlencoded',
-                              'Referer': 'http://www.cq.gov.cn/zwgk/szfwj'}, callback=self.parse_page,cb_kwargs=content['data'])
+                              'Referer': 'http://www.cq.gov.cn/zwgk/szfwj'}, callback=self.parse_page,meta=content['data'])
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         for selector in response.xpath('//*[@class="list"]/li'):
             item = {}
             item['title'] = selector.xpath('./a/text()').extract_first()
@@ -129,26 +129,26 @@ class AnhuiSpider(scrapy.Spider):
             try:
                 print(item['link'])
                 yield scrapy.Request(item['link'], callback=self.parse_item,
-                                     dont_filter=True, cb_kwargs=item)
+                                     dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = kwargs['title']
+            item['title'] = response.meta['title']
             item['article_num'] = response.css('.govDetailTable tr:nth-child(4) td:nth-child(2)::text').extract_first()
             item['content'] = "".join(response.xpath('//div[@class="govIntro"]').extract())
             item['appendix'] = appendix
             item['source'] = response.css('.govDetailTable tr:nth-child(2) td:nth-child(2)::text').extract_first()
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['province'] = '重庆市'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '重庆市人民政府'
-            item['link'] = kwargs['link']
+            item['link'] = response.meta['link']
             item['txt'] = "".join(response.xpath('//div[@class="govIntro"]//text()').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '重庆市人民政府'

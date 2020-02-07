@@ -49,7 +49,7 @@ function main(splash, args)
 end
 """
 
-class GansuSpider(scrapy.Spider):
+class AnhuiGgjyptSpider(scrapy.Spider):
     name = 'anhui_ggjypt'
     custom_settings = {
         'CONCURRENT_REQUESTS': 10,
@@ -68,9 +68,7 @@ class GansuSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -108,26 +106,27 @@ class GansuSpider(scrapy.Spider):
                         'url': content['url'],
                     },
                     callback=self.parse_page,
-                    cb_kwargs=content)
+                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
+        logging.error(response.text)
         page_count = int(self.parse_pagenum(response))
         try:
-            for pagenum in range(page_count):
-                if pagenum > 0:
-                    yield SplashRequest(kwargs['url'],
-                        endpoint='execute',
-                        args={
-                            'lua_source': script,
-                            'wait': 1,
-                            'page': pagenum,
-                            'url': kwargs['url'],
-                        },
-                        callback=self.parse,
-                        cb_kwargs=kwargs)
+            # for pagenum in range(page_count):
+            #     if pagenum > 0:
+            yield SplashRequest(response.meta['url'],
+                endpoint='execute',
+                args={
+                    'lua_source': script,
+                    'wait': 1,
+                    'page': 2,
+                    'url': response.meta['url'],
+                },
+                callback=self.parse,
+                meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -142,8 +141,7 @@ class GansuSpider(scrapy.Spider):
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
-    def parse(self, response, **kwargs):
-        print(response.xpath('//*[@id="packTablePg"]/@value').extract_first())
+    def parse(self, response):
         for selector in response.xpath('//*[@id="packTable"]/tbody/tr'):
             try:
                 if selector.xpath('./td[1]/a/text()'):
@@ -152,17 +150,18 @@ class GansuSpider(scrapy.Spider):
                     item['time'] = selector.xpath('./td[2]/font/text()').extract_first()
                     url = 'http://ggzy.ah.gov.cn/bulletin.do?method=showHomepage&bulletin_id=' + selector.xpath('./td[1]/a/@value').extract_first()
                     item['url'] = url
-                    yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                    print(url)
+                    yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
-        if kwargs['title']:
+    def parse_item(self, response):
+        if response.meta['title']:
             try:
                 appendix, appendix_name = get_attachments(response)
                 category = '其他';
-                title = kwargs['title']
+                title = response.meta['title']
                 if title.find('招标') >= 0:
                     category = '招标'
                 elif title.find('中标') >= 0:
@@ -180,13 +179,13 @@ class GansuSpider(scrapy.Spider):
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '安徽省'
-                item['time'] = kwargs['time']
+                item['time'] = response.meta['time']
                 item['website'] = '安徽省公共资源交易服务平台'
                 item['module_name'] = '安徽省-公共交易平台'
                 item['spider_name'] = 'anhui_ggjypt'
                 item['txt'] = "".join(response.xpath('//div[@class="content886"]//text()').extract())
                 item['appendix_name'] = appendix_name
-                item['link'] = kwargs['url']
+                item['link'] = response.meta['url']
                 item['appendix'] = appendix
                 item['time'] = get_times(item['time'])
                 print(

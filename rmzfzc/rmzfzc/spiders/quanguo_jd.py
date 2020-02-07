@@ -52,15 +52,15 @@ class QuanguoZuixinSpider(scrapy.Spider):
         try:
             for urlTmp in urlList:
                 url = urlTmp + "/0.htm"
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page, cb_kwargs={'preUrl': urlTmp})
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page, meta={'preUrl': urlTmp})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
-            preUrl = kwargs['preUrl']
+            preUrl = response.meta['preUrl']
             for pagenum in range(page_count):
                 url = preUrl + str(pagenum) + ".htm"
                 yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse)

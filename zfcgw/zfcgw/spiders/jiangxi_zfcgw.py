@@ -40,7 +40,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -76,17 +76,17 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url'].replace('jyxx.html',str(pagenum+1) + '.html')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs,
+                url = response.meta['url'].replace('jyxx.html',str(pagenum+1) + '.html')
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta,
                                     dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -103,10 +103,10 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for li in response.css('.ewb-list-node'):
             try:
-                if kwargs['topic'] == 'htgs':
+                if response.meta['topic'] == 'htgs':
                     href = li.css('a::attr(href)').extract_first().strip()
                     title = li.css('a::text').extract_first().strip()
                     region = ''
@@ -118,7 +118,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
                         'region':region,
                         'time':time
                     }
-                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1},callback=self.pares_htgs, cb_kwargs=result,dont_filter=True)
+                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1},callback=self.pares_htgs, meta=result,dont_filter=True)
                 else:
                     href = li.css('a::attr(href)').extract_first().strip()
                     title = ''.join(li.css('a *::text').extract()).strip()
@@ -131,7 +131,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
                         'region': region,
                         'time': time
                     }
-                    yield scrapy.Request(url, callback=self.pares_item, cb_kwargs=result,dont_filter=True)
+                    yield scrapy.Request(url, callback=self.pares_item, meta=result,dont_filter=True)
 
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
@@ -140,10 +140,10 @@ class JiangxiZfcgwSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def pares_item(self, response, **kwargs):
+    def pares_item(self, response):
         try:
             appendix, appendix_name=get_attachments(response)
-            title = kwargs['title']
+            title = response.meta['title']
             if title.find('招标') >= 0:
                 category = '招标'
             elif title.find('中标') >= 0:
@@ -161,10 +161,10 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             item['content'] = response.css('.article-info').extract_first()
             item['appendix'] = appendix
             item['category'] = category
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['source'] = ''
             item['website'] = '江西公共资源交易网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '2'
             item['region'] = '江西省'
             item['appendix_name'] = appendix_name
@@ -184,10 +184,10 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             logging.exception(e)
         yield item
 
-    def pares_htgs(self, response, **kwargs):
+    def pares_htgs(self, response):
         try:
             appendix, appendix_name=get_attachments(response)
-            title = kwargs['title']
+            title = response.meta['title']
             if title.find('招标') >= 0:
                 category = '招标'
             elif title.find('中标') >= 0:
@@ -205,10 +205,10 @@ class JiangxiZfcgwSpider(scrapy.Spider):
             item['content'] = response.css('.fui-accordions').extract_first()
             item['appendix'] = appendix
             item['category'] = category
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['source'] = ''
             item['website'] = '江西省政府采购网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '2'
             item['region'] = '江西省'
             item['appendix_name'] = appendix_name

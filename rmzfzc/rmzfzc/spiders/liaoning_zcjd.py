@@ -37,7 +37,7 @@ class BeijingZfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        'SPLASH_URL': 'http://47.106.239.73:8050/'}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -84,7 +84,7 @@ class BeijingZfwjSpider(scrapy.Spider):
                 # 加密记录不处理
                 if href.startswith('./'):
                     yield scrapy.Request("http://www.ln.gov.cn/zfxx/zcjd" + href[1:],
-                                         callback=self.parse_item,dont_filter=True,cb_kwargs=item)
+                                         callback=self.parse_item,dont_filter=True,meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -92,13 +92,13 @@ class BeijingZfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = kwargs['title']
+            item['title'] = response.meta['title']
             item['article_num'] = ''
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['content'] = "".join(response.xpath('//div[@class="TRS_Editor"]').extract())
             item['source'] = ''
             item['province'] = '辽宁省'

@@ -38,7 +38,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -83,7 +83,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 print(url)
                 item['avg_yield'] = selector.xpath('./td[2]/span/text()').extract_first()
                 item['pro_hold_rate'] = selector.xpath('./td[3]/text()').extract_first()
-                yield SplashRequest(url,callback=self.parse_item, dont_filter=True,cb_kwargs=item)
+                yield SplashRequest(url,callback=self.parse_item, dont_filter=True,meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -92,7 +92,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
     def parse_item(self, response,**kwargs):
-        print(kwargs)
+        print(response.meta)
         try:
             item = xtgsItem()
             name = response.xpath('//table[@class="xt_detail_tb_1"]/tbody/tr[1]/td[2]/text()').extract_first()
@@ -127,8 +127,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['shareholder'] = shareholder  # 大股东
             item['general_manager'] = general_manager  # 总经理
             item['aum'] = aum  # 资产管理规模
-            item['avg_yield'] = kwargs['avg_yield']  # 平均收益率
-            item['pro_hold_rate'] = kwargs['pro_hold_rate']   # 产品兑付比例
+            item['avg_yield'] = response.meta['avg_yield']  # 平均收益率
+            item['pro_hold_rate'] = response.meta['pro_hold_rate']   # 产品兑付比例
             item['company_website'] = ''  # 公司网址
             item['telephone'] = ''  # 电话
             item['fax'] = ''  # 传真

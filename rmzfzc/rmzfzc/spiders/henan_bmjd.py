@@ -36,7 +36,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,7 +78,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for href in response.xpath('//div[@class="mt15 list-box"]/ul/li/a/@href'):
             try:
                 print('href===' + href.extract())
-                yield SplashRequest(href.extract(),endpoint = 'execute',args={'lua_source': script, 'wait': 1,'url':href.extract()},callback=self.parse_item,dont_filter=True,cb_kwargs={'link':href.extract()})
+                yield SplashRequest(href.extract(),endpoint = 'execute',args={'lua_source': script, 'wait': 1,'url':href.extract()},callback=self.parse_item,dont_filter=True,meta={'link':href.extract()})
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -86,7 +86,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -103,7 +103,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['spider_name'] = 'henan_bmjd'
             item['txt'] = "".join(response.xpath('//div[@id="content"]//text()').extract())
             item['appendix_name'] = appendix_name
-            item['link'] = kwargs['link']
+            item['link'] = response.meta['link']
             item['appendix'] = appendix
             item['time'] = get_times(item['time'])
             print(

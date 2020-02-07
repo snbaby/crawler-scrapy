@@ -25,9 +25,8 @@ class LiaoningGzggZfcgwSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
+        }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -88,12 +87,12 @@ class LiaoningGzggZfcgwSpider(scrapy.Spider):
                                         'url': content['url'],
                                     },
                                     callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         script = """
             function wait_for_element(splash, css, maxwait)
               -- Wait until a selector matches an element
@@ -138,10 +137,10 @@ class LiaoningGzggZfcgwSpider(scrapy.Spider):
               return splash:html()
             end
             """
-        page_count = int(self.parse_pagenum(response, kwargs))
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url']
+                url = response.meta['url']
                 yield SplashRequest(url,
                                     endpoint='execute',
                                     args={
@@ -151,12 +150,12 @@ class LiaoningGzggZfcgwSpider(scrapy.Spider):
                                         'url': url,
                                     },
                                     callback=self.parse,
-                                    cb_kwargs=kwargs)
+                                    meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
@@ -171,7 +170,7 @@ class LiaoningGzggZfcgwSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         script = """
             function wait_for_element(splash, css, maxwait)
               -- Wait until a selector matches an element
@@ -229,15 +228,15 @@ class LiaoningGzggZfcgwSpider(scrapy.Spider):
                                         'url': url,
                                     },
                                     callback=self.parse_item,
-                                    cb_kwargs=result)
+                                    meta=result)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             appendix, appendix_name = get_attachments(response)
-            title = kwargs['title']
+            title = response.meta['title']
             if title.find('招标') >= 0:
                 category = '招标'
             elif title.find('中标') >= 0:
@@ -255,10 +254,10 @@ class LiaoningGzggZfcgwSpider(scrapy.Spider):
             item['content'] = response.css('form').extract_first()
             item['appendix'] = appendix
             item['category'] = category
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['source'] = ''
             item['website'] = '辽宁政府采购网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '2'
             item['region'] = '辽宁省'
             item['appendix_name'] = appendix_name

@@ -40,7 +40,7 @@ class HainanGgjyptSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -120,21 +120,21 @@ class HainanGgjyptSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
-                    url = kwargs['url']
+                    url = response.meta['url']
                 else:
-                    url = kwargs['url'].replace(
+                    url = response.meta['url'].replace(
                         '.jhtml', '_'+str(pagenum + 1) + '.jhtml')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs,
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta,
                                     dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -151,18 +151,18 @@ class HainanGgjyptSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for tr in response.css('.newtable tr'):
             try:
                 if len(tr.css('a[title]::attr(href)')) > 0:
                     url = response.urljoin(tr.css('a[title]::attr(href)').extract_first())
                     time = tr.css('td:nth-last-child(1)::text').extract_first()
-                    yield scrapy.Request(url, callback=self.pares_item, cb_kwargs={'url': url,'time':time}, dont_filter=True)
+                    yield scrapy.Request(url, callback=self.pares_item, meta={'url': url,'time':time}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def pares_item(self, response, **kwargs):
+    def pares_item(self, response):
         try:
             title = response.css('title::text').extract_first().replace(' - 全国公共资源交易平台（海南省）','').strip()
             if title.find('招标') >= 0:
@@ -183,10 +183,10 @@ class HainanGgjyptSpider(scrapy.Spider):
             item['content'] = response.css('.newsCon').extract_first()
             item['appendix'] = appendix
             item['category'] = category
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['source'] = response.css('.msgbar::text').extract_first().split('：')[2].replace('浏览次数','').strip()
             item['website'] = '海南省公共资源交易信息网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '2'
             item['region'] = '海南省'
             item['appendix_name'] = appendix_name

@@ -42,7 +42,7 @@ class FujianSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -62,17 +62,17 @@ class FujianSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url'] + '&page=' + str(pagenum + 1)
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs)
+                url = response.meta['url'] + '&page=' + str(pagenum + 1)
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -91,7 +91,7 @@ class FujianSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         str = ''
         for text in response.css('body::text').extract():
             str = str + text.strip()
@@ -111,7 +111,7 @@ class FujianSpider(scrapy.Spider):
                         'source': source,
                         'article_num':article_num
                     }
-                    yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                    yield scrapy.Request(url, callback=self.parse_item, meta=result, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -119,21 +119,21 @@ class FujianSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = kwargs['title']
-            item['article_num'] = kwargs['article_num']
+            item['title'] = response.meta['title']
+            item['article_num'] = response.meta['article_num']
             item['content'] = response.css('.htmlcon').extract_first()
             item['appendix'] = appendix
-            item['source'] = kwargs['source']
-            item['time'] = kwargs['time']
+            item['source'] = response.meta['source']
+            item['time'] = response.meta['time']
             item['province'] = '福建省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '福建省人民政府'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['txt'] = "".join(response.css('.htmlcon *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '福建省人民政府'

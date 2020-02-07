@@ -25,7 +25,7 @@ class SbkSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -114,7 +114,7 @@ class SbkSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         detail_page_script = """
                 function main(splash, args)
                     splash:init_cookies(splash.args.cookies)
@@ -157,19 +157,19 @@ class SbkSpider(scrapy.Spider):
                                 },
                                 session_id="foo",
                                 headers=response.data['headers'],
-                                callback=self.parse_end, cb_kwargs=item)
+                                callback=self.parse_end, meta=item)
 
-    def parse_end(self, response, **kwargs):
+    def parse_end(self, response):
         sbkItem = cnki_sbkItem()
-        sbkItem['title_cn'] = kwargs['title_cn']
-        sbkItem['author'] = kwargs['author']
-        sbkItem['degree'] = kwargs['degree']
-        sbkItem['degree_award_company'] = kwargs['degree_award_company']
-        sbkItem['degree_award_year'] = kwargs['degree_award_year']
-        sbkItem['website'] = kwargs['website']
-        sbkItem['link'] = kwargs['link']
-        sbkItem['spider_name'] = kwargs['spider_name']
-        sbkItem['module_name'] = kwargs['module_name']
+        sbkItem['title_cn'] = response.meta['title_cn']
+        sbkItem['author'] = response.meta['author']
+        sbkItem['degree'] = response.meta['degree']
+        sbkItem['degree_award_company'] = response.meta['degree_award_company']
+        sbkItem['degree_award_year'] = response.meta['degree_award_year']
+        sbkItem['website'] = response.meta['website']
+        sbkItem['link'] = response.meta['link']
+        sbkItem['spider_name'] = response.meta['spider_name']
+        sbkItem['module_name'] = response.meta['module_name']
 
         sbkItem['intro'] = response.css(
             "div.wxBaseinfo span#ChDivSummary::text").get("").strip()

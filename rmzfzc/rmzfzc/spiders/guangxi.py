@@ -40,7 +40,7 @@ class GuangxiSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,33 +64,33 @@ class GuangxiSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
-        page_count = int(self.parse_pagenum(response, kwargs))
+    def parse_page(self, response):
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
-                    url = kwargs['url']
+                    url = response.meta['url']
                 else:
-                    if kwargs['topic'] == 'xxgk':
-                        url = kwargs['url'] + '&pageno='+str(pagenum+1)
+                    if response.meta['topic'] == 'xxgk':
+                        url = response.meta['url'] + '&pageno='+str(pagenum+1)
                     else:
-                        url = kwargs['url'].replace('.shtml', '-' + str(pagenum + 1) + '.shtml')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs)
+                        url = response.meta['url'].replace('.shtml', '-' + str(pagenum + 1) + '.shtml')
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                if kwargs['topic'] == 'xxgk':
+                if response.meta['topic'] == 'xxgk':
                     return int(response.css('.more-page a:nth-child(1)::text').extract_first().split('条')[1].replace('页','').strip())
                 else:
                     return int(response.css('.more-page a:nth-last-child(1)::attr(href)').extract_first().split('index-')[1].replace('.shtml', ''))
@@ -99,23 +99,23 @@ class GuangxiSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for href in response.css('.more-list a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
                 if url.endswith('.pdf'):
                     return
-                if kwargs['topic'] == 'xxgk':
-                    yield scrapy.Request(url, callback=self.parse_xxgk, cb_kwargs={'url': url}, dont_filter=True)
-                elif kwargs['topic'] == 'zcjd':
-                    yield scrapy.Request(url, callback=self.parse_zcjd_dfxfg, cb_kwargs={'url': url}, dont_filter=True)
+                if response.meta['topic'] == 'xxgk':
+                    yield scrapy.Request(url, callback=self.parse_xxgk, meta={'url': url}, dont_filter=True)
+                elif response.meta['topic'] == 'zcjd':
+                    yield scrapy.Request(url, callback=self.parse_zcjd_dfxfg, meta={'url': url}, dont_filter=True)
                 else:
-                    yield scrapy.Request(url, callback=self.parse_zcjd_dfxfg, cb_kwargs={'url': url}, dont_filter=True)
+                    yield scrapy.Request(url, callback=self.parse_zcjd_dfxfg, meta={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_xxgk(self, response, **kwargs):
+    def parse_xxgk(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -129,7 +129,7 @@ class GuangxiSpider(scrapy.Spider):
             item['city'] = ''
             item['area'] = ''
             item['website'] = '广西壮族自治区人民政府门户网站'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['txt'] = ''.join(response.css('.article-con *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '广西壮族自治区人民政府门户网站'
@@ -148,7 +148,7 @@ class GuangxiSpider(scrapy.Spider):
             logging.exception(e)
         yield item
 
-    def parse_zcjd_dfxfg(self, response, **kwargs):
+    def parse_zcjd_dfxfg(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -162,7 +162,7 @@ class GuangxiSpider(scrapy.Spider):
             item['city'] = ''
             item['area'] = ''
             item['website'] = '广西壮族自治区人民政府门户网站'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['txt'] = ''.join(response.css('.article-con *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '广西壮族自治区人民政府门户网站'

@@ -36,7 +36,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,7 +87,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 # 加密记录不处理
                 yield SplashRequest(href, endpoint='execute',
                                 args={'lua_source': script, 'wait': 1, 'url': href}, callback=self.parse_item,
-                                dont_filter=True, cb_kwargs=item)
+                                dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -95,15 +95,15 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = kwargs['title']
-            item['article_num'] = kwargs['article_num']
+            item['title'] = response.meta['title']
+            item['article_num'] = response.meta['article_num']
             item['content'] = "".join(response.xpath('//div[@id="content"]').extract())
             item['source'] = '河南省人民政府'
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['province'] = '河南省'
             item['city'] = ''
             item['area'] = ''
@@ -112,7 +112,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             item['spider_name'] = 'henan_szfl'
             item['txt'] = "".join(response.xpath('//div[@id="content"]//text()').extract())
             item['appendix_name'] = appendix_name
-            item['link'] = kwargs['link']
+            item['link'] = response.meta['link']
             item['appendix'] = appendix
             item['time'] = get_times(item['time'])
             print(

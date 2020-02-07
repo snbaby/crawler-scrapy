@@ -24,8 +24,7 @@ class HylwSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -112,7 +111,7 @@ class HylwSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         detail_page_script = """
                 function main(splash, args)
                     splash:init_cookies(splash.args.cookies)
@@ -153,9 +152,9 @@ class HylwSpider(scrapy.Spider):
                                 },
                                 session_id="foo",
                                 headers=response.data['headers'],
-                                callback=self.parse_end, cb_kwargs=item)
+                                callback=self.parse_end, meta=item)
 
-    def parse_end(self, response, **kwargs):
+    def parse_end(self, response):
         sbkItem = hylwItem()
         sbkItem['title'] = response.css("#mainArea > div.wxmain > div.wxTitle > h2::text").get("").strip()
         author_list = response.css("#mainArea > div.wxmain > div.wxTitle > div.author a::text").extract()
@@ -167,7 +166,7 @@ class HylwSpider(scrapy.Spider):
         sbkItem['address'] =  response.xpath("//label[@id='catalog_ADDR']/../text()").get("").strip()
         sbkItem['type'] = response.xpath("//label[@id='catalog_ZTCLS']/../text()").get("").strip()
         sbkItem['website'] = '中国知网-会议'
-        sbkItem['link'] = kwargs['link']
+        sbkItem['link'] = response.meta['link']
         sbkItem['spider_name'] = self.name
         sbkItem['module_name'] = '中国知网-会议库'
         yield sbkItem

@@ -35,7 +35,7 @@ class GuizhouSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,22 +55,22 @@ class GuizhouSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         print(page_count)
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
-                    url = kwargs['url']
+                    url = response.meta['url']
                 else:
-                    url = kwargs['url'].replace(
+                    url = response.meta['url'].replace(
                         '.html', '_' + str(pagenum) + '.html')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse, cb_kwargs=kwargs)
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse, meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -88,13 +88,13 @@ class GuizhouSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
-        if kwargs['topic'] == 'szfl':
+    def parse(self, response):
+        if response.meta['topic'] == 'szfl':
             for href in response.css(
                     '.right-list-box ul li a::attr(href)').extract():
                 try:
                     url = response.urljoin(href)
-                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse_szfl, cb_kwargs={'url': url}, dont_filter=True)
+                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse_szfl, meta={'url': url}, dont_filter=True)
                 except Exception as e:
                     logging.error(self.name + ": " + e.__str__())
                     logging.exception(e)
@@ -103,12 +103,12 @@ class GuizhouSpider(scrapy.Spider):
                     '.zcjd_list ul li h2 a::attr(href)').extract():
                 try:
                     url = response.urljoin(href)
-                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse_wzjd, cb_kwargs={'url': url}, dont_filter=True)
+                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1, 'resource_timeout': 10}, callback=self.parse_wzjd, meta={'url': url}, dont_filter=True)
                 except Exception as e:
                     logging.error(self.name + ": " + e.__str__())
                     logging.exception(e)
 
-    def parse_szfl(self, response, **kwargs):
+    def parse_szfl(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -125,7 +125,7 @@ class GuizhouSpider(scrapy.Spider):
             item['city'] = ''
             item['area'] = ''
             item['website'] = '贵州省人民政府'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['txt'] = ''.join(response.css('.zw-con *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '贵州省人民政府'
@@ -144,7 +144,7 @@ class GuizhouSpider(scrapy.Spider):
             logging.exception(e)
         yield item
 
-    def parse_wzjd(self, response, **kwargs):
+    def parse_wzjd(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -161,7 +161,7 @@ class GuizhouSpider(scrapy.Spider):
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '贵州省人民政府'
-                item['link'] = kwargs['url']
+                item['link'] = response.meta['url']
                 item['txt'] = ''.join(response.css('.zw-con *::text').extract())
                 item['appendix_name'] = appendix_name
                 item['module_name'] = '贵州省人民政府'
@@ -177,7 +177,7 @@ class GuizhouSpider(scrapy.Spider):
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '贵州省人民政府'
-                item['link'] = kwargs['url']
+                item['link'] = response.meta['url']
                 item['txt'] = ''.join(response.css('.zw-con *::text').extract())
                 item['appendix_name'] = appendix_name
                 item['module_name'] = '贵州省人民政府'

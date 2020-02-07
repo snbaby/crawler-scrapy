@@ -41,7 +41,7 @@ class XizangGgjyptSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -101,21 +101,21 @@ class XizangGgjyptSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
-                    url = kwargs['url']
+                    url = response.meta['url']
                 else:
-                    url = kwargs['url'].replace(
+                    url = response.meta['url'].replace(
                         '.jhtml', '_' + str(pagenum + 1) + '.jhtml')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -132,11 +132,11 @@ class XizangGgjyptSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for href in response.css('.article-list-old a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
-                yield scrapy.Request(url, callback=self.pares_item, cb_kwargs={'url': url}, dont_filter=True)
+                yield scrapy.Request(url, callback=self.pares_item, meta={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -144,7 +144,7 @@ class XizangGgjyptSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def pares_item(self, response, **kwargs):
+    def pares_item(self, response):
         try:
             appendix, appendix_name = get_attachments(response)
             title = response.css('.div-title::text').extract_first().strip()
@@ -169,7 +169,7 @@ class XizangGgjyptSpider(scrapy.Spider):
                 '.div-title2::text').extract_first().split('浏览')[0].replace('发布时间：', '').strip()
             item['source'] = ''
             item['website'] = '西藏自治区公共资源交易信息网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '2'
             item['region'] = '西藏自治区'
             item['appendix_name'] = appendix_name

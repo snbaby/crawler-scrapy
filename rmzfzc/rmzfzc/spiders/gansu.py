@@ -28,7 +28,7 @@ class shandongZfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -98,12 +98,12 @@ class shandongZfwjSpider(scrapy.Spider):
                                         'url': content['url'],
                                     },
                                     callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         script = """
         function wait_for_element(splash, css, maxwait)
           -- Wait until a selector matches an element
@@ -150,7 +150,7 @@ class shandongZfwjSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 if pagenum > 0:
-                    url = kwargs['url']
+                    url = response.meta['url']
                     yield SplashRequest(url,
                         endpoint='execute',
                         args={
@@ -160,7 +160,7 @@ class shandongZfwjSpider(scrapy.Spider):
                             'url': url,
                         },
                         callback=self.parse,
-                        cb_kwargs=kwargs)
+                        meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -176,7 +176,7 @@ class shandongZfwjSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for selector in response.xpath('//*[@class="default_pgContainer"]/table/tbody/tr'):
             try:
                 item = {}
@@ -187,32 +187,32 @@ class shandongZfwjSpider(scrapy.Spider):
                     if url.startswith('/'):
                         url = 'http://www.gansu.gov.cn' + url
                     item['url'] = url
-                    item['topic'] = kwargs['topic']
-                    yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                    item['topic'] = response.meta['topic']
+                    yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
-            if kwargs['title']:
+            if response.meta['title']:
                 appendix, appendix_name = get_attachments(response)
                 item = rmzfzcItem()
-                item['title'] = kwargs['title']
+                item['title'] = response.meta['title']
                 item['article_num'] = ''
                 item['content'] = "".join(response.xpath('//*[@class="bt_content"]').extract())
                 item['source'] = '省政府办公厅'
-                item['time'] = kwargs['time']
+                item['time'] = response.meta['time']
                 item['province'] = '甘肃省'
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '甘肃省人民政府'
                 item['module_name'] = '甘肃省人民政府-政策解读'
-                item['spider_name'] = 'gansu_' + kwargs['topic']
+                item['spider_name'] = 'gansu_' + response.meta['topic']
                 item['txt'] = "".join(response.xpath('//*[@class="bt_content"]//text()').extract())
                 item['appendix_name'] = appendix_name
                 item['appendix'] = appendix
-                item['link'] = kwargs['url']
+                item['link'] = response.meta['url']
                 item['time'] = get_times(item['time'])
                 print("===========================>crawled one item" +
                     response.request.url)

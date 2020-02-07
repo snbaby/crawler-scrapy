@@ -27,8 +27,7 @@ class DfbzSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -77,21 +76,21 @@ class DfbzSpider(scrapy.Spider):
                                         'url': content['url'],
                 },
                     callback=self.parse_page,
-                    cb_kwargs=content)
+                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         try:
             for href in response.css('.panel-body a::attr(href)').extract():
                 url = response.urljoin(href)
-                yield SplashRequest(url, callback=self.parse, cb_kwargs={'url': url})
+                yield SplashRequest(url, callback=self.parse, meta={'url': url})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         script = """
             function main(splash, args)
               splash:go(args.url)
@@ -105,21 +104,21 @@ class DfbzSpider(scrapy.Spider):
         for num in range(
                 len(response.css('div[stdid]::attr(stdid)').extract())):
             try:
-                yield SplashRequest(kwargs['url'],
+                yield SplashRequest(response.meta['url'],
                                     endpoint='execute',
                                     args={
                                         'lua_source': script,
                                         'wait': 1,
                                         'num': num + 1,
-                                        'url': kwargs['url'],
+                                        'url': response.meta['url'],
                 },
                     callback=self.parse_item,
-                    cb_kwargs=kwargs)
+                    meta=response.meta)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = bzk_dfbzItem()
             item['name'] = response.css(
@@ -162,7 +161,7 @@ class DfbzSpider(scrapy.Spider):
             item['publish_no'] = response.css(
                 '#layui-layer1 > div.layui-layer-content > div > table > tbody > tr:nth-child(13) > td:nth-child(2) a::text').extract_first()
 
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['appendix_name'] = ''
             item['spider_name'] = 'dfbz'
             item['module_name'] = '标准库-地方标准'

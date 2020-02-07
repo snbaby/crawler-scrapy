@@ -21,16 +21,12 @@ class FlfgSpider(scrapy.Spider):
             'scrapy_splash.SplashMiddleware': 725,
             'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
         },
-        'SPIDER_MIDDLEWARES': {
-            'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -62,12 +58,12 @@ class FlfgSpider(scrapy.Spider):
                                     'iframes': 1,
                                 },
                                 callback=self.parse_result,
-                                cb_kwargs={'url': url})
+                                meta={'url': url})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_result(self, response, **kwargs):
+    def parse_result(self, response):
         page_script = """
             function main(splash, args)
                 assert(splash:go(args.url))
@@ -90,13 +86,13 @@ class FlfgSpider(scrapy.Spider):
         for i in range(page_num):
             page_js = "document.querySelector('#iframeResult').contentDocument.getElementsByName('curpage2')[0].value = " + str(
                 i + 1)
-            yield SplashRequest(kwargs['url'],
+            yield SplashRequest(response.meta['url'],
                                 endpoint='execute',
                                 args={
                                     'lua_source': page_script,
                                     'wait': 1,
                                     'page_js': page_js,
-                                    'url': kwargs['url'],
+                                    'url': response.meta['url'],
                                     'iframes': 1,
             },
                 session_id="foo",
@@ -115,7 +111,7 @@ class FlfgSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for record in response.css(
                 ".GridTableContent > tbody > tr:not(.GTContentTitle)"):
             title = record.css('td:nth-child(2) a::text').extract_first()
@@ -132,14 +128,14 @@ class FlfgSpider(scrapy.Spider):
                 'url': url
             }
             yield scrapy.Request(url, callback=self.parse_end,
-                                 dont_filter=True, cb_kwargs=result)
+                                 dont_filter=True, meta=result)
 
-    def parse_end(self, response, **kwargs):
+    def parse_end(self, response):
         item = cnki_flfgItem()
-        item['title'] = kwargs['title']
+        item['title'] = response.meta['title']
         item['source'] = '中国知网'
-        item['pub_time'] = kwargs['pub_time']
-        item['pub_org'] = kwargs['pub_org']
+        item['pub_time'] = response.meta['pub_time']
+        item['pub_org'] = response.meta['pub_org']
         item['implement_date'] = response.css(
             'div.author > p:nth-child(3)::text').extract_first().strip().replace('【实施日期】', '')
         item['pub_wordsize'] = response.css(
@@ -149,9 +145,9 @@ class FlfgSpider(scrapy.Spider):
         item['intro'] = response.css("#main > div:nth-child(1) > div.summary.pad10 > p:nth-child(3)::text").extract_first().strip().replace('【正文快照】', '')
         item['potency_level'] = response.css(
             '#main > div:nth-child(1) > div.summary.pad10 > p:nth-child(4)::text').extract_first().strip().replace('【效力级别】', '')
-        item['timeliness'] = kwargs['timeliness']
+        item['timeliness'] = response.meta['timeliness']
         item['website'] = '中国知网'
-        item['link'] = kwargs['url']
+        item['link'] = response.meta['url']
         item['spider_name'] = 'flfg'
         item['module_name'] = '中国知网-法律法规'
         yield item

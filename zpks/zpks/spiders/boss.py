@@ -61,7 +61,7 @@ class BossSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -103,7 +103,7 @@ class BossSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for href in response.xpath('//div[@class="info-primary"]/h3/a/@href').extract():
             try:
                 url = response.urljoin(href)
@@ -116,12 +116,12 @@ class BossSpider(scrapy.Spider):
                                         'url': url,
                                     },
                                     callback=self.parse_item,
-                                    cb_kwargs={'url':url})
+                                    meta={'url':url})
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = zpksItem()
             item['job'] = response.xpath('//h1/text()').extract_first()
@@ -131,7 +131,7 @@ class BossSpider(scrapy.Spider):
             item['salary'] = response.xpath('//*[@id="main"]/div[1]/div/div/div[2]/div[2]/span/text()').extract_first()
             item['time'] = ''
             item['website'] = 'boss直聘'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '1'
             item['source'] = 'boss直聘'
             item['content'] = ''.join(response.xpath('//*[@id="main"]/div[3]/div/div[2]/div[2]/div[2]/div').extract())

@@ -27,8 +27,7 @@ class GnbzSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -97,21 +96,21 @@ class GnbzSpider(scrapy.Spider):
                                         'url': content['url'],
                 },
                     callback=self.parse_page,
-                    cb_kwargs=content)
+                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         try:
             for href in response.css('.panel-body a::attr(href)').extract():
                 url = response.urljoin(href)
-                yield SplashRequest(url, callback=self.parse, cb_kwargs={'url': url})
+                yield SplashRequest(url, callback=self.parse, meta={'url': url})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         script = """
                 function main(splash, args)
                   splash:go(args.url)
@@ -125,22 +124,22 @@ class GnbzSpider(scrapy.Spider):
         for num in range(
                 len(response.css('div[stdid]::attr(stdid)').extract())):
             try:
-                yield SplashRequest(kwargs['url'],
+                yield SplashRequest(response.meta['url'],
                                     endpoint='execute',
                                     args={
                                         'lua_source': script,
                                         'wait': 1,
                                         'num': num + 1,
-                                        'url': kwargs['url'],
+                                        'url': response.meta['url'],
                 },
                     callback=self.parse_item,
                     dont_filter=True,
-                    cb_kwargs=kwargs)
+                    meta=response.meta)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         script = """
         function main(splash, args)
           splash:go(args.url)
@@ -210,7 +209,7 @@ class GnbzSpider(scrapy.Spider):
                                 },
                                 callback=self.parse_end,
                                 dont_filter=True,
-                                cb_kwargs=item)
+                                meta=item)
         except Exception as e:
             logging.error(
                 self.name +
@@ -220,38 +219,38 @@ class GnbzSpider(scrapy.Spider):
                 e.__str__())
             logging.exception(e)
 
-    def parse_end(self, response, **kwargs):
+    def parse_end(self, response):
         item = bzk_gnbzItem()
-        item['name'] = kwargs['name']
-        item['code'] = kwargs['code']
-        item['status'] = kwargs['status']
+        item['name'] = response.meta['name']
+        item['code'] = response.meta['code']
+        item['status'] = response.meta['status']
         if len(response.css(
             'body > div.repbg1 > div > div > div > div > table.tdlist > tbody > tr:nth-child(4) > td > button.btn.ck_btn.btn-sm.btn-primary::attr(data-value)').extract())>0:
             item['xiazai'] = 'http://c.gb688.cn/bzgk/gb/showGb?type=online&hcno=' + str(response.css(
                 'body > div.repbg1 > div > div > div > div > table.tdlist > tbody > tr:nth-child(4) > td > button.btn.ck_btn.btn-sm.btn-primary::attr(data-value)').extract_first())
         else:
             item['xiazai'] = ''
-        item['committees'] = kwargs['committees']
-        item['approvalDate'] = kwargs['approvalDate']
-        item['implementationDate'] = kwargs['implementationDate']
-        item['sourceWebsite'] = kwargs['sourceWebsite']
-        item['ics'] = kwargs['ics']
-        item['ccs'] = kwargs['ccs']
-        item['en_name'] = kwargs['en_name']
-        item['type'] = kwargs['type']
-        item['replace'] = kwargs['replace']
-        item['caibiao'] = kwargs['caibiao']
-        item['caibiao_name'] = kwargs['caibiao_name']
-        item['caibiao_level'] = kwargs['caibiao_level']
-        item['caibiao_type'] = kwargs['caibiao_type']
-        item['dept_host'] = kwargs['dept_host']
+        item['committees'] = response.meta['committees']
+        item['approvalDate'] = response.meta['approvalDate']
+        item['implementationDate'] = response.meta['implementationDate']
+        item['sourceWebsite'] = response.meta['sourceWebsite']
+        item['ics'] = response.meta['ics']
+        item['ccs'] = response.meta['ccs']
+        item['en_name'] = response.meta['en_name']
+        item['type'] = response.meta['type']
+        item['replace'] = response.meta['replace']
+        item['caibiao'] = response.meta['caibiao']
+        item['caibiao_name'] = response.meta['caibiao_name']
+        item['caibiao_level'] = response.meta['caibiao_level']
+        item['caibiao_type'] = response.meta['caibiao_type']
+        item['dept_host'] = response.meta['dept_host']
         item['dept_pub'] = response.css(
             'body > div.repbg1 > div > div > div > div > div:nth-child(7) > div.col-xs-12.col-md-10.content::text').extract_first()
-        item['publish_no'] = kwargs['publish_no']
+        item['publish_no'] = response.meta['publish_no']
         item['remark'] = response.css(
             'body > div.repbg1 > div > div > div > div > div:nth-child(8) > div.col-xs-12.col-md-10.content::text').extract_first()
-        item['link'] = kwargs['link']
-        item['appendix_name'] = kwargs['appendix_name']
-        item['spider_name'] = kwargs['spider_name']
-        item['module_name'] = kwargs['module_name']
+        item['link'] = response.meta['link']
+        item['appendix_name'] = response.meta['appendix_name']
+        item['spider_name'] = response.meta['spider_name']
+        item['module_name'] = response.meta['module_name']
         yield item

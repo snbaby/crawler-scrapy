@@ -25,7 +25,7 @@ class ShxtwSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,26 +40,26 @@ class ShxtwSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield scrapy.Request(content['url'], callback=self.parse_page, cb_kwargs=content, dont_filter=True)
+                yield scrapy.Request(content['url'], callback=self.parse_page, meta=content, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
-        page_count = int(self.parse_pagenum(response, kwargs))
+    def parse_page(self, response):
+        page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = kwargs['url']
+                url = response.meta['url']
                 if pagenum == 0:
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                    yield scrapy.Request(url, callback=self.parse, meta=response.meta, dont_filter=True)
                 else:
                     url = url.replace('1.html', str(pagenum + 1) + '.html')
-                    yield scrapy.Request(url, callback=self.parse, cb_kwargs=kwargs, dont_filter=True)
+                    yield scrapy.Request(url, callback=self.parse, meta=response.meta, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
@@ -70,16 +70,16 @@ class ShxtwSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for href in response.css('.img a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs={'url': url}, dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse_item, meta={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = hyyjbgItem()
             item['title'] = response.css('h1::text').extract_first()
@@ -93,7 +93,7 @@ class ShxtwSpider(scrapy.Spider):
                     txt = content + ''.join(selector.xpath('.//text()').extract())
             item['content'] = content
             item['website'] = '上海信托网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['spider_name'] = 'shxtw'
             item['txt'] = txt
             item['module_name'] = '信托融资一行业基本报告-上海信托网'

@@ -37,7 +37,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -84,7 +84,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item['time'] = selector.xpath('./span/text()').extract_first()
                 href = selector.xpath('./a/@href').extract_first()
                 url = response.urljoin(href)
-                yield SplashRequest(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                yield SplashRequest(url,callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -92,16 +92,16 @@ class TianJinSzfwjSpider(scrapy.Spider):
         # 1. 获取翻页链接
         # 2. yield scrapy.Request(第二页链接, callback=self.parse, dont_filter=True)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         print(response)
         try:
             appendix, appendix_name = get_attachments(response)
             item = rmzfzcItem()
-            item['title'] = kwargs['title']
+            item['title'] = response.meta['title']
             item['article_num'] = ''
             item['content'] = "".join(response.xpath('//div[@id="zoom"]').extract())
             item['source'] = ''
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['province'] = '河北省'
             item['city'] = ''
             item['area'] = ''

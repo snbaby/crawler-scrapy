@@ -24,9 +24,8 @@ class XizangZfcgwSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
+        }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -91,12 +90,12 @@ class XizangZfcgwSpider(scrapy.Spider):
                                             'url': content['url'],
                                         },
                                         callback=self.parse,
-                                        cb_kwargs=content)
+                                        meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for li in response.css('#news_div ul li'):
             try:
                 title = li.css('a::text').extract_first()
@@ -107,15 +106,15 @@ class XizangZfcgwSpider(scrapy.Spider):
                     'time': time,
                     'url': url
                 }
-                yield scrapy.Request(url, callback=self.parse_item, cb_kwargs=result, dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse_item, meta=result, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             appendix, appendix_name = get_attachments(response)
-            title = kwargs['title']
+            title = response.meta['title']
             if title.find('招标') >= 0:
                 category = '招标'
             elif title.find('中标') >= 0:
@@ -133,10 +132,10 @@ class XizangZfcgwSpider(scrapy.Spider):
             item['content'] = response.css('.neirong').extract_first()
             item['appendix'] = appendix
             item['category'] = category
-            item['time'] = kwargs['time']
+            item['time'] = response.meta['time']
             item['source'] = ''
             item['website'] = '西藏自治区政府采购网'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['type'] = '2'
             item['region'] = '西藏自治区'
             item['appendix_name'] = appendix_name

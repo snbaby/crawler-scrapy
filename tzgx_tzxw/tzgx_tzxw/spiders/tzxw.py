@@ -28,7 +28,7 @@ class TzxwSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,15 +56,15 @@ class TzxwSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield scrapy.FormRequest(content['url'], cb_kwargs=content, body=json.dumps(data), method='POST',
+                yield scrapy.FormRequest(content['url'], meta=content, body=json.dumps(data), method='POST',
                                          headers=header,
                                          callback=self.parse_page, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
-        page_count = self.parse_pagenum(response, kwargs)
+    def parse_page(self, response):
+        page_count = self.parse_pagenum(response)
         try:
             header = {
                 ':authority': 'www.itjuzi.com',
@@ -91,13 +91,13 @@ class TzxwSpider(scrapy.Spider):
                         "time": [],
                         "news_type": [],
                         "keywords": ""}
-                    yield scrapy.FormRequest(content['url'], cb_kwargs=content, body=json.dumps(data), method='POST',
+                    yield scrapy.FormRequest(content['url'], meta=content, body=json.dumps(data), method='POST',
                                              headers=header, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_pagenum(self, response, kwargs):
+    def parse_pagenum(self, response):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
@@ -108,7 +108,7 @@ class TzxwSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         investevents = json.loads(response.text)['data']['data']
         for investevent in investevents:
             try:
@@ -122,7 +122,7 @@ class TzxwSpider(scrapy.Spider):
                 result['txt'] = ''
                 result['spider_name'] = 'tzxw'
                 result['module_name'] = 'IT桔子-投资新闻'
-                yield scrapy.Request(investevent['url'], callback=self.parse_item, dont_filter=True, cb_kwargs=result)
+                yield scrapy.Request(investevent['url'], callback=self.parse_item, dont_filter=True, meta=result)
             except Exception as e:
                 logging.error(
                     self.name +
@@ -132,15 +132,15 @@ class TzxwSpider(scrapy.Spider):
                     e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response, **kwargs):
+    def parse_item(self, response):
         try:
             item = tzgx_tzxwItem()
-            item['title'] = kwargs['title']
-            item['source'] = kwargs['source']
-            item['date'] = kwargs['date']
+            item['title'] = response.meta['title']
+            item['source'] = response.meta['source']
+            item['date'] = response.meta['date']
             item['content'] = response.css('body').extract_first()
             item['website'] = 'it桔子'
-            item['link'] = kwargs['link']
+            item['link'] = response.meta['link']
             item['txt'] = ''.join(response.css('body *::text').extract())
             item['spider_name'] = 'tzxw'
             item['module_name'] = 'IT桔子-投资新闻'

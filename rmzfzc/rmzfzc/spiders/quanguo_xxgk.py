@@ -83,22 +83,22 @@ class QuanguoZuixinSpider(scrapy.Spider):
                 item['source'] = selector.xpath('./td[2]/ul/li[3]/text()').extract_first()
                 url = selector.xpath('./td[2]/a/@href').extract_first()
                 if url:
-                    yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, cb_kwargs=item)
+                    yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_item(self, response,**kwargs):
+    def parse_item(self, response):
         try:
-            if kwargs['title']:
+            if response.meta['title']:
                 item = rmzfzcItem()
                 appendix, appendix_name = get_attachments(response)
-                item['title'] = kwargs['title']
-                item['article_num'] = kwargs['article_num']
+                item['title'] = response.meta['title']
+                item['article_num'] = response.meta['article_num']
                 item['content'] = "".join(response.xpath('//*[@class="b12c"]').extract())
                 item['appendix'] = appendix
-                item['source'] = kwargs['source']
-                item['time'] = kwargs['time']
+                item['source'] = response.meta['source']
+                item['time'] = response.meta['time']
                 item['province'] = '国家'
                 item['city'] = ''
                 item['area'] = ''

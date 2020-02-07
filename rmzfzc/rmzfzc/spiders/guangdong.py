@@ -41,7 +41,7 @@ class GuangdongSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.106.239.73:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,21 +61,21 @@ class GuangdongSpider(scrapy.Spider):
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    cb_kwargs=content)
+                                    meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response, **kwargs):
+    def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
-                    url = kwargs['url']
+                    url = response.meta['url']
                 else:
-                    url = kwargs['url'].replace(
+                    url = response.meta['url'].replace(
                         '.html', '_' + str(pagenum + 1) + '.html')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, cb_kwargs=kwargs)
+                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -92,22 +92,22 @@ class GuangdongSpider(scrapy.Spider):
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse(self, response, **kwargs):
+    def parse(self, response):
         for href in response.css('.viewList ul a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
-                if kwargs['topic'] == 'wjk':
-                    yield scrapy.Request(url, callback=self.parse_wjk, cb_kwargs={'url': url}, dont_filter=True)
+                if response.meta['topic'] == 'wjk':
+                    yield scrapy.Request(url, callback=self.parse_wjk, meta={'url': url}, dont_filter=True)
                 else:
-                    yield scrapy.Request(url, callback=self.parse_zcjd, cb_kwargs={'url': url}, dont_filter=True)
+                    yield scrapy.Request(url, callback=self.parse_zcjd, meta={'url': url}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
-    def parse_wjk(self, response, **kwargs):
+    def parse_wjk(self, response):
         try:
             appendix, appendix_name = get_attachments(response)
-            if kwargs['url'].startswith('http://www.gd.gov.cn/gkml'):
+            if response.meta['url'].startswith('http://www.gd.gov.cn/gkml'):
                 item = rmzfzcItem()
                 item['title'] = response.css('.classify > div:nth-child(3) span::text').extract_first()
                 item['article_num'] = response.css('.classify > div:nth-child(4) div:nth-child(1) span::text').extract_first()
@@ -119,7 +119,7 @@ class GuangdongSpider(scrapy.Spider):
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '广东省人民政府'
-                item['link'] = kwargs['url']
+                item['link'] = response.meta['url']
                 item['txt'] = ''.join(response.css('.article-content *::text').extract())
                 item['appendix_name'] = appendix_name
                 item['module_name'] = '广东省人民政府'
@@ -138,7 +138,7 @@ class GuangdongSpider(scrapy.Spider):
                 item['city'] = ''
                 item['area'] = ''
                 item['website'] = '广东省人民政府'
-                item['link'] = kwargs['url']
+                item['link'] = response.meta['url']
                 item['txt'] = ''.join(response.css('.zw *::text').extract())
                 item['appendix_name'] = appendix_name
                 item['module_name'] = '广东省人民政府'
@@ -156,7 +156,7 @@ class GuangdongSpider(scrapy.Spider):
             logging.exception(e)
         yield item
 
-    def parse_zcjd(self, response, **kwargs):
+    def parse_zcjd(self, response):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
@@ -172,7 +172,7 @@ class GuangdongSpider(scrapy.Spider):
             item['city'] = ''
             item['area'] = ''
             item['website'] = '广东省人民政府'
-            item['link'] = kwargs['url']
+            item['link'] = response.meta['url']
             item['txt'] = ''.join(response.css('.zw *::text').extract())
             item['appendix_name'] = ''
             item['module_name'] = '广东省人民政府'
