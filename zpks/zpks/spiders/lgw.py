@@ -129,33 +129,29 @@ class LgwSpider(scrapy.Spider):
 
     def parse_item(self, response):
         try:
-            print(response.xpath('/html/body/div[6]/div/div[1]/div/h1/text()'))
-            if response.xpath('/html/body/div[6]/div/div[1]/div/h1/text()'):
-                item = zpksItem()
-                item['job'] = response.xpath('/html/body/div[6]/div/div[1]/div/h1/text()').extract_first()
-                company_name = response.xpath('//em[@class="fl-cn"]/text()').extract_first()
-                item['company_name'] = company_name.strip() if company_name else ''
-                item['industry'] = ''.join(response.xpath('//ul[@class="position-label clearfix"]/li/text()').extract())
-                location = ''.join(response.xpath('//div[@class="work_addr"]/a/text()').extract())
-                item['location'] = location.replace('查看地图', '') if location else ''
-                item['salary'] = response.xpath('//*[@class="salary"]/text()').extract_first()
-                item['time'] = datetime.date.today()
-                item['website'] = '拉勾网'
-                item['link'] = response.meta['url']
-                item['type'] = '4'
-                item['source'] = '拉勾网'
-                item['content'] = ''.join(response.xpath('//*[@class="job-detail"]').extract())
-                print(response.xpath('//dd[@class="job_request"]/h3/span[4]').extract_first())
-                education = response.xpath('//dd[@class="job_request"]/h3/span[4]/text()').extract_first()
-                item['education'] = education.replace('/', '') if education else ''
-                item['spider_name'] = 'lgw'
-                item['module_name'] = '拉勾网'
-                print(
-                    "===========================>crawled one item" +
-                    response.request.url)
-                yield item
-            else:
-                print('url===' + str(response.meta['url']))
+            item = zpksItem()
+            item['job'] = response.css('.job-name::attr(title)').extract_first()
+            company_name = response.xpath('//em[@class="fl-cn"]/text()').extract_first()
+            item['company_name'] = company_name.strip() if company_name else ''
+            item['industry'] = ''.join(response.xpath('//ul[@class="position-label clearfix"]/li/text()').extract())
+            location = ''.join(response.xpath('//div[@class="work_addr"]/a/text()').extract())
+            item['location'] = location.replace('查看地图', '') if location else ''
+            item['salary'] = response.xpath('//*[@class="salary"]/text()').extract_first()
+            item['time'] = datetime.date.today()
+            item['website'] = '拉勾网'
+            item['link'] = response.meta['url']
+            item['type'] = '4'
+            item['source'] = '拉勾网'
+            item['content'] = ''.join(response.xpath('//*[@class="job-detail"]').extract())
+            print(response.xpath('//dd[@class="job_request"]/h3/span[4]').extract_first())
+            education = response.xpath('//dd[@class="job_request"]/h3/span[4]/text()').extract_first()
+            item['education'] = education.replace('/', '') if education else ''
+            item['spider_name'] = 'lgw'
+            item['module_name'] = '拉勾网'
+            print(
+                "===========================>crawled one item" +
+                response.request.url)
+            yield item
         except Exception as e:
             logging.error(
                 self.name +
