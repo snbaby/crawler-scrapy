@@ -57,7 +57,6 @@ class HylwSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_result(self, response):
-        print(response.text)
         page_script = """
                 function main(splash, args)
                     splash:init_cookies(splash.args.cookies)
@@ -85,7 +84,7 @@ class HylwSpider(scrapy.Spider):
         base_url="http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CIPD"
         # 网站最大支持爬取300页内容
         for i in range(1, 300+1):
-            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'2&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CIPD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=1&'
+            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CIPD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=1&'
             print(new_url)
             yield SplashRequest(base_url,
                                 endpoint='execute',
@@ -129,6 +128,7 @@ class HylwSpider(scrapy.Spider):
             #tmp_url = /kns/detail/detail.aspx?QueryID=0&CurRec=21&DbCode=CPFD&dbname=CPFDTEMP&filename=DISE202001001023
             tmp_url = record.css(".fz14::attr(href)").get()
             tmp_url = "http://kns.cnki.net" + tmp_url
+            print('tmp_url===' + str(tmp_url))
             import urllib.parse as urlparse
             from urllib.parse import parse_qs
             tmp_url_parsed = urlparse.urlparse(tmp_url)
