@@ -130,7 +130,8 @@ class LgwSpider(scrapy.Spider):
     def parse_item(self, response):
         try:
             item = zpksItem()
-            item['job'] = response.css('.job-name ::text').extract_first()
+            print(response.css('.job-name::text').extract_first())
+            item['job'] = response.css('.job-name::text').extract_first()
             company_name = response.xpath('//em[@class="fl-cn"]/text()').extract_first()
             item['company_name'] = company_name.strip() if company_name else ''
             item['industry'] = ''.join(response.xpath('//ul[@class="position-label clearfix"]/li/text()').extract())

@@ -36,17 +36,17 @@ class ZlzpSpider(scrapy.Spider):
         try:
             json_body = {
                 "pageSize": "90",
-                "cityId": "801",
+                "cityId": "763",
                 "workExperience": "-1",
                 "education": "-1",
                 "companyType": "-1",
                 "employmentType": "-1",
                 "jobWelfareTag": "-1",
                 "kt": "3",
-                "at": "3e24e15426604d72a964d28f7d1228a3",
-                "rt": "a48e54219dc847399c1cbdeb41907156",
-                "_v": "0.32762194",
-                "userCode": 1055007456
+                "at": "5564fca6073a4bb09673c8d5f7398800",
+                "rt": "8c9712a650e24e7ba9ff2f1fb1b92048",
+                "_v": "0.81047222",
+                "userCode": 702162523
             }
             cityList = [
                 530,
@@ -83,15 +83,16 @@ class ZlzpSpider(scrapy.Spider):
                         json_body['start'] = j*90
                     json_body['cityId'] = str(city)
                     yield scrapy.Request(
-                        "https://fe-api.zhaopin.com/c/i/sou?at=3e24e15426604d72a964d28f7d1228a3&rt=a48e54219dc847399c1cbdeb41907156&_v=0.31682191&x-zp-page-request-id=d24b8e8d045340c180b5d617ebae39e3-1578154614610-240921&x-zp-client-id=342b4fd1-653a-415e-b3b2-1603acbccdba&MmEwMD=4L0MCGodotQCOrkeuaCcm6TeVXJ7FvkbakuiTh22v8NFwaFSn8d7vGVD7vNRPSlm.mvVVN3e..jGaTVy3zoPBSiJ9WK3ugRau7NQ7w9QcW2_ortWDEMQjYv2fpzGRQ3DthIe9U0w3VyzEqoJU0lbqbHotVKDGP2vHQvxf5RrTMEIMop6lrKrURB0dbS5Bl7NDNH39oZC7CWT8K.FQ9kgPykqeIkmGCwqPRJhapj2K.tCyNwtkUVF_5grwVrm2nc4HKAGx5GA4_HqlSdZraMtabW4QO1KoY.jziRyWTT7P27ygBuYo.N19tfOlBtCprpNVXBywhoxyUz4DX1tWXp6rBb8VRt.xd3SOGQB3PqYhH8RvpEsSCTPU7N_zIiTpJjajjGQICvQ1ZTPWImEMBU06ybqzlm3zPIogsBcWuCj53A6uMYg_B6cStBsqxGSdDIielgK",
+                        "https://fe-api.zhaopin.com/c/i/sou?at=5564fca6073a4bb09673c8d5f7398800&rt=8c9712a650e24e7ba9ff2f1fb1b92048&_v=0.93439897&x-zp-page-request-id=54c1684bb3d345f38c5d2b3b826d41ce-1583940312843-772771&x-zp-client-id=342b4fd1-653a-415e-b3b2-1603acbccdba&MmEwMD=50O8oZA_CKhu1wVgc7fo0.Pg2nFN.4VOrI9hlUnGKc5I77J0kcLNKZkkw45QszsqFRap2THgF6e2rNkZNSAv8zREYbAqS_SuJqVJGB.6tC.lvsHCJsaI6oU1yM0yn7Ib7dY_cPuL3Q6lwDzAbOagWUNxqpCoKZMbeQHFGJ6SgnsKMdmrN6JMfpwtQnJX_lcWr.X5398tgA0AKsPXy2vmWk4vlb7JBR.znKxUeFBlCu3NEb_PL73tqOzX4gh5VDgxwyRzkxoKyMwrT5dgmUdVY2khgWQwqYdPQEfeaEkutY.pmuOYensy5O7cqFKhAF4t.V2tUSgn06qzqvZ2YhS5WiPZBx4saTFy4TqE_7mzDfYAtPpAy2hs8CRk1NP9YqJHEIagaqC961ZOWVRipGmc2FZd_qCGVfJ1w0RC0CKYufXLBa8KScWDIHyDPt.MpihxE2bM",
                         method='POST',
-                        headers={'Content-Type': ' application/json;charset=UTF-8'},
+                        headers={'Content-Type': 'application/json;charset=UTF-8'},
                         body=json.dumps(json_body),
                         callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
     def parse_page(self, response):
+        print(response.text)
         script = """
         function main(splash, args)
           splash.images_enabled = false
@@ -114,15 +115,15 @@ class ZlzpSpider(scrapy.Spider):
                 item['education'] = obj['eduLevel']['name']
                 # 'https://fe-api.zhaopin.com/c/i/jobs/qrcode?number='+num+'&width=120&hyaline=false&_v=0.36637930&x-zp-page-request-id=996aa803fdd84a87b2a54ebedd8b4992-1577987777991-350633&x-zp-client-id=342b4fd1-653a-415e-b3b2-1603acbccdba'
                 print('positionURL:' + str(obj['positionURL']))
-                yield SplashRequest(obj['positionURL'],
-                    endpoint='execute',
-                    args={
-                        'lua_source': script,
-                        'wait': 1,
-                        'url': obj['positionURL'],
-                    },
-                    callback=self.parse_item,
-                    meta=item)
+                # yield SplashRequest(obj['positionURL'],
+                #     endpoint='execute',
+                #     args={
+                #         'lua_source': script,
+                #         'wait': 1,
+                #         'url': obj['positionURL'],
+                #     },
+                #     callback=self.parse_item,
+                #     meta=item)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
