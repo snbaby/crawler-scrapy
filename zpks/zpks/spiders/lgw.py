@@ -68,7 +68,9 @@ class LgwSpider(scrapy.Spider):
                   wait_for_element(splash,'.s_position_list ul.item_con_list li')
                   splash:runjs("document.querySelector('.s_position_list ul.item_con_list').innerHTML = ''")
                   splash:runjs("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').classList.remove('pager_is_current')")
+                  splash:wait(1)
                   splash:runjs("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').classList.add('pager_not_current')")
+                  splash:wait(1)
                   js = string.format("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').setAttribute('page',%d)", args.pagenum)
                   splash:evaljs(js)
                   splash:runjs("document.querySelector('#s_position_list > div.item_con_pager > div > span:nth-child(2)').click()")
@@ -128,6 +130,7 @@ class LgwSpider(scrapy.Spider):
 
     def parse_item(self, response):
         try:
+            print(response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()'))
             if response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()'):
                 print('url===' + str(response.meta['url']))
                 item = zpksItem()
