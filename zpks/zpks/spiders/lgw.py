@@ -110,6 +110,7 @@ class LgwSpider(scrapy.Spider):
           }
         end
         """
+        print(response.xpath('//a[@class="position_link"]/@href').extract())
         for href in response.xpath('//a[@class="position_link"]/@href').extract():
             try:
                 yield SplashRequest(href,
