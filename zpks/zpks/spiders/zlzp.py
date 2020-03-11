@@ -91,8 +91,7 @@ class ZlzpSpider(scrapy.Spider):
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
-    def parse_page(self, response,**kwargs):
-        print('aaaaaaaaaaaaaaaaaaa')
+    def parse_page(self, response):
         script = """
         function main(splash, args)
           splash.images_enabled = false
@@ -141,7 +140,7 @@ class ZlzpSpider(scrapy.Spider):
             print(
                 "===========================>crawled one item" +
                 response.request.url)
-            yield kwargs
+            yield response.meta
         except Exception as e:
             logging.error(
                 self.name +

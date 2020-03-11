@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
-import time
+import datetime
 from scrapy_splash import SplashRequest
 from zpks.items import zpksItem
 
@@ -89,7 +89,6 @@ class BossSpider(scrapy.Spider):
                 page_count = 10
                 for pagenum in range(page_count):
                     url = 'https://www.zhipin.com/'+content+'/?page='+str(pagenum+1)+'&ka=page-'+str(pagenum+1)
-                    logging.info(url)
                     yield SplashRequest(url,
                         endpoint='execute',
                         args={
@@ -104,7 +103,6 @@ class BossSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        logging.info(response.xpath('//div[@class="primary-wrapper"]/a/@href').extract())
         for href in response.xpath('//div[@class="primary-wrapper"]/a/@href').extract():
             try:
                 url = response.urljoin(href)
@@ -130,7 +128,7 @@ class BossSpider(scrapy.Spider):
             item['industry'] = '互联网'
             item['location'] = response.xpath('//*[@id="main"]/div[1]/div/div/div[2]/p/text()').extract_first()
             item['salary'] = response.xpath('//*[@id="main"]/div[1]/div/div/div[2]/div[2]/span/text()').extract_first()
-            item['time'] = ''
+            item['time'] = datetime.date.today()
             item['website'] = 'boss直聘'
             item['link'] = response.meta['url']
             item['type'] = '1'
