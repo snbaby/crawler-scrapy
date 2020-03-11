@@ -129,7 +129,6 @@ class YyqxSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        print(response.xpath('//*[@id="content"]/table[2]/tbody/tr/td/p/a/@href'))
         for selector in response.xpath('//*[@id="content"]/table[2]/tbody/tr/td/p/a/@href'):
             try:
                 href = selector.re(r'([1-9]\d*\.?\d*)')[2]
@@ -143,7 +142,6 @@ class YyqxSpider(scrapy.Spider):
     def parse_item(self, response):
         try:
             datas = eval(response.text)
-            print(datas)
             if datas[0]:
                 item = yyqxItem()
                 item['registration_code'] = datas[0]['CONTENT']

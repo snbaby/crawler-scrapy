@@ -104,7 +104,6 @@ class GjypSpider(scrapy.Spider):
         print(page_count)
         try:
             for pagenum in range(page_count):
-                print(pagenum)
                 if pagenum > 0:
                     yield SplashRequest(response.meta['url'],
                         endpoint='execute',
@@ -114,8 +113,7 @@ class GjypSpider(scrapy.Spider):
                             'page': pagenum,
                             'url': response.meta['url'],
                         },
-                        callback=self.parse,
-                        meta=response.meta)
+                        callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
