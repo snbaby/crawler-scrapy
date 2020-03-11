@@ -167,7 +167,7 @@ class HylwSpider(scrapy.Spider):
         sbkItem['address'] =  response.xpath("//label[@id='catalog_ADDR']/../text()").get("").strip()
         sbkItem['type'] = response.xpath("//label[@id='catalog_ZTCLS']/../text()").get("").strip()
         sbkItem['website'] = '中国知网-会议'
-        logging.info('url====' + str(response.meta['url']))
+        logging.info('url====' + str(response.meta['link']))
         sbkItem['link'] = response.meta['link']
         sbkItem['spider_name'] = self.name
         sbkItem['module_name'] = '中国知网-会议库'
