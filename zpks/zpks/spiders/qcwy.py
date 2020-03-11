@@ -73,16 +73,12 @@ class BeijingZfwjSpider(scrapy.Spider):
             item = zpksItem()
             temp = response.xpath('//p[@class="msg ltype"]/text()').extract()
             location = response.xpath('//p[@class="msg ltype"]/text()').extract_first()
-            for dd in temp:
-                if dd.find('发布')>-1:
-                    times = dd.replace('发布','')
-            currYear = datetime.now().year
             item['job'] = response.xpath('//h1/@title').extract_first()
             item['company_name'] = response.xpath('//p[@class="cname"]/a/@title').extract_first()
             item['industry'] = ''.join(response.xpath('//p[@class="fp"]/a/text()').extract())
             item['location'] = location.replace('\xa0','') if location else ''
             item['salary'] = response.xpath('//div[@class="cn"]/strong/text()').extract_first()
-            item['time'] = times.replace('\xa0','') if currYear + '-' + times else ''
+            item['time'] = datetime.date.today()
             item['website'] = '前程无忧'
             item['link'] = response.request.url
             item['type'] = '2'
