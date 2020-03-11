@@ -113,7 +113,7 @@ class ZlzpSpider(scrapy.Spider):
                 item['link'] = obj['positionURL']
                 item['education'] = obj['eduLevel']['name']
                 # 'https://fe-api.zhaopin.com/c/i/jobs/qrcode?number='+num+'&width=120&hyaline=false&_v=0.36637930&x-zp-page-request-id=996aa803fdd84a87b2a54ebedd8b4992-1577987777991-350633&x-zp-client-id=342b4fd1-653a-415e-b3b2-1603acbccdba'
-                print(obj['positionURL'])
+                print('positionURL:' + str(obj['positionURL']))
                 yield SplashRequest(obj['positionURL'],
                     endpoint='execute',
                     args={
@@ -128,12 +128,10 @@ class ZlzpSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_item(self, response):
-        print(response.text)
         try:
             response.meta['website'] = '智联招聘'
             response.meta['type'] = '3'
             response.meta['source'] = '智联招聘'
-            print(response.xpath('//*[@class="describtion__detail-content"]').extract())
             response.meta['content'] = ''.join(response.xpath('//*[@class="describtion__detail-content"]').extract())
             response.meta['spider_name'] = 'zlzp'
             response.meta['module_name'] = '智联招聘'
