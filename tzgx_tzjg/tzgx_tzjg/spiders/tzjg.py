@@ -23,7 +23,7 @@ class TzjgSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://47.106.239.73:8050/"}
+        'SPLASH_URL': "http://localhost:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
+import datetime
 import time
 
 from scrapy_splash import SplashRequest
@@ -33,7 +34,7 @@ class BeijingZfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-         'SPLASH_URL': "http://47.106.239.73:8050/"}
+         'SPLASH_URL': "http://localhost:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -75,13 +76,13 @@ class BeijingZfwjSpider(scrapy.Spider):
             for dd in temp:
                 if dd.find('发布')>-1:
                     times = dd.replace('发布','')
-
+            currYear = datetime.now().year
             item['job'] = response.xpath('//h1/@title').extract_first()
             item['company_name'] = response.xpath('//p[@class="cname"]/a/@title').extract_first()
             item['industry'] = ''.join(response.xpath('//p[@class="fp"]/a/text()').extract())
             item['location'] = location.replace('\xa0','') if location else ''
             item['salary'] = response.xpath('//div[@class="cn"]/strong/text()').extract_first()
-            item['time'] = times.replace('\xa0','') if times else ''
+            item['time'] = times.replace('\xa0','') if currYear + '-' + times else ''
             item['website'] = '前程无忧'
             item['link'] = response.request.url
             item['type'] = '2'

@@ -70,7 +70,7 @@ class QuanguoZuixinSpider(scrapy.Spider):
                 'html': 1,
                 'wait':3
             }
-            yield scrapy.Request("http://47.106.239.73:8050/render.json",
+            yield scrapy.Request("http://localhost:8050/render.json",
                            method='POST',
                            headers={'Content-Type':'application/json'},
                            body=json.dumps(json_body),

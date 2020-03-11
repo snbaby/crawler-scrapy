@@ -23,8 +23,7 @@ class HylwSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://47.106.239.73:8050/"}
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -58,6 +57,7 @@ class HylwSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_result(self, response):
+        print(response.text)
         page_script = """
                 function main(splash, args)
                     splash:init_cookies(splash.args.cookies)
@@ -86,6 +86,7 @@ class HylwSpider(scrapy.Spider):
         # 网站最大支持爬取300页内容
         for i in range(1, 300+1):
             new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage='+str(i)+'2&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CIPD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=1&'
+            print(new_url)
             yield SplashRequest(base_url,
                                 endpoint='execute',
                                 args={
@@ -166,6 +167,7 @@ class HylwSpider(scrapy.Spider):
         sbkItem['address'] =  response.xpath("//label[@id='catalog_ADDR']/../text()").get("").strip()
         sbkItem['type'] = response.xpath("//label[@id='catalog_ZTCLS']/../text()").get("").strip()
         sbkItem['website'] = '中国知网-会议'
+        logging.info('url====' + str(response.meta['url']))
         sbkItem['link'] = response.meta['link']
         sbkItem['spider_name'] = self.name
         sbkItem['module_name'] = '中国知网-会议库'

@@ -61,7 +61,7 @@ class BossSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://47.106.239.73:8050/"}
+        'SPLASH_URL': "http://localhost:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -89,7 +89,7 @@ class BossSpider(scrapy.Spider):
                 page_count = 10
                 for pagenum in range(page_count):
                     url = 'https://www.zhipin.com/'+content+'/?page='+str(pagenum+1)+'&ka=page-'+str(pagenum+1)
-                    print(url)
+                    logging.info(url)
                     yield SplashRequest(url,
                         endpoint='execute',
                         args={
@@ -104,10 +104,11 @@ class BossSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.xpath('//div[@class="info-primary"]/h3/a/@href').extract():
+        logging.info(response.xpath('//div[@class="primary-wrapper"]/a/@href').extract())
+        for href in response.xpath('//div[@class="primary-wrapper"]/a/@href').extract():
             try:
                 url = response.urljoin(href)
-                print(url)
+                logging.info(url)
                 yield SplashRequest(url,
                                     endpoint='execute',
                                     args={
@@ -139,7 +140,7 @@ class BossSpider(scrapy.Spider):
             item['education'] = tmp[len(tmp)-1] if len(tmp)>0 else ''
             item['spider_name'] = 'boss'
             item['module_name'] = 'boss直聘'
-            print(
+            logging.info(
                 "===========================>crawled one item" +
                 response.request.url)
             yield item

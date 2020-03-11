@@ -27,8 +27,7 @@ class BzkSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://47.106.239.73:8050/"}
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -134,6 +133,7 @@ class BzkSpider(scrapy.Spider):
                                  dont_filter=True, meta=item)
 
     def parse_end(self, response):
+        logging.info('url====' + str(response.meta['link']))
         try:
             item = cnki_bzkItem()
             item['title'] = response.meta['title']

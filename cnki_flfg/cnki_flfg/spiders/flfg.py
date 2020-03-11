@@ -26,7 +26,7 @@ class FlfgSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://47.106.239.73:8050/"}
+        'SPLASH_URL': "http://localhost:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -147,6 +147,7 @@ class FlfgSpider(scrapy.Spider):
             '#main > div:nth-child(1) > div.summary.pad10 > p:nth-child(4)::text').extract_first().strip().replace('【效力级别】', '')
         item['timeliness'] = response.meta['timeliness']
         item['website'] = '中国知网'
+        logging.info('url====' + str(response.meta['url']))
         item['link'] = response.meta['url']
         item['spider_name'] = 'flfg'
         item['module_name'] = '中国知网-法律法规'
