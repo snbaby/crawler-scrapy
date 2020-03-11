@@ -131,7 +131,6 @@ class LgwSpider(scrapy.Spider):
         try:
             print(response.xpath('/html/body/div[6]/div/div[1]/div/h1/text()'))
             if response.xpath('/html/body/div[6]/div/div[1]/div/h1/text()'):
-                print('url===' + str(response.meta['url']))
                 item = zpksItem()
                 item['job'] = response.xpath('/html/body/div[6]/div/div[1]/div/h1/text()').extract_first()
                 company_name = response.xpath('//em[@class="fl-cn"]/text()').extract_first()
@@ -155,6 +154,8 @@ class LgwSpider(scrapy.Spider):
                     "===========================>crawled one item" +
                     response.request.url)
                 yield item
+            else:
+                print('url===' + str(response.meta['url']))
         except Exception as e:
             logging.error(
                 self.name +
