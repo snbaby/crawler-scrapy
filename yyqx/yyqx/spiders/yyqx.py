@@ -105,7 +105,6 @@ class YyqxSpider(scrapy.Spider):
         print(page_count)
         try:
             for pagenum in range(page_count):
-                print(pagenum)
                 if pagenum > 0:
                     yield SplashRequest(response.meta['url'],
                         endpoint='execute',
@@ -115,8 +114,7 @@ class YyqxSpider(scrapy.Spider):
                             'page': pagenum,
                             'url': response.meta['url'],
                         },
-                        callback=self.parse,
-                        meta=response.meta)
+                        callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -131,6 +129,7 @@ class YyqxSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
+        print(response.xpath('//*[@id="content"]/table[2]/tbody/tr/td/p/a/@href'))
         for selector in response.xpath('//*[@id="content"]/table[2]/tbody/tr/td/p/a/@href'):
             try:
                 href = selector.re(r'([1-9]\d*\.?\d*)')[2]
