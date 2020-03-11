@@ -112,7 +112,6 @@ class LgwSpider(scrapy.Spider):
           }
         end
         """
-        print(response.xpath('//a[@class="position_link"]/@href').extract())
         for href in response.xpath('//a[@class="position_link"]/@href').extract():
             try:
                 yield SplashRequest(href,
@@ -130,11 +129,11 @@ class LgwSpider(scrapy.Spider):
 
     def parse_item(self, response):
         try:
-            print(response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()'))
-            if response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()'):
+            print(response.xpath('/html/body/div[6]/div/div[1]/div/h1/text()'))
+            if response.xpath('/html/body/div[6]/div/div[1]/div/h1/text()'):
                 print('url===' + str(response.meta['url']))
                 item = zpksItem()
-                item['job'] = response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()').extract_first()
+                item['job'] = response.xpath('/html/body/div[6]/div/div[1]/div/h1/text()').extract_first()
                 company_name = response.xpath('//em[@class="fl-cn"]/text()').extract_first()
                 item['company_name'] = company_name.strip() if company_name else ''
                 item['industry'] = ''.join(response.xpath('//ul[@class="position-label clearfix"]/li/text()').extract())
