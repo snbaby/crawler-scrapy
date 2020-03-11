@@ -87,9 +87,8 @@ class BzkSpider(scrapy.Spider):
         page_num = self.parse_pagenum(response)
         base_url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CCND"
         # 网站最大支持爬取300页内容
-        for i in range(page_num):
-            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' + \
-                str(i + 1) + '&RecordsPerPage=20&QueryID=6&ID=&turnpage=1&tpagemode=L&dbPrefix=CCND&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
+        for i in range(1, 301):
+            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' + str(i) + '&RecordsPerPage=20&QueryID=6&ID=&turnpage=1&tpagemode=L&dbPrefix=CCND&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
             yield SplashRequest(base_url,
                                 endpoint='execute',
                                 args={

@@ -95,8 +95,7 @@ class LgwSpider(scrapy.Spider):
                                             'pagenum': pagenum + 1,
                                             'url': content['url'],
                                         },
-                                        callback=self.parse,
-                                        meta=content)
+                                        callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -129,6 +128,7 @@ class LgwSpider(scrapy.Spider):
     def parse_item(self, response):
         try:
             if response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()'):
+                print('url===' + str(response.meta['url']))
                 item = zpksItem()
                 item['job'] = response.xpath('/html/body/div[5]/div/div[1]/div/h1/text()').extract_first()
                 company_name = response.xpath('//em[@class="fl-cn"]/text()').extract_first()
