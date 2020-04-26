@@ -9,9 +9,9 @@ class ProxyMiddleWare(object):
         '''对request对象加上proxy'''
         logging.info("this is request ip:" +proxy)
         try:
-            request.meta['proxy'] = 'http://'+ proxy
+            request.meta['splash']['args']['proxy'] = 'http://' + proxy
         except:
-            request.meta['splash']['args']['proxy'] ='http://'+ proxy
+            request.meta['proxy'] = 'http://' + proxy
 
 
     def process_response(self, request, response, spider):

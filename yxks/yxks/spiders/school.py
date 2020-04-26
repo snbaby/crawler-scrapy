@@ -144,7 +144,7 @@ class schoolSpider(scrapy.Spider):
             'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
             'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
             # 'yxks.utils.middleware.ProxyMiddleWare.ProxyMiddleWare': 100,
-            # 'scrapy.downloadermiddleware.httpproxy.HttpProxyMiddleware': 700,
+            'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 700,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
