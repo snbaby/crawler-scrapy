@@ -131,25 +131,26 @@ kelei = {
 class schoolSpider(scrapy.Spider):
     name = 'school'
     custom_settings = {
-        'CONCURRENT_REQUESTS': 10,
+        'CONCURRENT_REQUESTS': 32,
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOAD_DELAY': 0.25,
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
+            # 'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
+            'utils.middlewares.ProxyMiddleWare.ProxyMiddleWare': 110,
             'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
             'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
+            # 'yxks.utils.middleware.ProxyMiddleWare.ProxyMiddleWare': 100,
+            # 'scrapy.downloadermiddleware.httpproxy.HttpProxyMiddleware': 700,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
-        },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        }
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -157,10 +158,9 @@ class schoolSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            num = 144
+            num = 97
             for i in range(num):
-                url = 'https://api.eol.cn/gkcx/api/?access_token=&admissions=&central=&department=&dual_class=&f211=&f985=&is_dual_class=&keyword=&page=' + str(i) + '&province_id=&request_type=1&school_type=&signsafe=&size=20&sort=view_total&type=&uri=apigkcx/api/school/hotlists'
-                print(url)
+                url = 'https://api.eol.cn/gkcx/api/?access_token=&admissions=&central=&department=&dual_class=&f211=&f985=&is_dual_class=&keyword=&page=' + str(i) + '&province_id=&request_type=1&school_type=&signsafe=&size=30&sort=view_total&type=&uri=apigkcx/api/school/hotlists'
                 yield scrapy.Request(url, callback=self.parse_page, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -211,8 +211,8 @@ class schoolSpider(scrapy.Spider):
             schoolRpecialtiesUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/pc_special.json'
             yield scrapy.Request(schoolRpecialtiesUrl, callback=self.parse_specialties, dont_filter=True, meta={'name':school['name']})
 
-            planUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/dic/specialplan.json'
-            yield scrapy.Request(planUrl, callback=self.parse_plan, dont_filter=True, meta={'name':content['school_id']})
+            # planUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/dic/specialplan.json'
+            # yield scrapy.Request(planUrl, callback=self.parse_plan, dont_filter=True, meta={'name':content['school_id']})
 
             employmentUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/pc_jobdetail.json'
             yield scrapy.Request(employmentUrl, callback=self.parse_employment, dont_filter=True,

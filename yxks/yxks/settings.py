@@ -94,18 +94,19 @@ AUTOTHROTTLE_ENABLED = True
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-LOG_ENABLED = True
-LOG_FILE = "spiders.log"
+# LOG_ENABLED = True
+# LOG_FILE = "spiders.log"
 LOG_LEVEL = "INFO"
 
 MYSQL_HOST = '10.8.32.125'
 # MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'
 # MYSQL_HOST = '192.168.43.201'
 MYSQL_USER = 'root'
-#MYSQL_PASSWORD = 'Liqin1988'
+# MYSQL_PASSWORD = 'Liqin1988'
 MYSQL_PASSWORD ='Admin123!'
 
 MYSQL_DB = 'engineering-brain'
+# MYSQL_DB = 'python'
 MYSQL_PORT = 3306
 MYSQL_CHRSET = 'utf8'
 

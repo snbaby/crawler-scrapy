@@ -1,1 +1,1 @@
-# -*- coding: utf-8 -*-import sys,osfrom scrapy.cmdline import executeexecute("scrapy crawl school".split())execute("scrapy crawl major".split())
+# -*- coding: utf-8 -*-import sys,osfrom scrapy.cmdline import executeexecute("scrapy crawl school".split())execute("scrapy crawl major".split())os.system("scrapy crawl quanguo_ggjypt  -a pagenum=3")
