@@ -131,25 +131,26 @@ kelei = {
 class schoolSpider(scrapy.Spider):
     name = 'school'
     custom_settings = {
-        'CONCURRENT_REQUESTS': 10,
+        'CONCURRENT_REQUESTS': 32,
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOAD_DELAY': 0.25,
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
+            # 'scrapy.downloadermiddleware.useragent.UserAgentMiddleware': None,
+            'utils.middlewares.ProxyMiddleWare.ProxyMiddleWare': 110,
             'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 126,
             'utils.middlewares.DeduplicateMiddleware.DeduplicateMiddleware': 130,
+            # 'yxks.utils.middleware.ProxyMiddleWare.ProxyMiddleWare': 100,
+            'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 700,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
-        },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        }
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
