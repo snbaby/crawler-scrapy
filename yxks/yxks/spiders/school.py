@@ -157,10 +157,9 @@ class schoolSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            num = 144
+            num = 97
             for i in range(num):
-                url = 'https://api.eol.cn/gkcx/api/?access_token=&admissions=&central=&department=&dual_class=&f211=&f985=&is_dual_class=&keyword=&page=' + str(i) + '&province_id=&request_type=1&school_type=&signsafe=&size=20&sort=view_total&type=&uri=apigkcx/api/school/hotlists'
-                print(url)
+                url = 'https://api.eol.cn/gkcx/api/?access_token=&admissions=&central=&department=&dual_class=&f211=&f985=&is_dual_class=&keyword=&page=' + str(i) + '&province_id=&request_type=1&school_type=&signsafe=&size=30&sort=view_total&type=&uri=apigkcx/api/school/hotlists'
                 yield scrapy.Request(url, callback=self.parse_page, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -211,8 +210,8 @@ class schoolSpider(scrapy.Spider):
             schoolRpecialtiesUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/pc_special.json'
             yield scrapy.Request(schoolRpecialtiesUrl, callback=self.parse_specialties, dont_filter=True, meta={'name':school['name']})
 
-            planUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/dic/specialplan.json'
-            yield scrapy.Request(planUrl, callback=self.parse_plan, dont_filter=True, meta={'name':content['school_id']})
+            # planUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/dic/specialplan.json'
+            # yield scrapy.Request(planUrl, callback=self.parse_plan, dont_filter=True, meta={'name':content['school_id']})
 
             employmentUrl = 'https://static-data.eol.cn/www/school/' + str(content['school_id']) + '/pc_jobdetail.json'
             yield scrapy.Request(employmentUrl, callback=self.parse_employment, dont_filter=True,
@@ -235,6 +234,8 @@ class schoolSpider(scrapy.Spider):
                 specialties_item['website'] = ''
                 specialties_item['link'] = ''
                 specialties_item['module_name'] = '开设专业'
+                print(
+                    "===========================>crawled one item:" + specialties_item['major'])
                 yield specialties_item
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -254,36 +255,42 @@ class schoolSpider(scrapy.Spider):
                     for type in types:
                         for batch in batchs:
                             schoolRecruitUrl = 'https://api.eol.cn/gkcx/api/?access_token=&local_batch_id='+str(batch)+'&local_province_id='+str(pid)+'&local_type_id='+str(type)+'&page=1&school_id='+str(response.meta['name'])+'&signsafe=&size=200&uri=apidata/api/gk/plan/special&year='+str(year)
-                            print(schoolRecruitUrl)
                             yield scrapy.Request(schoolRecruitUrl, callback=self.parse_plan_item, dont_filter=True,
-                                                 meta={'year': year,'province':pid,'type':type})
+                                                 meta={'year': year,'province':pid,'type':type,'schoolRecruitUrl':schoolRecruitUrl})
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
+
     def parse_plan_item(self, response):
         try:
-            plan_items = json.loads(response.text)['data']['item']
-            year = response.meta['year']
-            province = response.meta['province']
-            type = response.meta['type']
-            plan_item = recruitPlanLibraryItem()
-            for item in plan_items:
-                specialties_item = specialtiesInSchoolsItem()
-                plan_item['name'] = item['name']
-                plan_item['major'] = item['spname']
-                plan_item['secondLevel'] = item['level3_name'] if ('level3_name' in item) else ''
-                plan_item['subject'] = item['level2_name']  if ('level2_name' in item) else ''
-                plan_item['local'] = provinceObject[province]
-                plan_item['majorType'] = kelei[type]
-                plan_item['particularYear'] = year
-                plan_item['batch'] = item['local_batch_name']
-                plan_item['planRecruit'] = item['num']
-                plan_item['website'] = ''
-                plan_item['link'] = ''
-                plan_item['spider_name'] = 'zsjh'
-                plan_item['module_name'] = '招生计划'
-                plan_item['insert_tpye'] = 'zhaosheng'
-                yield plan_item
+            data = json.loads(response.text)
+            if data['code'] == '200':
+                plan_items = data['data']['item']
+                year = response.meta['year']
+                province = response.meta['province']
+                type = response.meta['type']
+                plan_item = recruitPlanLibraryItem()
+                for item in plan_items:
+                    plan_item['name'] = item['name']
+                    plan_item['major'] = item['spname']
+                    plan_item['secondLevel'] = item['level3_name'] if ('level3_name' in item) else ''
+                    plan_item['subject'] = item['level2_name']  if ('level2_name' in item) else ''
+                    plan_item['local'] = provinceObject[province]
+                    plan_item['majorType'] = kelei[type]
+                    plan_item['particularYear'] = year
+                    plan_item['batch'] = item['local_batch_name']
+                    plan_item['planRecruit'] = item['num']
+                    plan_item['website'] = ''
+                    plan_item['link'] = ''
+                    plan_item['spider_name'] = 'zsjh'
+                    plan_item['module_name'] = '招生计划'
+                    plan_item['insert_tpye'] = 'zhaosheng'
+                    print(
+                        "===========================>crawled one 招生计划 item:" + plan_item['name'])
+                    yield plan_item
+            else:
+                logging.error('error link:' + str(response.meta['schoolRecruitUrl']))
+                logging.error('error data:' + str(data))
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -306,6 +313,8 @@ class schoolSpider(scrapy.Spider):
             employment_item['spider_name'] = 'jyqk'
             employment_item['module_name'] = '就业情况'
             employment_item['insert_tpye'] = 'employment'
+            print(
+                "===========================>crawled one 就业情况 item:" + employment_item['name'])
             yield employment_item
 
             employmentLocals = employment['province']
@@ -319,6 +328,8 @@ class schoolSpider(scrapy.Spider):
                 item['spider_name'] = 'jylx'
                 item['module_name'] = '就业流向'
                 item['insert_tpye'] = 'employment_local'
+                print(
+                    "===========================>crawled one 就业流向 item:" + item['name'])
                 yield item
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
