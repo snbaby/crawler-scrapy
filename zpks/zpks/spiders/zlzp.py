@@ -7,7 +7,7 @@ import json
 from utils.tools.attachment import get_times
 
 class ZlzpSpider(scrapy.Spider):
-    name = 'zlzp'
+    name = 'zlzp1'
     custom_settings = {
         'CONCURRENT_REQUESTS': 10,
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,

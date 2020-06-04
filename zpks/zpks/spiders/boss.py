@@ -133,7 +133,7 @@ class BossSpider(scrapy.Spider):
             item['link'] = response.meta['url']
             item['type'] = '1'
             item['source'] = 'boss直聘'
-            item['content'] = ''.join(response.xpath('//*[@id="main"]/div[3]/div/div[2]/div[2]/div[2]/div').extract())
+            item['content'] = ''.join(response.css('.describtion__detail-content').extract())
             tmp = response.xpath('//*[@id="main"]/div[1]/div/div/div[2]/p//text()').extract()
             item['education'] = tmp[len(tmp)-1] if len(tmp)>0 else ''
             item['spider_name'] = 'boss'
