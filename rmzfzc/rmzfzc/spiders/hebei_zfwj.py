@@ -37,7 +37,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,7 +79,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for selector in response.xpath('//table[@class="xxgkzclbtab3"]/tbody/tr'):
             try:
                 item = {}
-                item['title'] = selector.xpath('./td[2]/a/text()').extract_first()
+                item['title'] = selector.xpath('./td[2]/a/@title').extract_first()
                 item['time'] = selector.xpath('./td[4]/text()').extract_first()
                 item['article_num'] = selector.xpath('./td[3]/text()').extract_first()
                 href = selector.xpath('./td[2]/a/@href').extract_first()
