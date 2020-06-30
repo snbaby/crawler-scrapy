@@ -36,7 +36,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,7 +90,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = response.xpath('//*[@id="title"]/text()').extract_first()
+            item['title'] = ''.join(response.xpath('//*[@id="title"]/text()').extract())
             item['article_num'] = ''
             item['content'] = "".join(response.xpath('//div[@id="content"]').extract())
             item['source'] = response.xpath('//*[@id="source"]/text()').extract_first()
