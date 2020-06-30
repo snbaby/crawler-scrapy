@@ -26,7 +26,7 @@ class ZhejiangZfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -63,7 +63,7 @@ class ZhejiangZfwjSpider(scrapy.Spider):
         end
         function main(splash, args)
           splash:go(args.url)
-          wait_for_element(splash, ".btn_page")
+          wait_for_element(splash, ".pgBtn")
           splash:wait(1)
           return splash:html()
         end
@@ -91,7 +91,7 @@ class ZhejiangZfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response):
-        script = """
+        script1 = """
         function wait_for_element(splash, css, maxwait)
           -- Wait until a selector matches an element
           -- in the page. Return an error if waited more
@@ -122,11 +122,10 @@ class ZhejiangZfwjSpider(scrapy.Spider):
         function main(splash, args)
           splash:go(args.url)
           wait_for_element(splash, ".btn_page")
-          js = string.format("document.querySelector('#currpage').value =%d", args.pagenum)
+          js = "funGoPage('/module/xxgk/search.jsp',2)"
           splash:evaljs(js)
-          splash:runjs("document.querySelector('.btn_page').click()")
-          wait_for_element(splash, ".btn_page")
-          splash:wait(1)
+          splash:wait(20000)
+          wait_for_element(splash, ".pgBtn")
           return splash:html()
         end
         """
@@ -134,10 +133,11 @@ class ZhejiangZfwjSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 url = response.meta['url']
+                print(22222222)
                 yield SplashRequest(url,
                                     endpoint='execute',
                                     args={
-                                        'lua_source': script,
+                                        'lua_source': script1,
                                         'wait': 1,
                                         'pagenum': pagenum+1,
                                         'url': url,
@@ -153,17 +153,21 @@ class ZhejiangZfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.css('#div1545735 > table > tbody > tr > td > table.tb_title > tbody > tr > td:nth-child(1)::text').extract_first().split('录  共')[1].split('页')[0].strip())
+                return int(response.css('#div1545735 > table > tbody > tr > td > table.tb_title > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(3) > a::text').extract_first().split('共')[1].split('页')[0].strip())
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
+        print(1)
+        print(response.css('body').extract())
+        print(2)
         for href in response.css('a[onmouseover]::attr(href)').extract():
             try:
                 url = response.urljoin(href)
-                yield scrapy.Request(url,callback=self.parse_item,meta={'url':url},dont_filter=True)
+                print(url)
+                # yield scrapy.Request(url,callback=self.parse_item,meta={'url':url},dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
