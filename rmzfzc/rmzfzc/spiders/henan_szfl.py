@@ -36,7 +36,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,7 +78,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for selector in response.xpath('//div[@class="con-box"]/ul/li'):
             try:
                 item = {}
-                item['title'] = selector.xpath('./a[1]//text()').extract_first().strip()
+                item['title'] = response.css('meta[name=ArticleTitle]::attr(content)').extract_first()
                 item['article_num'] = selector.xpath('./p//text()').extract_first().strip()
                 item['time'] = selector.xpath('./span//text()').extract_first().strip()
                 href = selector.xpath('./a[1]/@href').extract_first()
