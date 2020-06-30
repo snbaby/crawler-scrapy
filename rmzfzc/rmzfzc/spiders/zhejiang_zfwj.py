@@ -91,59 +91,25 @@ class ZhejiangZfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response):
-        script1 = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
+        url = 'http://www.zj.gov.cn/module/xxgk/search.jsp'
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_16_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
 
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-          splash:go(args.url)
-          wait_for_element(splash, ".btn_page")
-          js = "funGoPage('/module/xxgk/search.jsp',2)"
-          splash:evaljs(js)
-          splash:wait(20000)
-          wait_for_element(splash, ".pgBtn")
-          return splash:html()
-        end
-        """
+        }
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = response.meta['url']
-                print(22222222)
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script1,
-                                        'wait': 1,
-                                        'pagenum': pagenum+1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta)
+                data = {
+                    'texttype': '0',
+                    'currpage': str(pagenum+1),  # 翻页
+                    'sortfield': ',compaltedate:0',
+                    'infotypeId': ' C0201',
+                    'jdid': ' 3096',
+                    'area': ' 000014349',
+                    'divid': ' div1545735',
+
+                }
+                yield scrapy.FormRequest(url, formdata=data, callback=self.parse, dont_filter=True, headers=headers)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -160,14 +126,10 @@ class ZhejiangZfwjSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        print(1)
-        print(response.css('body').extract())
-        print(2)
         for href in response.css('a[onmouseover]::attr(href)').extract():
             try:
                 url = response.urljoin(href)
-                print(url)
-                # yield scrapy.Request(url,callback=self.parse_item,meta={'url':url},dont_filter=True)
+                yield scrapy.Request(url,callback=self.parse_item,meta={'url':url},dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -176,25 +138,18 @@ class ZhejiangZfwjSpider(scrapy.Spider):
         try:
             item = rmzfzcItem()
             appendix, appendix_name = get_attachments(response)
-            item['title'] = ''.join(response.css('.title::text').extract()).strip()
-            item['article_num'] = response.css('.wh_content::text').extract_first()
-            item['content'] = response.css('.zjszflm').extract_first()
+            item['title'] = ''.join(response.css('title::text').extract()).strip()
+            item['article_num'] = response.css('tr.xxgk-info-wh td::text').extract_first()
+            item['content'] = ''.join(response.css('.article').extract())
             item['appendix'] = appendix
-            if len(response.css('.xxgk_top').extract()) > 0:
-                item['source'] = ''.join(response.css('.xxgk_top tr:nth-child(2) td:nth-child(2)::text').extract()).strip()
-                item['time'] = ''.join(response.css('.xxgk_top tr:nth-child(2) td:nth-child(4)::text').extract()).strip()
-            elif len(response.css('.fgwj_xxgk_head').extract()) > 0:
-                item['source'] = ''.join(response.css('.fgwj_xxgk_head tr:nth-child(2) td:nth-child(2)::text').extract()).strip()
-                item['time'] = ''.join(response.css('.fgwj_xxgk_head tr:nth-child(2) td:nth-child(4)::text').extract()).strip()
-            else:
-                item['source'] = ''
-                item['time'] = ''
+            item['source'] = response.css('meta[name=contentSource]::attr(content)').extract_first()
+            item['time'] = get_times(response.css('meta[name=PubDate]::attr(content)').extract_first())
             item['province'] = '浙江省'
             item['city'] = ''
             item['area'] = ''
             item['website'] = '浙江省人民政府'
             item['link'] = response.meta['url']
-            item['txt'] = "".join(response.css('.zjszflm *::text').extract())
+            item['txt'] = ''.join(response.css('.article *::text').extract())
             item['appendix_name'] = appendix_name
             item['module_name'] = '浙江省人民政府'
             item['spider_name'] = 'zhejiang_zfwj'
