@@ -4,6 +4,7 @@ import logging
 import json
 import time
 
+from utils.tools.attachment import get_attachments,get_times
 from tzgx_rz.items import tzgx_rzItem
 
 
@@ -129,7 +130,7 @@ class RzSpider(scrapy.Spider):
                 item['investors'] = investors
                 item['amount'] = investevent['money']
                 item['rotation'] = investevent['round']
-                item['time'] = str(investevent['year'])+'-'+str(investevent['month'])+'-'+str(investevent['day'])
+                item['time'] = get_times(str(investevent['year'])+'-'+str(investevent['month'])+'-'+str(investevent['day']))
                 item['industry'] = investevent['com_scope']
                 item['introduction'] = investevent['com_des']
                 item['website'] = 'IT桔子'
