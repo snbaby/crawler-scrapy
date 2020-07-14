@@ -4,7 +4,9 @@ import logging
 
 from scrapy_splash import SplashRequest
 from rmzfzc.items import rmzfzcItem
+#from rmzfzc.rmzfzc.items import rmzfzcItem
 from utils.tools.attachment import get_attachments,get_times
+#from rmzfzc.utils.tools.attachment import get_attachments,get_times
 script = """
 function main(splash, args)
   assert(splash:go(args.url))
@@ -45,21 +47,27 @@ class BeijingZfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://www.shanxi.gov.cn/zw/zfgkzl/zfxxgkgd/index.shtml"
+            #url = "http://www.shanxi.gov.cn/zw/zfgkzl/zfxxgkgd/index.shtml"
+            #新URL
+            url = "http://www.shanxi.gov.cn/zw/zfwj/szfbgtwj/"
+            print(url)
             yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_page(self, response):
+        logging.info(response.text)
         page_count = int(self.parse_pagenum(response))
         try:
             print('page_count====' + str(page_count))
             # 在解析翻页数之前，首先解析首页内容
             for pagenum in range(page_count):
                 if pagenum<page_count:
-                    url = "http://www.shanxi.gov.cn/zw/zfgkzl/zfxxgkgd/index_" + \
-                        str(pagenum) + ".shtml" if pagenum > 0 else "http://www.shanxi.gov.cn/zw/zfgkzl/zfxxgkgd/index.shtml"
+                    #url = "http://www.shanxi.gov.cn/zw/zfgkzl/zfxxgkgd/index_" + \
+                     #   str(pagenum) + ".shtml" if pagenum > 0 else "http://www.shanxi.gov.cn/zw/zfgkzl/zfxxgkgd/index.shtml"
+                    url = "http://www.shanxi.gov.cn/zw/zfwj/szfbgtwj/index_" + \
+                        str(pagenum) + ".shtml" if pagenum > 0 else "http://www.shanxi.gov.cn/zw/zfwj/szfbgtwj/index.shtml"
                     print('url==='+url)
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
         except Exception as e:
@@ -71,17 +79,17 @@ class BeijingZfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.xpath('//div[@class="shanxi-gov-page-box mt20"]/p/script').re(r'([1-9]\d*\.?\d*)')[26])
+                return int(response.xpath('//div[@class="shanxi-gov-page-box"]/p/script').re(r'([1-9]\d*\.?\d*)')[26])
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.xpath('//td[@class="affaires-doc-title"]/a/@href'):
+        for href in response.css('.tab-flag-construck ul a::attr(href)').getall():
             try:
-                print('url===' + href.extract())
-                url = response.urljoin(href.extract())
+                #print('url===' + href.extract())
+                url = response.urljoin(href)
                 yield scrapy.Request(url,callback=self.parse_item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
