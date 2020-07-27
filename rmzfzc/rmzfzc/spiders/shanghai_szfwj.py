@@ -37,7 +37,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://localhost:8050/"
+        #'SPLASH_URL': "http://121.36.103.134:8050/"
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -71,7 +73,6 @@ class TianJinSzfwjSpider(scrapy.Spider):
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
-
 
     def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
