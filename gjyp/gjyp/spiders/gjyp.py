@@ -70,7 +70,9 @@ class GjypSpider(scrapy.Spider):
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'SPLASH_URL': "http://localhost:8050/"}
+        #'SPLASH_URL': "http://localhost:8050/"
+        'SPLASH_URL': "http://121.36.103.134:8050/"
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -81,7 +83,8 @@ class GjypSpider(scrapy.Spider):
             contents = [
                 {
                     'topic': 'gjyp',  # 重庆市公共资源拍卖交易网
-                    'url': 'http://app1.sfda.gov.cn/datasearchcnda/face3/base.jsp?tableId=25&tableName=TABLE25&title=%B9%FA%B2%FA%D2%A9%C6%B7&bcId=152904713761213296322795806604'
+                    #'url': 'http://app1.sfda.gov.cn/datasearchcnda/face3/base.jsp?tableId=25&tableName=TABLE25&title=%B9%FA%B2%FA%D2%A9%C6%B7&bcId=152904713761213296322795806604'
+                    'url': 'http://app1.nmpa.gov.cn/datasearchcnda/face3/base.jsp?tableId=25&tableName=TABLE25&title=%B9%FA%B2%FA%D2%A9%C6%B7&bcId=152904713761213296322795806604'
                 }
             ]
             for content in contents:

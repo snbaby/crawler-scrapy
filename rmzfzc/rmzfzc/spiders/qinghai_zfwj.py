@@ -48,6 +48,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         list = ['http://zwgk.qh.gov.cn/zdgk/zwgkzfxxgkml/8/9/index']
+        #list = ['http://zwgk.qh.gov.cn/zdgk/zwgkzfxxgkml/?id=1229']
         for urlTmp in list:
             try:
                 url = urlTmp+ ".html"

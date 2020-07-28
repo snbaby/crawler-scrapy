@@ -29,7 +29,9 @@ class HybzSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        #'SPLASH_URL': "http://localhost:8050/"
+        'SPLASH_URL': "http://121.36.103.134:8050/"
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -136,12 +138,15 @@ class HybzSpider(scrapy.Spider):
             end
             """
         page_count = self.parse_pagenum(response)
+        print(page_count)
         try:
             for pagenum in range(page_count):
                 if pagenum == 0:
                     self.parse(response)
                 else:
+                    print(pagenum)
                     url = response.meta['url']
+                    print(url)
                     yield SplashRequest(url,
                                         endpoint='execute',
                                         args={
@@ -169,6 +174,7 @@ class HybzSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
+        print('function parse start to run.....')
         for tr in response.css('#hbtable tbody tr'):
             try:
                 result = {
@@ -181,6 +187,7 @@ class HybzSpider(scrapy.Spider):
                     'beian': tr.css('td:nth-child(8)::text').extract_first(),
                     'url': response.urljoin(
                         tr.css('a::attr(href)').extract_first())}
+                print(result)
                 yield scrapy.Request(response.urljoin(tr.css('a::attr(href)').extract_first()), callback=self.parse_item,
                                      meta=result, dont_filter=True)
             except Exception as e:
@@ -188,10 +195,12 @@ class HybzSpider(scrapy.Spider):
                 logging.exception(e)
 
     def parse_item(self, response):
+        print('start to parse item')
         try:
             item = bzk_hybzItem()
             appendix, appendix_name = get_attachments(response)
             item['name'] = response.meta['name']
+            print(item['name'])
             item['code'] = response.meta['code']
             item['status'] = response.meta['status']
             item['xiazai'] = appendix

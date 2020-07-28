@@ -42,7 +42,9 @@ class AnhuiSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        #'SPLASH_URL': "http://localhost:8050/"
+        'SPLASH_URL': "http://121.36.103.134:8050/"
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -53,16 +55,17 @@ class AnhuiSpider(scrapy.Spider):
             contents = [
                 {
                     'topic': 'szfwj',  # 省政府文件
-                    'url': 'http://xxgk.ah.gov.cn/tmp/Nav_wenjian.shtml?SS_ID=11&tm=63125.92&Page=1'
-                },
-                {
-                    'topic': 'xzgz',  # 行政规章
-                    'url': 'http://xxgk.ah.gov.cn/tmp/Nav_wenjian.shtml?SS_ID=8&tm=55994.64&Page=1'
-                },
-                {
-                    'topic': 'bmjd',  # 部门解读
-                    'url': 'http://xxgk.ah.gov.cn/tmp/Nav_gongkailanmu.shtml?SS_ID=437&tm=61703.66&Page=1'
+                    #'url': 'http://xxgk.ah.gov.cn/tmp/Nav_wenjian.shtml?SS_ID=11&tm=63125.92&Page=1'
+                    'url': 'http://www.ah.gov.cn/public/column/1681?type=4&action=list&nav=3&catId=6708461'
                 }
+                #{
+                #    'topic': 'xzgz',  # 行政规章
+                #    'url': 'http://xxgk.ah.gov.cn/tmp/Nav_wenjian.shtml?SS_ID=8&tm=55994.64&Page=1'
+                #},
+                #{
+                #    'topic': 'bmjd',  # 部门解读
+                #    'url': 'http://xxgk.ah.gov.cn/tmp/Nav_gongkailanmu.shtml?SS_ID=437&tm=61703.66&Page=1'
+                #}
             ]
             for content in contents:
                 yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
@@ -90,8 +93,8 @@ class AnhuiSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.css(
-                    '.page_nav a:nth-child(2)::attr(href)').extract_first().split('Page=')[1])
+                #return int(response.css('.page_nav a:nth-child(2)::attr(href)').extract_first().split('Page=')[1])
+                return int(response.xpath("//*[@id='page_public_info']/span[4]/text()[2]").re(r'([1-9]\d*)'))
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -155,7 +158,10 @@ class AnhuiSpider(scrapy.Spider):
         try:
             appendix, appendix_name = get_attachments(response)
             item = rmzfzcItem()
-            item['title'] = response.css('.sy1::text').extract_first().strip()
+            title = ''
+            for title_str in response.css('h1.wztit xxgk_wztit::text').getall():
+                title += title_str
+            item['title'] = title
             item['article_num'] = response.css('.nr_topcon ul li:nth-child(8)::text').extract_first().strip()
             item['content'] = response.css('.wzcon').extract_first()
             item['appendix'] = appendix

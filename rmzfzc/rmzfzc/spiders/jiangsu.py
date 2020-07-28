@@ -39,7 +39,7 @@ class JiangsuSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://121.36.103.134:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -73,6 +73,7 @@ class JiangsuSpider(scrapy.Spider):
 
     def parse_page(self, response):
         page_count = int(self.parse_pagenum(response))
+        #print(page_count)
         uid = response.css('.bt-rig-cen-01 div::attr(id)').extract_first()
         try:
             for pagenum in range(page_count):
@@ -96,9 +97,12 @@ class JiangsuSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
+        print(response.text)
         for href in response.css('.main_list a::attr(href)').extract():
             try:
-                url = response.urljoin(href)
+                #url = response.urljoin(href)
+                url = href
+                print(url)
                 if response.meta['topic'] == 'szfjbgtwj':
                     yield scrapy.Request(url, callback=self.parse_szfjbgtwj, meta={'url': url}, dont_filter=True)
                 elif response.meta['topic'] == 'zcjd':

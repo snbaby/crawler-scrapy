@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
+import math
 
 from scrapy_splash import SplashRequest
 from bzk_dfbz.items import bzk_dfbzItem
@@ -27,7 +28,9 @@ class DfbzSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://localhost:8050/"}
+        #'SPLASH_URL': "http://localhost:8050/"
+        'SPLASH_URL': "http://121.36.103.134:8050/"
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -80,6 +83,11 @@ class DfbzSpider(scrapy.Spider):
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
+
+    def parse_page_num(self, response):
+        page_num_tmp = int(response.css("div.panel-heading span.badge::text").get())
+        self.add_pagenum = math.ceil(page_num_tmp / 20)
+
 
     def parse_page(self, response):
         try:

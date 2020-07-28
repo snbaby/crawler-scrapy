@@ -25,7 +25,9 @@ class schoolSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': 'http://localhost:8050/'}
+        #'SPLASH_URL': 'http://localhost:8050/'
+        'SPLASH_URL': "http://121.36.103.134:8050/"
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -33,7 +35,7 @@ class schoolSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            num = 50
+            num = 73
             for i in range(num):
                 url = 'https://api.eol.cn/gkcx/api/?access_token=&page='+str(i)+'&signsafe=&size=30&uri=apidata/api/gk/special/lists&keyword=&level1=&level2='
                 yield scrapy.Request(url, callback=self.parse_page, dont_filter=True)

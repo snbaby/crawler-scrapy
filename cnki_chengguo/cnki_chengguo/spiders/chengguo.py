@@ -25,7 +25,9 @@ class ChengguoSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        #'SPLASH_URL': "http://localhost:8050/"
+        'SPLASH_URL': "http://121.36.103.134:8050/"
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -127,13 +129,16 @@ class ChengguoSpider(scrapy.Spider):
         for record in response.css(".GridTableContent tr:not(.GTContentTitle)"):
             #dest_url = http://dbpub.cnki.net/grid2008/dbpub/detail.aspx?dbcode=SNAD&dbname=SNAD&filename=SNAD000000000021
             #tmp_url = /kns/detail/detail.aspx?QueryID=0&CurRec=21&dbcode=SNAD&dbname=SNAD&filename=SNAD000000000021
-            tmp_url = record.css(".fz14::attr(href)").get()
-            tmp_url = "http://dbpub.cnki.net" + tmp_url
+            extracted_url = record.css(".fz14::attr(href)").get()
+            tmp_url = extracted_url.replace('kns', 'kcms')
+            #tmp_url = "http://dbpub.cnki.net" + tmp_url
+            tmp_url = "https://kns8.cnki.net" + tmp_url
             import urllib.parse as urlparse
             from urllib.parse import parse_qs
             tmp_url_parsed = urlparse.urlparse(tmp_url)
 
-            talent_url = "http://dbpub.cnki.net/grid2008/dbpub/detail.aspx?"
+            #talent_url = "http://dbpub.cnki.net/grid2008/dbpub/detail.aspx?"
+            talent_url = "https://kns8.cnki.net/kns/detail/detail.aspx?"
             from urllib.parse import urlencode
             query_str = urlencode({
                 'dbcode': parse_qs(tmp_url_parsed.query)['dbcode'][0],
@@ -157,16 +162,17 @@ class ChengguoSpider(scrapy.Spider):
 
     def parse_end(self, response):
         sbkItem = cnki_chengguoItem()
-        sbkItem['name'] = response.css("body > table:nth-child(3) > tbody > tr > td:nth-child(2) > strong::text").get("").strip()
-        sbkItem['accomplish_person'] = response.css("#box > tbody > tr:nth-child(1) > td.checkItem::text").get("").strip()
-        sbkItem['first_accomplish_company'] = response.css("#box > tbody > tr:nth-child(2) > td.checkItem::text").get("").strip()
-        sbkItem['keyword'] = response.css("#box > tbody > tr:nth-child(3) > td.checkItem::text").get("").strip()
-        sbkItem['zt_type'] = response.css("#box > tbody > tr:nth-child(4) > td.checkItem::text").get("").strip()
-        sbkItem['xk_type'] = response.css("#box > tbody > tr:nth-child(5) > td.checkItem::text").get("").strip()
-        sbkItem['intro'] =  response.css("#cgjj::text").get("").strip()
-        sbkItem['type'] = response.css("#box > tbody > tr:nth-child(7) > td.checkItem::text").get("").strip()
-        sbkItem['time'] = response.css("#box > tbody > tr:nth-child(11) > td.checkItem::text").get("").strip()
-        sbkItem['research_time'] = response.css("#box > tbody > tr:nth-child(9) > td.checkItem::text").get("").strip()
+        sbkItem['name'] = response.css("div.wx-tit h1::text").get().strip()
+        sbkItem['accomplish_person'] = response.css("div.brief div.row p.funds::text").get().strip()
+        sbkItem['first_accomplish_company'] = response.css("div.brief div.row p.funds a.author::text").get().strip()
+        sbkItem['keyword'] = response.css("div.brief div.row p.funds::text").getall()[1].strip()
+        sbkItem['zt_type'] = response.css("div.brief div.row p.funds::text").getall()[2].strip()
+        sbkItem['xk_type'] = response.css("div.brief div.row p.funds::text").getall()[3].strip()
+        sbkItem['intro'] =  response.css("div.brief div.row p.funds::text").getall()[4].strip()
+        sbkItem['type'] = response.css("div.brief div.row p.funds::text").getall()[5].strip()
+        sbkItem['time'] = response.css("div.brief div.row p.funds::text").getall()[7].strip()
+        #sbkItem['research_time'] = response.css("#box > tbody > tr:nth-child(9) > td.checkItem::text").get().strip()
+        sbkItem['research_time'] = ""
         sbkItem['website'] = '中国知网-成果'
         sbkItem['link'] = response.meta['link']
         sbkItem['spider_name'] = self.name

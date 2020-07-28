@@ -37,6 +37,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
+        #'SPLASH_URL': 'http://121.36.103.134:8050/'}
         'SPLASH_URL': "http://localhost:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
