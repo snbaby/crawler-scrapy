@@ -115,7 +115,7 @@ class TzxwSpider(scrapy.Spider):
                 result = {}
                 result['title'] = investevent['title']
                 result['source'] = investevent['main_url']
-                result['date'] = investevent['year']
+                result['date'] = time.strftime("%Y--%m--%d", time.localtime(investevent['time']))
                 result['content'] = ''
                 result['website'] = 'it桔子'
                 result['link'] = investevent['url']
