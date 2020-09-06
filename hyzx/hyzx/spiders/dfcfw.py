@@ -67,7 +67,7 @@ class DfcfwSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.css('#newsListContent .image a::attr(href)').extract():
+        for href in response.css('#newsListContent .title a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
                 yield scrapy.Request(url, callback=self.parse_item, meta={'url': url}, dont_filter=True)
