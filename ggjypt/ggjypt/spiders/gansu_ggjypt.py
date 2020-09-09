@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
+import json
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
+
 
 class GansuGgjyptSpider(scrapy.Spider):
     name = 'gansu_ggjypt'
@@ -27,135 +29,30 @@ class GansuGgjyptSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
-
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-          splash:go(args.url)
-          return splash:html()
-        end
-        """
         try:
-            contents = [
-                {
-                    'topic': 'sjjyxx',  # 省局交易信息
-                    'url': 'http://ggzyjy.gansu.gov.cn/f/newprovince/annogoods/list'
-                }
-            ]
-            for content in contents:
-                yield SplashRequest(content['url'],
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    meta=content)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_page(self, response):
-        script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-
-              assert(splash:go(args.url))
-              wait_for_element(splash, ".active")
-              wait_for_element(splash, ".sTradingInformationSelectedBtoList a")
-              splash:runjs("document.querySelector('.sTradingInformationSelectedBtoList').innerHTML = ''")
-              splash:runjs("document.querySelector('.active').classList.remove('active')")
-              js = string.format("page(%d,10,'')", args.pagenum)
-              splash:evaljs(js)
-              wait_for_element(splash, ".active")
-              wait_for_element(splash, ".sTradingInformationSelectedBtoList a")
-              return splash:html()
-            end
-            """
-        page_count = int(self.parse_pagenum(response, ))
-        try:
+            url = 'http://ggzyjy.gansu.gov.cn/f/newprovince/annogoods/getAnnoList'
+            page_count = 3071
             for pagenum in range(page_count):
-                url = response.meta['url']
-                yield SplashRequest(url,
-                    endpoint='execute',
-                    args={
-                        'lua_source': script,
-                        'wait': 1,
-                        'pagenum': pagenum + 1,
-                        'url': url,
-                    },
-                    callback=self.parse,
-                    meta=response.meta)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response, ):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                return int(response.css('.pagination-roll  > ul > li:nth-last-child(3) > a::text').extract_first())
-            return self.add_pagenum
+                data = {
+                    'pageNo': str(pagenum+1),
+                    'pageSize': '10',
+                    'area': '620000',
+                    'prjpropertynewI': 'I',
+                    'prjpropertynewA': 'A',
+                    'prjpropertynewD': 'D',
+                    'prjpropertynewC': 'C',
+                    'prjpropertynewB': 'B',
+                    'prjpropertynewE': 'E',
+                    'projectname': ''
+                }
+                yield scrapy.FormRequest(url=url, formdata=data, method='POST', callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -192,33 +89,35 @@ class GansuGgjyptSpider(scrapy.Spider):
         function main(splash, args)
           splash:go(args.url)
           splash:wait(5)
+          wait_for_element(splash, ".jxTradingMainLeft")
           return splash:html()
         end
         """
-        for detail in response.css('.sTradingInformationSelectedBtoList .sDisclosurLeftConDetailList'):
-            try:
-                title = detail.css('a::attr(title)').extract_first()
-                url = response.urljoin(detail.css('a::attr(href)').extract_first())
-                time = detail.css('i::text').extract_first()
-                result = {
-                    'url': url,
-                    'title': title,
-                    'time': time
+        try:
+            for selector in response.css('.sTradingInformationSelectedBtoList dl'):
+                if not selector.css("::attr(id)").extract_first():
+                    title = selector.css('a::attr(title)').extract_first()
+                    url = response.urljoin(selector.css('a::attr(href)').extract_first())
+                    time = selector.css('i::text').extract_first()
+                    result = {
+                        'url': url,
+                        'title': title,
+                        'time': time
 
-                }
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse_item,
-                                    meta=result,
-                                    dont_filter=True)
-            except Exception as e:
-                logging.error(self.name + ": " + e.__str__())
-                logging.exception(e)
+                    }
+                    yield SplashRequest(url,
+                                        endpoint='execute',
+                                        args={
+                                            'lua_source': script,
+                                            'wait': 1,
+                                            'url': url,
+                                        },
+                                        callback=self.parse_item,
+                                        meta=result,
+                                        dont_filter=True)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
     def parse_item(self, response):
         try:
@@ -274,4 +173,3 @@ class GansuGgjyptSpider(scrapy.Spider):
                 e.__str__())
             logging.exception(e)
         yield item
-
