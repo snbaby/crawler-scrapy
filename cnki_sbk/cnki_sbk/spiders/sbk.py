@@ -2,19 +2,24 @@
 import scrapy
 import logging
 import json
-import time
-
 from cnki_sbk.items import cnki_sbkItem
-from scrapy_splash import SplashRequest
 
 
 class SbkSpider(scrapy.Spider):
     name = 'sbk'
     custom_settings = {
+        # 并发请求
+        'CONCURRENT_REQUESTS': 1,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
+        'CONCURRENT_REQUESTS_PER_IP': 0,
+        # 下载暂停
+        'DOWNLOAD_DELAY': 0.1,
         'DOWNLOADER_MIDDLEWARES': {
-            'scrapy_splash.SplashCookiesMiddleware': 723,
-            'scrapy_splash.SplashMiddleware': 725,
+            # 'scrapy_splash.SplashCookiesMiddleware': 723,
+            # 'scrapy_splash.SplashMiddleware': 725,
             'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+             # 自定义随机请求头
+            'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 120,
         },
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
@@ -25,107 +30,38 @@ class SbkSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        # 'SPLASH_URL': "http://47.57.108.128:8050/"
+        # 'SPLASH_URL': "http://localhost:8050/"
+    }
 
-    def __init__(self, pagenum=None, *args, **kwargs):
+    def __init__(self, cookie={},pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.cookie = cookie
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-        function main(splash, args)
-            assert(splash:go(args.url))
-            assert(splash:wait(1))
-            splash:runjs("document.querySelector('#btnSearch').click();")
-            splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
-            splash:wait(5)
-            return splash:evaljs("iframe()")
-        end
-        """
-
         try:
-            url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
-            yield SplashRequest(url,
-                                endpoint='execute',
-                                args={
-                                    'lua_source': script,
-                                    'wait': 1,
-                                    'url': url,
-                                    'iframes': 1,
-                                },
-                                callback=self.parse_result)
+            urls = 'http://localhost:8888/getCookie?url=http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD'
+            # urls = 'https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CDFD&QueryID=0&CurRec=5700&dbname=CDFDLAST2020&filename=1019640493.nh'
+            yield scrapy.Request(urls, callback=self.parse_cookie, dont_filter=True,
+                                 priority=10)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_result(self, response):
-        page_script = """
-                function main(splash, args)
-                    splash:init_cookies(splash.args.cookies)
-                    assert(splash:go(args.url))
-                    assert(splash:wait(1))
-                    splash:runjs("document.querySelector('#btnSearch').click();")
-                    splash:wait(5)
-                    js_string= "document.getElementById('iframeResult').src='" .. args.new_url .. "'"
-                    splash:runjs(js_string)
-                    splash:wait(5)
-                    splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
+    def parse_cookie(self, response):
+        if len(str(response.text)) > 10:
+            print('spider.cookie:' + str(response.text))
+            self.cookie = json.loads(response.text)
+            yield scrapy.Request('http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD', callback=self.parse_page, meta=response.meta, dont_filter=True)
 
-
-                    local iframe_result = splash:evaljs("iframe()")
-                    local entries = splash:history()
-                    local last_response = entries[#entries].response
-                    return {
-                        cookies = splash:get_cookies(),
-                        html = iframe_result,
-                        headers = last_response.headers,
-                    }
-                end
-                """
-        page_num = self.parse_pagenum(response)
-        base_url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CDMD"
-        # 网站最大支持爬取300页内容
-        for i in range(1, 300 + 1):
-            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' + \
-                str(i) + '&RecordsPerPage=20&QueryID=0&ID=&turnpage=1&tpagemode=L&dbPrefix=CDMD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
-            yield SplashRequest(base_url,
-                                endpoint='execute',
-                                args={
-                                    'lua_source': page_script,
-                                    'wait': 1,
-                                    'url': base_url,
-                                    'new_url': new_url,
-                                    'iframes': 1,
-                                },
-                                session_id="foo",
-                                callback=self.parse)
-
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                result_cnt = response.css(
-                    ".pagerTitleCell::text").extract_first()
-                result_cnt = int(result_cnt.split()[1].replace(",", ""))
-                return int((result_cnt + 19) / 20)
-            return self.add_pagenum
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
+    def parse_page(self, response):
+        for page_num in range(120):
+            url = 'https://kns.cnki.net/kns/brief/brief.aspx?curpage=' + str(
+                page_num + 1) + '&RecordsPerPage=50&QueryID=41&ID=&turnpage=1&tpagemode=L&dbPrefix=CDMD&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
+            yield scrapy.Request(url, callback=self.parse, meta=response.meta, dont_filter=True)
 
     def parse(self, response):
-        detail_page_script = """
-                function main(splash, args)
-                    splash:init_cookies(splash.args.cookies)
-                    assert(splash:go(args.url))
-                    assert(splash:wait(1))
-                    return {
-                        cookies = splash:get_cookies(),
-                        html = splash:html(),
-                    }
-                end
-                """
         for record in response.css(
                 ".GridTableContent tr:not(.GTContentTitle)"):
             paper_url = record.css(".fz14::attr(href)").get()
@@ -135,29 +71,19 @@ class SbkSpider(scrapy.Spider):
             item = {}
             item['title_cn'] = record.css(".fz14::text").get()
             item['author'] = record.css(
-                "td.author_flag a::text").extract_first().strip()
+                "td.author_flag a::text").extract_first()
             item['degree'] = record.css(
-                "td:nth-child(5)::text").extract_first().strip()
+                "td:nth-child(5)::text").extract_first()
             item['degree_award_company'] = record.css(
-                "td:nth-child(4) a::text").extract_first().strip()
+                "td:nth-child(4) a::text").extract_first()
             item['degree_award_year'] = record.css(
-                "td:nth-child(6)::text").extract_first().strip()
+                "td:nth-child(6)::text").extract_first()
             item['website'] = "中国知网-博硕士"
             item['link'] = paper_url
             item['spider_name'] = 'sbk'
             item['module_name'] = '中国知网-硕博库'
-
-            yield SplashRequest(paper_url,
-                                endpoint='execute',
-                                args={
-                                    'url': paper_url,
-                                    'lua_source': detail_page_script,
-                                    'wait': 1,
-                                    'iframes': 1,
-                                },
-                                session_id="foo",
-                                headers=response.data['headers'],
-                                callback=self.parse_end, meta=item)
+            print('paper_url==' + str(paper_url))
+            yield scrapy.Request(paper_url, callback=self.parse_end,headers={'type': 'item'}, meta=item, dont_filter=True)
 
     def parse_end(self, response):
         sbkItem = cnki_sbkItem()
@@ -171,33 +97,25 @@ class SbkSpider(scrapy.Spider):
         sbkItem['spider_name'] = response.meta['spider_name']
         sbkItem['module_name'] = response.meta['module_name']
 
-        sbkItem['intro'] = response.css(
-            "div.wxBaseinfo span#ChDivSummary::text").get("").strip()
-        sbkItem['tutor'] = response.css("label#catalog_TUTOR")[0].xpath(
-            'following-sibling::text()[1]').get("").strip()
-        sbkItem['type'] = response.css("label#catalog_ZTCLS")[0].xpath(
-            'following-sibling::text()[1]').get("").strip()
-
-        sbkItem['fund_name'] = ''
+        sbkItem['intro'] = response.css("#ChDivSummary::text").get("").strip()
+        sbkItem['tutor'] = ''
+        sbkItem['type'] = ''
         sbkItem['doi'] = ''
-
-        result = response.css(".wxBaseinfo *::text").extract()
-        for i in range(len(result)):
-            if result[i] == 'DOI：':
-                sbkItem['doi'] = result[i+1]
-
-        clickResult = response.css(
-            ".wxBaseinfo > p > a::attr(onclick)").extract()
-        textResult = response.css(".wxBaseinfo > p > a::text").extract()
-
-        sbkItem['keyword'] = ''
         sbkItem['fund_name'] = ''
-        for i in range(len(clickResult)):
-            if clickResult[i].strip().index('kw') > -1:
-                sbkItem['keyword'] = sbkItem['keyword'] + textResult[i]
-            else:
-                sbkItem['fund_name'] = sbkItem['fund_name'] + textResult[i]
-
-        sbkItem['province'] = response.css(
-            '#func608 > div.sourinfo > p:nth-child(3)::text').extract_first()
+        result = response.css("div.doc-top>div.row")
+        for i in range(len(result)):
+            li = result[i].css('ul>li')
+            if len(li) > 0:
+                for j in range(len(li)):
+                    if li[j].css('span::text').get("").strip() == '分类号：':
+                        sbkItem['type'] = li[j].css('p::text').get("").strip()
+                    if li[j].css('span::text').get("").strip() == 'DOI：':
+                        sbkItem['doi'] = li[j].css('p::text').get("").strip()
+            elif result[i].css('span::text').get("").strip() == '基金资助：':
+                sbkItem['fund_name'] = ''.join(result[i].css('p>a *::text').extract())
+            elif result[i].css('span::text').get("").strip() == '导师：':
+                sbkItem['tutor'] = result[i].css('p::text').get("").strip()
+        sbkItem['keyword'] = ''.join(response.css("div.doc-top>div.brief>div.row")[1].css("p.keywords a *::text").extract())
+        sbkItem['province'] = ''
+        print("===========================>crawled one item")
         yield sbkItem
