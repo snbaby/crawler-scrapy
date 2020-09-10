@@ -63,6 +63,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
             for pagenum in range(page_count):
                 if pagenum > 0:
                     url = "http://www.yanglee.com/Action/ProductAJAX.ashx?mode=statistics&pageSize=40&pageIndex="+str(pagenum)+"&conditionStr=producttype%3A1&start_released=&end_released=&orderStr=1&ascStr=ulup&_=1576330869045"
+                    print(url)
                     yield SplashRequest(url, args={'lua_source': script, 'wait': 1},headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
                               'Referer': 'http://www.yanglee.com/Product/Index.aspx'}, callback=self.parse, dont_filter=True)
         except Exception as e:
@@ -85,8 +86,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for obj in data['result']:
             try:
                 url = 'http://www.yanglee.com/Product/Detail.aspx?id='+str(obj['ID'])
-                print(url)
-                yield SplashRequest(url,callback=self.parse_item, dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse_item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -127,7 +127,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
             item['name'] = name  # 产品名称
             item['issure'] = issure  # 发行机构
-            item['issue_date'] = get_times(issue_date)  # 发行时间
+            item['issue_date'] = get_times(issue_date.replace('至',''))  # 发行时间
             item['pro_address'] = pro_address  # 项目所在地
             item['pre_scale'] = ''  # 预期发行规模
             item['real_scale'] = real_scale  # 实际发行规模

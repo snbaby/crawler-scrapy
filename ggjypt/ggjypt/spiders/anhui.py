@@ -78,23 +78,24 @@ class AnhuiGgjyptSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=1&hySort=&bulletinclass=jy&num=undefined'
-                },
-                {
-                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=2&hySort=&bulletinclass=jy&num=undefined'
-                },
-                {
-                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=3&hySort=&bulletinclass=jy&num=undefined'
-                },
-                {
-                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=4&hySort=&bulletinclass=jy&num=undefined'
-                },
-                {
-                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=7&hySort=&bulletinclass=jy&num=undefined'
-                },
-                {
-                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&fileType=12&hySort=&bulletinclass=jy&num=undefined'
+                    'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&bulletinType=01&fileType=1&hySort=&bulletinclass=jy&num=1'
                 }
+                # ,
+                # {
+                #     'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&bulletinType=01&fileType=2&hySort=&bulletinclass=jy&num=1'
+                # },
+                # {
+                #     'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&bulletinType=01&fileType=3&hySort=&bulletinclass=jy&num=1'
+                # },
+                # {
+                #     'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&bulletinType=01&fileType=4&hySort=&bulletinclass=jy&num=1'
+                # },
+                # {
+                #     'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&bulletinType=01&fileType=7&hySort=&bulletinclass=jy&num=1'
+                # },
+                # {
+                #     'url': 'http://ggzy.ah.gov.cn/bulletininfo.do?method=showList&bulletinType=01&fileType=12&hySort=&bulletinclass=jy&num=1'
+                # }
             ]
             for content in contents:
                 yield SplashRequest(content['url'],
@@ -112,7 +113,6 @@ class AnhuiGgjyptSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse_page(self, response):
-        logging.error(response.text)
         page_count = int(self.parse_pagenum(response))
         try:
             # for pagenum in range(page_count):
