@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
+import json
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
 
 script = """
 function wait_for_element(splash, css, maxwait)
@@ -49,6 +50,7 @@ function main(splash, args)
 end
 """
 
+
 class GansuSpider(scrapy.Spider):
     name = 'hebei_ggjypt'
     custom_settings = {
@@ -69,7 +71,7 @@ class GansuSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,85 +81,66 @@ class GansuSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002001/subNoticeGov.html',
-                    'id': '#page_001002001001'
+                    'url': 'http://ggzy.hebei.gov.cn/EpointWebBuilderZx/rest/infolist/get',
+                    'cat': '001002001001',
+                    'index': 2400,
+                    'pageSize': '13'
                 },
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002002/subNoticeGov.html',
-                    'id': '#page_001002002001'
+                    'url': 'http://ggzy.hebei.gov.cn/EpointWebBuilderZx/rest/infolist/get',
+                    'cat': '001002002001',
+                    'index': 547,
+                    'pageSize': '13'
                 },
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002004/subNoticeGov.html',
-                    'id': '#page_001002004001'
+                    'url': 'http://ggzy.hebei.gov.cn/EpointWebBuilderZx/rest/infolist/get',
+                    'cat': '001002003001',
+                    'index': 1,
+                    'pageSize': '13'
                 },
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002005/001002005001/subNoticeGovGJzb.html',
-                    'id': '#page_001002005001001'
+                    'url': 'http://ggzy.hebei.gov.cn/EpointWebBuilderZx/rest/infolist/get',
+                    'cat': '001002004001',
+                    'index': 460,
+                    'pageSize': '13'
                 },
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002005/001002005002/subNoticeGovGJzb.html',
-                    'id': '#page_001002005002001'
+                    'url': 'http://ggzy.hebei.gov.cn/EpointWebBuilderZx/rest/infolist/get',
+                    'cat': '001002005003',
+                    'index': 20,
+                    'pageSize': '15'
                 },
                 {
-                    'url': 'http://www.hebpr.gov.cn/hbjyzx/jydt/001002/001002006/subNoticeGov.html',
-                    'id': '#page_001002006001'
+                    'url': 'http://ggzy.hebei.gov.cn/EpointWebBuilderZx/rest/infolist/get',
+                    'cat': '001002006001',
+                    'index': 198,
+                    'pageSize': '13'
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'],
-                    endpoint = 'execute',
-                    args={
-                        'lua_source': script,
-                        'id': content['id'],
-                        'page': 1,
-                        'url': content['url'],
-                    },
-                    callback=self.parse_page,
-                    meta=content)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_page(self, response):
-        page_count = int(self.parse_pagenum(response))
-        print(page_count)
-        try:
-            for pagenum in range(page_count):
-                if pagenum > 0:
-                    yield SplashRequest(response.meta['url'],
-                        endpoint='execute',
-                        args={
-                            'lua_source': script,
-                            'id': response.meta['id'],
-                            'page': pagenum,
-                            'url': response.meta['url'],
-                        },
-                        callback=self.parse,
-                        meta=response.meta)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                return int(response.xpath('//*[@class="m-pagination-page"]/li[last()]/a/text()').extract()[0]) + 1
-            return self.add_pagenum
+                for pagenum in range(content['index']):
+                    data = {
+                        'cat': content['cat'],
+                        'index': str(pagenum + 1),
+                        'pageSize': content['pageSize']
+                    }
+                    # yield scrapy.Request(content['url'], body=json.dumps(data), method='POST',
+                    #                      headers={'Content-Type': 'application/json'}, callback=self.parse)
+                    yield scrapy.FormRequest(url=content['url'],
+                                             headers={'Accept': 'application/json, text/javascript, */*; q=0.01'},
+                                             formdata=data, method='POST', callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for selector in response.xpath('//li[@class="ewb-com-item"]'):
+        for jsonData in json.loads(response.text):
             try:
                 item = {}
-                item['title'] = selector.xpath('./div/a/text()').extract_first()
-                item['time'] = selector.xpath('./span/text()').extract_first().strip()
-                url = response.urljoin(selector.xpath('./div/a/@href').extract_first())
-                print(url)
-                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, meta=item)
+                item['title'] = jsonData['title']
+                item['time'] = jsonData['infodate']
+                item['url'] = 'http://ggzy.hebei.gov.cn/hbjyzx' + jsonData['infourl']
+                yield scrapy.Request(item['url'], callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
