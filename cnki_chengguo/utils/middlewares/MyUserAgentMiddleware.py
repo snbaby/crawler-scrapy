@@ -6,4 +6,6 @@ class MyUserAgentMiddleware():
         self.ua =random.choice(self.User_Agent)
 
     def process_request(self, request, spider):
+        if request.headers.getlist('Type') != 'item':
+            request.cookies = spider.cookie
         request.headers.setdefault('User-Agent',self.ua)

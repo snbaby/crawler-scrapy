@@ -95,8 +95,8 @@ AUTOTHROTTLE_ENABLED = True
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 LOG_ENABLED = True
-# LOG_FILE = "spiders.log"
-LOG_LEVEL = "DEBUG"
+LOG_FILE = "spiders.log"
+LOG_LEVEL = "ERROR"
 
 # MYSQL_HOST = '10.8.32.125'
 MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'

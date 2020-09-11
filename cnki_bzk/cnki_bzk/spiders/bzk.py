@@ -2,115 +2,59 @@
 import scrapy
 import logging
 import json
-import time
-
 from cnki_bzk.items import cnki_bzkItem
-from scrapy_splash import SplashRequest
 
 
-class BzkSpider(scrapy.Spider):
+class SbkSpider(scrapy.Spider):
     name = 'bzk'
     custom_settings = {
+        # 并发请求
         'CONCURRENT_REQUESTS': 1,
         'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 1,
+        # 下载暂停
+        'DOWNLOAD_DELAY': 0.1,
+        'DOWNLOADER_MIDDLEWARES': {
+            'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+             # 自定义随机请求头
+            'utils.middlewares.MyUserAgentMiddleware.MyUserAgentMiddleware': 120,
+        },
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-        },
-        'DOWNLOADER_MIDDLEWARES': {
-            'scrapy_splash.SplashCookiesMiddleware': 723,
-            'scrapy_splash.SplashMiddleware': 725,
-            'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
         },
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'}
+        'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
+    }
 
-    def __init__(self, pagenum=None, *args, **kwargs):
+    def __init__(self, cookie={},pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.cookie = cookie
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-        function main(splash, args)
-            assert(splash:go(args.url))
-            assert(splash:wait(1))
-            splash:runjs("document.querySelector('#btnSearch').click();")
-            splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
-            splash:wait(5)
-            return splash:evaljs("iframe()")
-        end
-        """
-
         try:
-            url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CCND"
-            yield SplashRequest(url,
-                                endpoint='execute',
-                                args={
-                                    'lua_source': script,
-                                    'wait': 1,
-                                    'url': url,
-                                    'iframes': 1,
-                                },
-                                callback=self.parse_result)
+            urls = 'http://localhost:8888/getCookie?url=http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CCND'
+            # urls = 'https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CDFD&QueryID=0&CurRec=5700&dbname=CDFDLAST2020&filename=1019640493.nh'
+            yield scrapy.Request(urls, callback=self.parse_cookie, dont_filter=True,
+                                 priority=10)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_result(self, response):
-        page_script = """
-                function main(splash, args)
-                    splash:init_cookies(splash.args.cookies)
-                    assert(splash:go(args.url))
-                    assert(splash:wait(1))
-                    splash:runjs("document.querySelector('#btnSearch').click();")
-                    splash:wait(5)
-                    js_string= "document.getElementById('iframeResult').src='" .. args.new_url .. "'"
-                    splash:runjs(js_string)
-                    splash:wait(5)
-                    splash:runjs("iframe = function(){ var f = document.getElementById('iframeResult'); return f.contentDocument.getElementsByTagName('body')[0].innerHTML;}")
+    def parse_cookie(self, response):
+        if len(str(response.text)) > 10:
+            print('spider.cookie:' + str(response.text))
+            self.cookie = json.loads(response.text)
+            yield scrapy.Request('http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CCND', callback=self.parse_page, meta=response.meta, dont_filter=True)
 
-
-                    local iframe_result = splash:evaljs("iframe()")
-                    local entries = splash:history()
-                    local last_response = entries[#entries].response
-                    return {
-                        cookies = splash:get_cookies(),
-                        html = iframe_result,
-                        headers = last_response.headers,
-                    }
-                end
-                """
-        page_num = self.parse_pagenum(response)
-        base_url = "http://kns.cnki.net/kns/brief/result.aspx?dbprefix=CCND"
-        # 网站最大支持爬取300页内容
-        for i in range(1, 301):
-            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' + str(i) + '&RecordsPerPage=20&QueryID=6&ID=&turnpage=1&tpagemode=L&dbPrefix=CCND&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
-            yield SplashRequest(base_url,
-                                endpoint='execute',
-                                args={
-                                    'lua_source': page_script,
-                                    'wait': 1,
-                                    'url': base_url,
-                                    'new_url': new_url,
-                                    'iframes': 1,
-                                },
-                                session_id="foo",
-                                callback=self.parse)
-
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                return 300
-            return self.add_pagenum
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
+    def parse_page(self, response):
+        for page_num in range(120):
+            new_url = 'http://kns.cnki.net/kns/brief/brief.aspx?curpage=' + str(page_num+1) + '&RecordsPerPage=50&QueryID=6&ID=&turnpage=1&tpagemode=L&dbPrefix=CCND&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx&isinEn=0&'
+            print(new_url)
+            yield scrapy.Request(new_url, callback=self.parse, meta=response.meta, dont_filter=True)
 
     def parse(self, response):
         for record in response.css(
@@ -127,9 +71,8 @@ class BzkSpider(scrapy.Spider):
             item['link'] = paper_url
             item['spider_name'] = 'bzk'
             item['module_name'] = '中国知网-报纸库'
-
-            yield scrapy.Request(paper_url, callback=self.parse_end,
-                                 dont_filter=True, meta=item)
+            print('paper_url==' + str(paper_url))
+            yield scrapy.Request(paper_url, callback=self.parse_end,headers={'type': 'item'}, meta=item, dont_filter=True)
 
     def parse_end(self, response):
         logging.info('url====' + str(response.meta['link']))
@@ -138,22 +81,26 @@ class BzkSpider(scrapy.Spider):
             item['title'] = response.meta['title']
             item['author'] = response.meta['author']
             item['name'] = response.meta['name']
-            result = response.css('.wxBaseinfo *::text').extract()
             item['sub_title'] = ''
             item['intro'] = ''
             item['version'] = ''
+            result = response.css('div.brief>div.row')
             for i in range(len(result)):
-                if result[i] == '正文快照：':
-                    item['intro'] = result[i+1]
-                if result[i] == '副标题：':
-                    item['sub_title'] = result[i+1]
-                if result[i] == '版号：':
-                    item['version'] = result[i+1]
+                if result[i].css('span::text').get("").strip() == '正文快照：':
+                    item['intro'] = result[i].css('.abstract-text::text').get("").strip()
+                if result[i].css('span::text').get("").strip() == '副标题：':
+                    item['sub_title'] = result[i].css('p::text').get("").strip()
+            result1 = response.css('div.doc-top>div.row')
+            for i in range(len(result1)):
+                if result1[i].css('span::text').get("").strip() == '版号：':
+                    item['version'] = result1[i].css('p::text').get("").strip()
+            item['intro'] = response.css('.abstract-text *::text').extract()
             item['date'] = response.meta['date']
             item['website'] = response.meta['website']
             item['link'] = response.meta['link']
             item['spider_name'] = response.meta['spider_name']
             item['module_name'] = response.meta['module_name']
+            print('paper_url==' + str(response.url))
             yield item
         except Exception as e:
             logging.error(

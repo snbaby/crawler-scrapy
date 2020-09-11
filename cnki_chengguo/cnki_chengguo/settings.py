@@ -19,7 +19,7 @@ NEWSPIDER_MODULE = 'cnki_chengguo.spiders'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
-
+COOKIES_ENABLED = True
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # CONCURRENT_REQUESTS = 32
 
@@ -75,7 +75,7 @@ ITEM_PIPELINES = {
 }
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
-AUTOTHROTTLE_ENABLED = True
+# AUTOTHROTTLE_ENABLED = True
 # The initial download delay
 # AUTOTHROTTLE_START_DELAY = 5
 # The maximum download delay to be set in case of high latencies
@@ -94,18 +94,19 @@ AUTOTHROTTLE_ENABLED = True
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
+
 LOG_ENABLED = True
 LOG_FILE = "spiders.log"
-LOG_LEVEL = "INFO"
+LOG_LEVEL = "ERROR"
 
-#MYSQL_HOST = '10.8.32.125'
+# MYSQL_HOST = '10.8.32.125'
 MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'
 # MYSQL_HOST = '192.168.43.201'
 MYSQL_USER = 'root'
 MYSQL_PASSWORD = 'Liqin1988'
-#MYSQL_PASSWORD ='Admin123!'
+# MYSQL_PASSWORD ='Admin123!'
 
-#MYSQL_DB = 'engineering-brain'
+# MYSQL_DB = 'engineering-brain'
 MYSQL_DB = 'python'
 MYSQL_PORT = 3306
 MYSQL_CHRSET = 'utf8'
