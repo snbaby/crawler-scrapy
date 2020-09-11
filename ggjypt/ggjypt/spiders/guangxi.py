@@ -43,7 +43,7 @@ function main(splash, args)
   js = string.format("__doPostBack('MoreInfoList1$Pager','%d')", args.page)
   splash:evaljs(js)
   wait_for_element(splash, ".DataGrid")
-  assert(splash:wait(5))
+  assert(splash:wait(1))
   return splash:html()
 end
 """
@@ -124,52 +124,51 @@ class GansuSpider(scrapy.Spider):
                     item['title'] = selector.css('td:nth-child(2) a::attr(title)').extract_first()
                     item['time'] = selector.css('td:nth-child(3)::text').extract_first().strip()
                     item['url'] = response.urljoin(selector.css('td:nth-child(2) a::attr(href)').extract_first())
-                    yield scrapy.Request(url, callback=self.parse_item, dont_filter=True, meta=item)
+                    yield scrapy.Request(item['url'], callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_item(self, response):
-        if response.meta['title']:
-            try:
-                appendix, appendix_name = get_attachments(response)
-                category = '其他';
-                title = response.meta['title']
-                if title.find('招标') >= 0:
-                    category = '招标'
-                elif title.find('中标') >= 0:
-                    category = '中标'
-                elif title.find('成交') >= 0:
-                    category = '成交'
-                elif title.find('结果') >= 0:
-                    category = '结果'
-                elif title.find('单一') >= 0:
-                    category = '单一'
-                item = ztbkItem()
-                item['title'] = title
-                item['content'] = "".join(response.xpath('//td[@class="infodetail"]').extract())
-                item['source'] = ''
-                item['category'] = category
-                item['type'] = ''
-                item['region'] = '广西壮族自治区'
-                item['time'] = response.meta['time']
-                item['website'] = '广西壮族自治区公共资源交易服务平台'
-                item['module_name'] = '广西壮族自治区-公共交易平台'
-                item['spider_name'] = 'guangxi_ggjypt'
-                item['txt'] = "".join(response.xpath('//td[@class="infodetail"]//text()').extract())
-                item['appendix_name'] = appendix_name
-                item['link'] = response.meta['url']
-                item['appendix'] = appendix
-                item['time'] = get_times(item['time'])
-                print(
-                    "===========================>crawled one item" +
-                    response.request.url)
-            except Exception as e:
-                logging.error(
-                    self.name +
-                    " in parse_item: url=" +
-                    response.request.url +
-                    ", exception=" +
-                    e.__str__())
-                logging.exception(e)
-            yield item
+        try:
+            appendix, appendix_name = get_attachments(response)
+            category = '其他';
+            title = response.meta['title']
+            if title.find('招标') >= 0:
+                category = '招标'
+            elif title.find('中标') >= 0:
+                category = '中标'
+            elif title.find('成交') >= 0:
+                category = '成交'
+            elif title.find('结果') >= 0:
+                category = '结果'
+            elif title.find('单一') >= 0:
+                category = '单一'
+            item = ztbkItem()
+            item['title'] = title
+            item['content'] = response.css('.infodetail').extract_first()
+            item['source'] = ''
+            item['category'] = category
+            item['type'] = ''
+            item['region'] = '广西壮族自治区'
+            item['time'] = response.meta['time']
+            item['website'] = '广西壮族自治区公共资源交易服务平台'
+            item['module_name'] = '广西壮族自治区-公共交易平台'
+            item['spider_name'] = 'guangxi_ggjypt'
+            item['txt'] = ''.join(response.css('.infodetail *::text').extract())
+            item['appendix_name'] = appendix_name
+            item['link'] = response.meta['url']
+            item['appendix'] = appendix
+            item['time'] = get_times(item['time'])
+            print(
+                "===========================>crawled one item" +
+                response.request.url)
+        except Exception as e:
+            logging.error(
+                self.name +
+                " in parse_item: url=" +
+                response.request.url +
+                ", exception=" +
+                e.__str__())
+            logging.exception(e)
+        yield item
