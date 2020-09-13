@@ -41,7 +41,7 @@ class NingxiaGgjyptSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -109,7 +109,7 @@ class NingxiaGgjyptSpider(scrapy.Spider):
                     logging.error(self.name + ": " + e.__str__())
                     logging.exception(e)
         else:
-            result = json.loads(response.css('pre::text').extract_first())
+            result = json.loads(response.text)
             data = json.loads(result.get('return'))
             Table = data.get('Table')
             for table in Table:
