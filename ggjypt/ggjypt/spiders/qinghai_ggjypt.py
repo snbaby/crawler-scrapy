@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
+import json
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
+
 
 class QinghaiGgjyptSpider(scrapy.Spider):
     name = 'qinghai_ggjypt'
@@ -12,7 +14,7 @@ class QinghaiGgjyptSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS': 10,
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOAD_DELAY': 2,
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -26,173 +28,80 @@ class QinghaiGgjyptSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        #'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        # 'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-                function wait_for_element(splash, css, maxwait)
-                  -- Wait until a selector matches an element
-                  -- in the page. Return an error if waited more
-                  -- than maxwait seconds.
-                  if maxwait == nil then
-                      maxwait = 10
-                  end
-                  return splash:wait_for_resume(string.format([[
-                    function main(splash) {
-                      var selector = '%s';
-                      var maxwait = %s;
-                      var end = Date.now() + maxwait*1000;
-
-                      function check() {
-                        if(document.querySelector(selector)) {
-                          splash.resume('Element found');
-                        } else if(Date.now() >= end) {
-                          var err = 'Timeout waiting for element';
-                          splash.error(err + " " + selector);
-                        } else {
-                          setTimeout(check, 200);
-                        }
-                      }
-                      check();
-                    }
-                  ]], css, maxwait))
-                end
-                function main(splash, args)
-                  splash:go(args.url)
-                  wait_for_element(splash, ".active")
-                  splash:wait(1)
-                  return splash:html()
-                end
-                """
         try:
             contents = [
                 {
                     'topic': 'gcjs',  # 工程建设
-                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001001/secondPage.html'
+                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001001/secondPage.html',
+                    'categoryNum': '001001',
+                    'pageIndex': 12845
                 },
                 {
                     'topic': 'zfcg',  # 政府采购
-                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001002/secondPage.html'
+                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001002/secondPage.html',
+                    'categoryNum': '001002',
+                    'pageIndex': 8609
                 },
                 {
                     'topic': 'ypcq',  # 药品采购
-                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001003/secondPage.html'
+                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001003/secondPage.html',
+                    'categoryNum': '001003',
+                    'pageIndex': 12
                 },
                 {
                     'topic': 'cqjy',  # 产权交易
-                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001004/secondPage.html'
+                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001004/secondPage.html',
+                    'categoryNum': '001004',
+                    'pageIndex': 265
                 },
                 {
                     'topic': 'kqjtd',  # 矿权及土地
-                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001005/secondPage.html'
+                    'url': 'http://www.qhggzyjy.gov.cn/ggzy/jyxx/001005/secondPage.html',
+                    'categoryNum': '001005',
+                    'pageIndex': 97
                 }
             ]
+            url = 'http://www.qhggzyjy.gov.cn/wzds/CustomSearchInfoShow.action?cmd=Custom_Search_InfoShow'
             for content in contents:
-                yield SplashRequest(content['url'],
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': content['url'],
-                },
-                    callback=self.parse_page,
-                    meta=content)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_page(self, response):
-        script = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
-
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-
-          assert(splash:go(args.url))
-          wait_for_element(splash, ".active")
-          splash:runjs("document.querySelector('#record').innerHTML = ''")
-          splash:runjs("document.querySelector('.active').classList.add('test')")
-          splash:runjs("document.querySelector('.active').classList.remove('active')")
-          js = string.format("document.querySelector('.test').setAttribute('data-page-index',%d)", args.pagenum)
-          splash:evaljs(js)
-          splash:runjs("document.querySelector('.test').click()")
-          wait_for_element(splash, ".active")
-          wait_for_element(splash, "#record tr")
-          return splash:html()
-        end
-        """
-        page_count = int(self.parse_pagenum(response, ))
-        try:
-            for pagenum in range(page_count):
-                url = response.meta['url']
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'pagenum': pagenum,
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response, ):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                total = int(response.css('.m-pagination-info::text').extract_first().split('of')[1].replace('entires', '').strip())
-                if total/10 == int(total/10):
-                    return int(total/10)
-                else:
-                    return int(total/10) + 1
-            return self.add_pagenum
+                pageIndex = content['pageIndex']
+                for pageNum in range(pageIndex):
+                    data = {
+                        'cnum': '001;002;003;004;005;006;007;008;009;010',
+                        'front': '/ggzy',
+                        'area': '0',
+                        'categoryNum': '001001',
+                        'pageIndex': str(pageNum + 1),
+                        'pageSize': '10',
+                        'xiaquCode': '',
+                        'titleInfo': ''
+                    }
+                    print(data)
+                    yield scrapy.FormRequest(url=url,
+                                             headers={
+                                                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                                 'Accept': 'application/json, text/javascript, */*; q=0.01'
+                                             },
+                                             formdata=data, method='POST', callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for tr in response.css('#record tr'):
-            try:
-                title = tr.css(
-                    'td:nth-child(2) a::attr(title)').extract_first()
-                url = response.urljoin(
-                    tr.css('td:nth-child(2) a::attr(href)').extract_first())
-                region = tr.css(
-                    'td:nth-child(3) span::attr(title)').extract_first()
-                time = tr.css('td:nth-child(4) span::text').extract_first()
+        datas = json.loads(json.loads(response.text)['custom'])['records']
+        try:
+            for data in datas:
+                title = data['title']
+                url = 'http://www.qhggzyjy.gov.cn'+data['linkurl']
+                region = data['xiaquname']
+                time = data['date']
                 result = {
                     'url': url,
                     'title': title,
@@ -201,9 +110,9 @@ class QinghaiGgjyptSpider(scrapy.Spider):
 
                 }
                 yield scrapy.Request(url, callback=self.parse_item, meta=result, dont_filter=True)
-            except Exception as e:
-                logging.error(self.name + ": " + e.__str__())
-                logging.exception(e)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
     def parse_item(self, response):
         try:
