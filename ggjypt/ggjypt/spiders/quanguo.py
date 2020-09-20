@@ -4,53 +4,35 @@ import logging
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-import time
-from utils.tools.attachment import get_attachments,get_times
+import datetime
+import json
+from utils.tools.attachment import get_attachments, get_times
 
-script = """
-function wait_for_element(splash, css, maxwait)
-  -- Wait until a selector matches an element
-  -- in the page. Return an error if waited more
-  -- than maxwait seconds.
-  if maxwait == nil then
-      maxwait = 10
-  end
-  return splash:wait_for_resume(string.format([[
-    function main(splash) {
-      var selector = '%s';
-      var maxwait = %s;
-      var end = Date.now() + maxwait*1000;
+url = 'http://deal.ggzy.gov.cn/ds/deal/dealList_find.jsp'
+end = datetime.date.today()
+begin = end.replace(day=end.day - 9)
+TIMEBEGIN_SHOW = begin.strftime("%Y-%m-%d")
+TIMEBEGIN = TIMEBEGIN_SHOW
+TIMEEND_SHOW = end.strftime("%Y-%m-%d")
+TIMEEND = TIMEEND_SHOW
+data = {
+    "TIMEBEGIN_SHOW": TIMEBEGIN_SHOW,
+    "TIMEEND_SHOW": TIMEEND_SHOW,
+    "TIMEBEGIN": TIMEBEGIN,
+    "TIMEEND": TIMEEND,
+    "SOURCE_TYPE": "1",
+    "DEAL_TIME": "05",
+    "DEAL_CLASSIFY": "00",
+    "DEAL_STAGE": "0000",
+    "DEAL_PROVINCE": "0",
+    "DEAL_CITY": "0",
+    "DEAL_PLATFORM": "0",
+    "BID_PLATFORM": "0",
+    "DEAL_TRADE": "0",
+    "isShowAll": "1",
+    "PAGENUMBER": "1"
+}
 
-      function check() {
-        if(document.querySelector(selector)) {
-          splash.resume('Element found');
-        } else if(Date.now() >= end) {
-          var err = 'Timeout waiting for element';
-          splash.error(err + " " + selector);
-        } else {
-          setTimeout(check, 200);
-        }
-      }
-      check();
-    }
-  ]], css, maxwait))
-end
-
-function main(splash, args)
-  splash:go(args.url)
-  assert(splash:wait(0.5))
-  wait_for_element(splash, ".btn")
-  splash:runjs("document.querySelector('#choose_time_05').click()")
-  splash:runjs("document.querySelector('#searchButton').click()")
-  wait_for_element(splash, ".btn")
-  js = string.format("document.querySelector('#gotopage').value =%d", args.page)
-  splash:evaljs(js)
-  splash:runjs("document.querySelector('#toview').innerHTML=''")
-  splash:runjs("document.querySelector('.btn').click()")
-  wait_for_element(splash, "#toview > div")
-  return splash:html()
-end
-"""
 
 class GansuSpider(scrapy.Spider):
     name = 'quanguo_ggjypt'
@@ -59,21 +41,21 @@ class GansuSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
         'DOWNLOAD_DELAY': 0.5,
-        'DOWNLOADER_MIDDLEWARES' : {
+        'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
             'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
         },
-        'SPIDER_MIDDLEWARES' : {
+        'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
-        'HTTPCACHE_STORAGE' : 'scrapy_splash.SplashAwareFSCacheStorage',
+        'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
         'ITEM_PIPELINES': {
             'utils.pipelines.MysqlTwistedPipeline.MysqlTwistedPipeline': 64,
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -81,81 +63,43 @@ class GansuSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            contents = [
-                {
-                    'topic': 'quanguo',  # 全国公共资源拍卖交易网
-                    'url': 'http://deal.ggzy.gov.cn/ds/deal/dealList.jsp'
-                }
-            ]
-            for content in contents:
-                yield SplashRequest(content['url'],
-                                    endpoint = 'execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'page': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    meta=content)
+            yield scrapy.FormRequest(url=url, formdata=data, method='POST',
+                                     headers={
+                                         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                         'Accept': '*/*'
+                                     },
+                                     callback=self.parse_page, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_page(self, response):
-        page_count = int(self.parse_pagenum(response))
-        print('page_count' + str(page_count))
         try:
+            result = json.loads(response.text)
+            page_count = result['ttlpage']
             for pagenum in range(page_count):
-                if pagenum > 0:
-                    yield SplashRequest(response.meta['url'],
-                                        endpoint='execute',
-                                        args={
-                                            'lua_source': script,
-                                            'wait': 1,
-                                            'page': pagenum,
-                                            'url': response.meta['url'],
-                                        },
-                                        callback=self.parse,
-                                        meta=response.meta)
+                data['PAGENUMBER'] = str(pagenum + 1)
+                yield scrapy.FormRequest(url=url, formdata=data, method='POST',
+                                         headers={
+                                             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                             'Accept': '*/*'
+                                         },
+                                         callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                return int(response.xpath('//*[@class="count"]').re(r'([1-9]\d*\.?\d*)')[1]) + 1
-            return self.add_pagenum
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
+
     def parse(self, response):
-        script = """
-        function main(splash, args)
-          splash:go(args.url)
-          assert(splash:wait(1))
-          splash:runjs("document.querySelector('body').innerHTML = document.getElementsByTagName('iframe')[0].contentWindow.document.body.querySelector('.detail').innerHTML")
-          return splash:html()
-        end
-        """
-        for selector in response.xpath('//*[@class="publicont"]/div/h4'):
+        for tempData in json.loads(response.text)['data']:
             try:
                 item = {}
-                item['title'] = selector.xpath('./a/text()').extract_first()
-                item['time'] = selector.xpath('./span/text()').extract_first()
-                url = selector.xpath('./a/@href').extract_first()
-                item['url'] = url
-                yield SplashRequest(url,
-                    endpoint='execute',
-                    args={
-                        'lua_source': script,
-                        'wait': 1,
-                        'url': url,
-                    },
-                    callback=self.parse_item,
-                    meta=item)
+                item['title'] = tempData['title']
+                item['time'] = tempData['timeShow']
+                item['url'] = tempData['url'].replace('/html/a', '/html/b')
+                item['source'] = tempData['platformName']
+                item['region'] = tempData['districtShow']
+                item['type'] = tempData['stageShow']
+                yield scrapy.Request(item['url'], callback=self.parse_item, meta=item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -178,16 +122,16 @@ class GansuSpider(scrapy.Spider):
                     category = '单一'
                 item = ztbkItem()
                 item['title'] = title
-                item['content'] = "".join(response.xpath('//div[@id="mycontent"]').extract())
-                item['source'] = response.xpath('//a[@class="originUrl"]/text()').extract_first()
+                item['content'] = "".join(response.css('#mycontent').extract())
+                item['source'] = response.meta['source']
                 item['category'] = category
-                item['type'] = ''
-                item['region'] = '全国'
+                item['type'] = response.meta['type']
+                item['region'] = response.meta['region']
                 item['time'] = response.meta['time']
                 item['website'] = '全国公共资源交易服务平台'
                 item['module_name'] = '全国-公共交易平台'
                 item['spider_name'] = 'quanguo_ggjypt'
-                item['txt'] = "".join(response.xpath('//div[@id="mycontent"]//text()').extract())
+                item['txt'] = "".join(response.css('#mycontent *::text').extract())
                 item['appendix_name'] = appendix_name
                 item['link'] = response.meta['url']
                 item['appendix'] = appendix
