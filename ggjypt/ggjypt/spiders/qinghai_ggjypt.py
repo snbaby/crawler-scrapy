@@ -83,7 +83,6 @@ class QinghaiGgjyptSpider(scrapy.Spider):
                         'xiaquCode': '',
                         'titleInfo': ''
                     }
-                    print(data)
                     yield scrapy.FormRequest(url=url,
                                              headers={
                                                  'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',

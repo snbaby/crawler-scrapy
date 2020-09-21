@@ -2,47 +2,30 @@
 import scrapy
 import logging
 import time
+import json
+import math
+import datetime
 
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
 
-script = """
-function wait_for_element(splash, css, maxwait)
-  -- Wait until a selector matches an element
-  -- in the page. Return an error if waited more
-  -- than maxwait seconds.
-  if maxwait == nil then
-      maxwait = 10
-  end
-  return splash:wait_for_resume(string.format([[
-    function main(splash) {
-      var selector = '%s';
-      var maxwait = %s;
-      var end = Date.now() + maxwait*1000;
+url = 'http://ggzyjy.sc.gov.cn/WebBuilder/rest/searchindb/get'
+end = datetime.date.today()
+begin = end.replace(month=end.month - 3)
+strDate = begin.strftime("%Y-%#m-%#d 00:00:00")
+endDate = end.strftime("%Y-%#m-%#d 23:59:59")
 
-      function check() {
-        if(document.querySelector(selector)) {
-          setTimeout(check, 200);
-        } else if(Date.now() >= end) {
-          var err = 'Timeout waiting for element';
-          splash.error(err + " " + selector);
-        } else {
-          splash.resume('Element found');
-        }
-      }
-      check();
-    }
-  ]], css, maxwait))
-end
+data = {
+    "fuTitle": "",
+    "pageIndex": "1",
+    "strDate": strDate,
+    "endDate": endDate,
+    "categorynum": "002",
+    "jyResource": "000",
+    "tradeType": "no"
+}
 
-function main(splash, args)
-  splash:go(args.url)
-  wait_for_element(splash, ".layui-layer-content.layui-layer-loading1")
-  assert(splash:wait(3))
-  return splash:html()
-end
-"""
 
 class TianJinSzfwjSpider(scrapy.Spider):
     name = 'sichuan_ggjypt'
@@ -50,7 +33,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS': 10,
         'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOAD_DELAY': 2,
         'DOWNLOADER_MIDDLEWARES': {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -73,56 +56,52 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html"
-            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_page)
+
+            yield scrapy.FormRequest(url=url,
+                                     headers={
+                                         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                         'Accept': 'application/json, text/javascript, */*; q=0.01'
+                                     },
+                                     dont_filter=True,
+                                     formdata=data, method='POST', callback=self.parse_page)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_page(self, response):
-        page_count = int(self.parse_pagenum(response))
+        page_count = math.ceil(json.loads(response.text)['totalcount']/12)
         try:
             for pagenum in range(page_count):
-                if pagenum == 0:
-                    url = "http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html"
-                    yield SplashRequest(url,endpoint = 'execute', args={'lua_source': script, 'wait': 1,'url': url}, callback=self.parse,
-                                        dont_filter=True)
-                elif pagenum < 7 and pagenum > 1:
-                    url = "http://ggzyjy.sc.gov.cn/jyxx/"+str(pagenum)+".html"
-                    yield SplashRequest(url, endpoint='execute', args={'lua_source': script, 'wait': 1, 'url': url},
-                                        callback=self.parse,
-                                        dont_filter=True)
-                elif pagenum > 6:
-                    url = "http://ggzyjy.sc.gov.cn/jyxx/transactionInfo.html?categoryNum=002&pageIndex=" + str(pagenum)
-                    yield SplashRequest(url, endpoint='execute', args={'lua_source': script, 'wait': 1, 'url': url},
-                                        callback=self.parse,
-                                        dont_filter=True)
-                print(url + str(pagenum))
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            details = response.xpath('//*[@id="pager"]/script').re(r'([1-9]\d*\.?\d*)')[4]
-            pageCount = response.xpath('//*[@id="pager"]/script').re(r'([1-9]\d*\.?\d*)')[3]
-            if not self.add_pagenum:
-                return int(details) / int(pageCount) + 1
-            return self.add_pagenum
+                data['pageIndex'] = str(pagenum + 1)
+                yield scrapy.FormRequest(url=url,
+                                         headers={
+                                             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                             'Accept': 'application/json, text/javascript, */*; q=0.01'
+                                         },
+                                         dont_filter=True,
+                                         meta=data,
+                                         formdata=data, method='POST', callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for selector in response.xpath('//ul[@class="comm-list"]/li/p'):
+        for infodata in json.loads(response.text)['infodata']:
             try:
+                infoid = infodata['infoid']
+                infodate = infodata['infodate']
+                categorynum = infodata['categorynum']
+                zhuanzai = infodata['zhuanzai']
+                title = infodata['title']
+
                 item = {}
-                item['title'] = selector.xpath('./a/text()').extract_first()
-                item['time'] = selector.xpath('./span/text()').extract_first()
-                url = response.urljoin(selector.xpath('./a/@href').extract_first())
-                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True, meta=item)
+                item['title'] = title
+                item['time'] = infodate
+                item['zhuanzai'] = zhuanzai
+                item['url'] = 'http://ggzyjy.sc.gov.cn/jyxx/' + categorynum[0:6] + '/' + categorynum + '/' + infodate[
+                                                                                                             0:10].replace(
+                    '-', '') + '/' + infoid + '.html'
+                yield scrapy.Request(item['url'], callback=self.parse_item, dont_filter=True, meta=item)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -149,7 +128,7 @@ class TianJinSzfwjSpider(scrapy.Spider):
                 item = ztbkItem()
                 item['title'] = title
                 item['content'] = "".join(response.xpath('//div[@class="clearfix"]').extract())
-                item['source'] = '四川省公共资源交易服务平台'
+                item['source'] = response.meta['zhuanzai']
                 item['category'] = category
                 item['type'] = ''
                 item['region'] = '四川省'
