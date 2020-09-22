@@ -6,24 +6,13 @@ from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
 from utils.tools.attachment import get_attachments,get_times
 
-script = """
-function main(splash, args)
-  assert(splash:go(args.url))
-  assert(splash:wait(1))
-  return {
-    html = splash:html(),
-  }
-end
-"""
-
-
 class TianJinSzfwjSpider(scrapy.Spider):
     name = 'tianjin_ggjypt'
     custom_settings = {
-        'CONCURRENT_REQUESTS': 10,
-        'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+        'CONCURRENT_REQUESTS': 1,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
         'CONCURRENT_REQUESTS_PER_IP': 0,
-        'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOAD_DELAY': 2,
         'SPIDER_MIDDLEWARES': {
             'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
         },
@@ -38,7 +27,9 @@ class TianJinSzfwjSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
+
+
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,8 +37,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
 
     def start_requests(self):
         try:
-            url = "http://ggzy.xzsp.tj.gov.cn/jyxxzfcg/index.jhtml"
-            yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse_type)
+            url = "http://60.28.163.169/jyxx/index_1.jhtml"
+            yield scrapy.Request(url, callback=self.parse_type, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -56,23 +47,18 @@ class TianJinSzfwjSpider(scrapy.Spider):
         for href in response.xpath('//ul[@class="menu_list"]/li/h3/@onclick'):
             try:
                 url = href.extract()
-                url = url.replace('window.location=\'','').replace('\'','')
-                print(url)
-                yield SplashRequest(url,callback=self.parse_page, dont_filter=True,meta={'url':url})
-
+                url = url.replace('window.location=\'','').replace('\'','').replace('http://ggzy.zwfwb.tj.gov.cn:80','http://60.28.163.169')
+                yield scrapy.Request(url, callback=self.parse_page,headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
 
     def parse_page(self, response):
-        page_count = int(self.parse_pagenum(response))
-        print('url'+str(page_count))
+        page_count = self.parse_pagenum(response)
         try:
             for pagenum in range(page_count):
-                temUrl = response.meta['url'].replace('.jhtml', '')+'_'
-                url = temUrl + \
-                      str(pagenum) + ".jhtml" if pagenum > 0 else response.meta['url']
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, dont_filter=True)
+                url = response.url.replace('.jhtml', '')+'_' + str(pagenum+1) + ".jhtml"
+                yield scrapy.Request(url, callback=self.parse, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -82,7 +68,11 @@ class TianJinSzfwjSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.xpath('//*[@class="pages-list"]/li[1]/a/text()').re(r'([1-9]\d*\.?\d*)')[2])
+                result = response.css('body > div.content-warp > div.jyxxcontent > div > div > ul > li:nth-last-child(2) > a::attr(onclick)').extract_first()
+                if result == "location.href='index.jhtml';":
+                    return 1
+                else:
+                    return int(result.replace("location.href='index_","").replace(".jhtml';",""))
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -91,9 +81,8 @@ class TianJinSzfwjSpider(scrapy.Spider):
     def parse(self, response):
         for href in response.xpath('//div[@class="article-list3-t"]/a/@url'):
             try:
-                url = response.urljoin(href.extract())
-                print(url)
-                yield SplashRequest(url,callback=self.parse_item, dont_filter=True)
+                url = response.urljoin(href.extract()).replace('http://ggzy.zwfwb.tj.gov.cn:80','http://60.28.163.169')
+                yield scrapy.Request(url,callback=self.parse_item, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
