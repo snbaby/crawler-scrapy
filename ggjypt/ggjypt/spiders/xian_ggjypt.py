@@ -5,18 +5,6 @@ import logging
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
 from utils.tools.attachment import get_attachments,get_times
-
-script = """
-function main(splash, args)
-  assert(splash:go(args.url))
-  assert(splash:wait(1))
-  return {
-    html = splash:html(),
-  }
-end
-"""
-
-
 class XianGgjyptSpider(scrapy.Spider):
     name = 'xian_ggjypt'
     custom_settings = {
@@ -41,7 +29,7 @@ class XianGgjyptSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,23 +40,23 @@ class XianGgjyptSpider(scrapy.Spider):
             contents = [
                 {
                     'topic': 'gcjs',  # 工程建设项目招标投标
-                    'url': 'http://www.sxggzyjy.cn/jydt/001001/001001001/subPage_jyxx.html'
+                    'url': 'http://xa.sxggzyjy.cn/jydt/001001/001001001/subPage.html'
                 },
                 {
                     'topic': 'tdsy',  # 土地使用权和矿业权出让
-                    'url': 'http://www.sxggzyjy.cn/jydt/001001/001001002/subPage_jyxx.html'
+                    'url': 'http://xa.sxggzyjy.cn/jydt/001001/001001002/subPage.html'
                 },
                 {
                     'topic': 'gycq',  # 国有产权交易
-                    'url': 'http://www.sxggzyjy.cn/jydt/001001/001001003/subPage_jyxx.html'
+                    'url': 'http://xa.sxggzyjy.cn/jydt/001001/001001003/subPage.html'
                 },
                 {
                     'topic': 'zfcg',  # 政府采购
-                    'url': 'http://www.sxggzyjy.cn/jydt/001001/001001004/subPage_jyxx.html'
+                    'url': 'http://xa.sxggzyjy.cn/jydt/001001/001001004/subPage.html'
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
+                yield scrapy.Request(content['url'], callback=self.parse_page,
                                     meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -83,7 +71,7 @@ class XianGgjyptSpider(scrapy.Spider):
                 else:
                     url = response.meta['url'].replace(
                         'subPage.html', str(pagenum + 1) + '.html')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta,
+                yield scrapy.Request(url, callback=self.parse, meta=response.meta,
                                     dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
