@@ -5,6 +5,7 @@ import logging
 from scrapy_splash import SplashRequest
 from ggjypt.items import ztbkItem
 from utils.tools.attachment import get_attachments,get_times
+from scrapy.selector import Selector
 
 script = """
 function main(splash, args)
@@ -41,7 +42,7 @@ class XizangGgjyptSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        'SPLASH_URL': "http://localhost:8050/"}
+        'SPLASH_URL': "http://47.57.108.128:8050/"}
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -54,53 +55,53 @@ class XizangGgjyptSpider(scrapy.Spider):
                     'topic': 'zbzsgg',  # 招标资审报告
                     'url': 'http://www.xzggzy.gov.cn:9090/zbzsgg/index.jhtml'
                 },
-                {
-                    'topic': 'jyjggg',  # 交易结果公告
-                    'url': 'http://www.xzggzy.gov.cn:9090/jyjggg/index.jhtml'
-                },
-                {
-                    'topic': 'zbwjcq',  # 招标文件澄清
-                    'url': 'http://www.xzggzy.gov.cn:9090/zbwjcq/index.jhtml'
-                },
-                {
-                    'topic': 'zgysjg',  # 资格预审结果
-                    'url': 'http://www.xzggzy.gov.cn:9090/zgysjg/index.jhtml'
-                },
-                {
-                    'topic': 'td',  # 成交公示
-                    'url': 'http://www.xzggzy.gov.cn:9090/td/index.jhtml'
-                },
-                {
-                    'topic': 'cq',  # 挂牌结果
-                    'url': 'http://www.xzggzy.gov.cn:9090/cq/index.jhtml'
-                },
-                {
-                    'topic': 'jyjg',  # 交易结果
-                    'url': 'http://www.xzggzy.gov.cn:9090/jyjg/index.jhtml'
-                },
-                {
-                    'topic': 'zrbqyxx',  # 转让标企业信息
-                    'url': 'http://www.xzggzy.gov.cn:9090/zrbqyxx/index.jhtml'
-                },
-                {
-                    'topic': 'zrbgdxx',  # 转让标股东信息
-                    'url': 'http://www.xzggzy.gov.cn:9090/zrbgdxx/index.jhtml'
-                },
-                {
-                    'topic': '',  # 采购/资审公告
-                    'url': 'http://www.xzggzy.gov.cn:9090/zfcg/index.jhtml'
-                },
-                {
-                    'topic': 'zbgg',  # 中标公告
-                    'url': 'http://www.xzggzy.gov.cn:9090/zbgg/index.jhtml'
-                },
-                {
-                    'topic': 'gzsx',  # 更正事项
-                    'url': 'http://www.xzggzy.gov.cn:9090/gzsx/index.jhtml'
-                }
+                # {
+                #     'topic': 'jyjggg',  # 交易结果公告
+                #     'url': 'http://www.xzggzy.gov.cn:9090/jyjggg/index.jhtml'
+                # },
+                # {
+                #     'topic': 'zbwjcq',  # 招标文件澄清
+                #     'url': 'http://www.xzggzy.gov.cn:9090/zbwjcq/index.jhtml'
+                # },
+                # {
+                #     'topic': 'zgysjg',  # 资格预审结果
+                #     'url': 'http://www.xzggzy.gov.cn:9090/zgysjg/index.jhtml'
+                # },
+                # {
+                #     'topic': 'td',  # 成交公示
+                #     'url': 'http://www.xzggzy.gov.cn:9090/td/index.jhtml'
+                # },
+                # {
+                #     'topic': 'cq',  # 挂牌结果
+                #     'url': 'http://www.xzggzy.gov.cn:9090/cq/index.jhtml'
+                # },
+                # {
+                #     'topic': 'jyjg',  # 交易结果
+                #     'url': 'http://www.xzggzy.gov.cn:9090/jyjg/index.jhtml'
+                # },
+                # {
+                #     'topic': 'zrbqyxx',  # 转让标企业信息
+                #     'url': 'http://www.xzggzy.gov.cn:9090/zrbqyxx/index.jhtml'
+                # },
+                # {
+                #     'topic': 'zrbgdxx',  # 转让标股东信息
+                #     'url': 'http://www.xzggzy.gov.cn:9090/zrbgdxx/index.jhtml'
+                # },
+                # {
+                #     'topic': '',  # 采购/资审公告
+                #     'url': 'http://www.xzggzy.gov.cn:9090/zfcg/index.jhtml'
+                # },
+                # {
+                #     'topic': 'zbgg',  # 中标公告
+                #     'url': 'http://www.xzggzy.gov.cn:9090/zbgg/index.jhtml'
+                # },
+                # {
+                #     'topic': 'gzsx',  # 更正事项
+                #     'url': 'http://www.xzggzy.gov.cn:9090/gzsx/index.jhtml'
+                # }
             ]
             for content in contents:
-                yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
+                yield scrapy.Request(content['url'], callback=self.parse_page,
                                     meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -115,7 +116,7 @@ class XizangGgjyptSpider(scrapy.Spider):
                 else:
                     url = response.meta['url'].replace(
                         '.jhtml', '_' + str(pagenum + 1) + '.jhtml')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta, dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse, meta=response.meta, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -125,7 +126,7 @@ class XizangGgjyptSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.css(
+                return int(Selector(text=response.text.split('</html>')[1]).css(
                     '.pages-list li:nth-child(1) a::text').extract_first().split('/')[1].replace('页', '').strip())
             return self.add_pagenum
         except Exception as e:
@@ -133,7 +134,7 @@ class XizangGgjyptSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.css('.article-list-old a::attr(href)').extract():
+        for href in Selector(text=response.text.split('</html>')[1]).css('.article-list-old a::attr(href)').extract():
             try:
                 url = response.urljoin(href)
                 yield scrapy.Request(url, callback=self.pares_item, meta={'url': url}, dont_filter=True)
