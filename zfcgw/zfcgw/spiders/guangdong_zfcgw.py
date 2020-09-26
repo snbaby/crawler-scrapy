@@ -4,7 +4,9 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
+
+
 class GuangdongZfcgwSpider(scrapy.Spider):
     name = 'guangdong_zfcgw'
     custom_settings = {
@@ -25,139 +27,33 @@ class GuangdongZfcgwSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
-        }
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-              splash:go(args.url)
-              wait_for_element(splash, ".m_m_c_list")
-              splash:runjs("document.querySelector('.m_m_c_list').innerHTML = ''")
-              splash:runjs("clearForm();onSearch();")
-              wait_for_element(splash, ".m_m_c_list")
-              splash:wait(1)
-              return splash:html()
-            end
-            """
         try:
-            contents = [
-                {
-                    'topic': 'zbgg',  # 招标公告
-                    'url': 'http://www.gdgpo.gov.cn/queryMoreInfoList/channelCode/0005.html'
+            url = 'http://www.gdgpo.gov.cn/queryMoreInfoList.do'
+            for pageNum in range(self.parse_pagenum()):
+                data = {
+                    'channelCode': '0005',
+                    'pointPageIndexId': '1',
+                    'pageIndex': str(pageNum + 1),
+                    'pageSize': '15'
                 }
-            ]
-            for content in contents:
-                yield SplashRequest(content['url'],
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    meta=content)
+                yield scrapy.FormRequest(url=url, formdata=data, method='POST', callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
-    def parse_page(self, response):
-        script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-                splash:go(args.url)
-                wait_for_element(splash, ".m_m_c_list")
-                splash:runjs("document.querySelector('.m_m_c_list').innerHTML = ''")
-                splash:runjs("clearForm();onSearch();")
-                wait_for_element(splash, ".m_m_c_list")
-                splash:runjs("document.querySelector('.m_m_c_list').innerHTML = ''")
-                js = string.format("turnOverPage(%d)", args.pagenum)
-                splash:evaljs(js)
-                wait_for_element(splash, ".m_m_c_list")
-                splash:wait(1)
-                return splash:html()
-            end
-            """
-        page_count = int(self.parse_pagenum(response))
-        try:
-            for pagenum in range(page_count):
-                url = response.meta['url']
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'pagenum': pagenum + 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response):
+    def parse_pagenum(self):
         try:
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.css('form a:nth-last-child(3)::attr(href)').extract_first().replace('javascript:turnOverPage(','').replace(')','').strip())
+                return 26
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
@@ -175,7 +71,6 @@ class GuangdongZfcgwSpider(scrapy.Spider):
                     'title': title,
                     'region': region,
                     'time': time
-
                 }
                 yield scrapy.Request(url, callback=self.parse_item, meta=result, dont_filter=True)
             except Exception as e:
