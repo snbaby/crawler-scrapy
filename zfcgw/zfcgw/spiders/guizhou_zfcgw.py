@@ -4,7 +4,9 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
+
+
 class GuizhouZfcgwSpider(scrapy.Spider):
     name = 'guizhou_zfcgw'
     custom_settings = {
@@ -25,124 +27,100 @@ class GuizhouZfcgwSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
-        }
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-        function main(splash, args)
-          splash:go(args.url)
-          splash:wait(1)
-          return splash:html()
-        end
-        """
         try:
             contents = [
                 {
                     'topic': 'cgxqgg',  # 综合查询
-                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153332561072666.html?siteId=1'
+                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153332561072666.html?siteId=1',
+                    'post_url': 'http://www.ccgp-guizhou.gov.cn/article-search.html',
+                    'category.id': '1153332561072666'
                 },
                 {
                     'topic': 'cggg',  # 采购公告
-                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153418052184995.html?siteId=1'
+                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153418052184995.html?siteId=1',
+                    'post_url': 'http://www.ccgp-guizhou.gov.cn/article-search.html',
+                    'category.id': '1153418052184995'
                 },
                 {
                     'topic': 'gzgg',  # 更正公告
-                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153454200156791.html?siteId=1'
+                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153454200156791.html?siteId=1',
+                    'post_url': 'http://www.ccgp-guizhou.gov.cn/article-search.html',
+                    'category.id': '1153454200156791'
                 },
                 {
                     'topic': 'fbgg',  # 废标公告
-                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153488085289816.html?siteId=1'
+                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153488085289816.html?siteId=1',
+                    'post_url': 'http://www.ccgp-guizhou.gov.cn/article-search.html',
+                    'category.id': '1153488085289816'
                 },
                 {
                     'topic': 'zbcjgg',  # 中标(成交)公告
-                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153531755759540.html?siteId=1'
+                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153531755759540.html?siteId=1',
+                    'post_url': 'http://www.ccgp-guizhou.gov.cn/article-search.html',
+                    'category.id': '1153531755759540'
                 },
                 {
                     'topic': 'dylygs',  # 单一来源公示
-                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153567415242344.html?siteId=1'
+                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153567415242344.html?siteId=1',
+                    'post_url': 'http://www.ccgp-guizhou.gov.cn/article-search.html',
+                    'category.id': '1153567415242344'
                 },
                 {
                     'topic': 'dylycjgg',  # 单一来源(成交)公告
-                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153595823404526.html?siteId=1'
+                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1153595823404526.html?siteId=1',
+                    'post_url': 'http://www.ccgp-guizhou.gov.cn/article-search.html',
+                    'category.id': '1153595823404526'
                 },
                 {
                     'topic': 'zgys',  # 资格预审
-                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1156071132711523.html?siteId=1'
+                    'url': 'http://www.ccgp-guizhou.gov.cn/list-1156071132711523.html?siteId=1',
+                    'post_url': 'http://www.ccgp-guizhou.gov.cn/article-search.html',
+                    'category.id': '1156071132711523'
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'],
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    meta=content,
-                                    dont_filter=True)
+                yield scrapy.Request(content['url'],
+                                     callback=self.parse_page,
+                                     headers={
+                                         'Accept': '*/*',
+                                         'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36'
+                                     },
+                                     meta=content,
+                                     dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse_page(self, response):
-        script = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
-
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-          splash:go(args.url)
-          wait_for_element(splash, ".xnrx a")
-          splash:runjs("document.querySelector('.xnrx').innerHTML = ''")
-          js = string.format("page(%d,15,'');", args.pagenum)
-          splash:evaljs(js)
-          wait_for_element(splash, ".xnrx a")
-          splash:wait(1)
-          return splash:html()
-        end
-        """
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = response.meta['url']
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'pagenum': pagenum + 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta)
+                url = response.meta['post_url']
+                data = {
+                    'siteId': '1',
+                    'category.id': response.meta['category.id'],
+                    'areaName': '',
+                    'tenderRocurementPm': '',
+                    'beginDate': '',
+                    'endDate': '',
+                    'keywords': '',
+                    'articlePageNo': str(pagenum + 1),
+                    'articlePageSize': '15'
+                }
+                yield scrapy.FormRequest(url=url,
+                                         headers={
+                                             'Accept': '*/*',
+                                             'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36'
+                                         },
+                                         formdata=data, method='POST', dont_filter=True, callback=self.parse,
+                                         meta=response.meta)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -169,7 +147,12 @@ class GuizhouZfcgwSpider(scrapy.Spider):
                     'title': title,
                     'time': time
                 }
-                yield scrapy.Request(url, callback=self.parse_item, meta=result, dont_filter=True)
+                yield scrapy.Request(url,
+                                     headers={
+                                         'Accept': '*/*',
+                                         'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36'
+                                     },
+                                     callback=self.parse_item, meta=result, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
