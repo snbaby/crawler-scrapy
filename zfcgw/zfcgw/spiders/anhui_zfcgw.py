@@ -4,7 +4,8 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
+
 
 class AnhuiZfcgwSpider(scrapy.Spider):
     name = 'anhui_zfcgw'
@@ -40,12 +41,9 @@ class AnhuiZfcgwSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'],
-                                    args={
-                                        'wait': 1
-                },
-                    callback=self.parse_page,
-                    meta=content, dont_filter=True)
+                yield scrapy.Request(content['url'],
+                                     callback=self.parse_page,
+                                     meta=content, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -56,12 +54,9 @@ class AnhuiZfcgwSpider(scrapy.Spider):
             for pagenum in range(page_count):
                 url = response.meta['url'].replace(
                     'pageNum=1', 'pageNum=' + str(pagenum + 1))
-                yield SplashRequest(url,
-                                    args={
-                                        'wait': 1
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta, dont_filter=True)
+                yield scrapy.Request(url,
+                                     callback=self.parse,
+                                     meta=response.meta, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -79,7 +74,7 @@ class AnhuiZfcgwSpider(scrapy.Spider):
             logging.exception(e)
 
     def parse(self, response):
-        for tr in response.css('tbody tr'):
+        for tr in response.css('table tr'):
             try:
                 title = tr.css(
                     'td:nth-child(1) a::attr(title)').extract_first()
