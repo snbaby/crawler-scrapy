@@ -4,17 +4,7 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
-
-script = """
-function main(splash, args)
-  assert(splash:go(args.url))
-  assert(splash:wait(1))
-  return {
-    html = splash:html(),
-  }
-end
-"""
+from utils.tools.attachment import get_attachments, get_times
 
 class HainanZfcgwSpider(scrapy.Spider):
     name = 'hainan_zfcgw'
@@ -40,7 +30,7 @@ class HainanZfcgwSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage'
-        }
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,8 +45,7 @@ class HainanZfcgwSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    meta=content)
+                yield scrapy.Request(content['url'], callback=self.parse_page, meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -65,8 +54,8 @@ class HainanZfcgwSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                url = response.meta['url'] + '&currentPage=' + str(pagenum+1)
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta,dont_filter=True)
+                url = response.meta['url'] + '&currentPage=' + str(pagenum + 1)
+                yield scrapy.Request(url, callback=self.parse, meta=response.meta, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -76,19 +65,31 @@ class HainanZfcgwSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                return int(response.css('select[name="currentPage"] option:nth-last-child(1)::text').extract_first().strip())
+                return int(
+                    response.css('select[name="currentPage"] option:nth-last-child(1)::text').extract_first().strip())
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for li in response.css('.nei02_04_01 li'):
+        for li in response.css('.index07_07_02 li'):
             try:
-                href = li.css('em a::attr(href)').extract_first()
-                region = li.css('span b a::text').extract_first()
+                href = li.css('a::attr(href)').extract_first().strip()
+                time = li.css('em::text').extract_first().strip()
+                region = li.css('span p::text').extract_first().strip()
+                source = ''
+                for tempSource in li.css('i::text').extract():
+                    if '代理机构' in tempSource:
+                        source = tempSource.replace('代理机构：','')
                 url = response.urljoin(href)
-                yield scrapy.Request(url, callback=self.pares_item, meta={'url': url,'region':region}, dont_filter=True)
+                temp = {
+                    'url': url,
+                    'region': region,
+                    'time': time,
+                    'source': source
+                }
+                yield scrapy.Request(url, callback=self.pares_item, meta=temp, dont_filter=True)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
@@ -98,7 +99,7 @@ class HainanZfcgwSpider(scrapy.Spider):
 
     def pares_item(self, response):
         try:
-            title = response.css('.title::text').extract_first()
+            title = response.css('title::text').extract_first()
             appendix, appendix_name = get_attachments(response)
             if title.find('招标') >= 0:
                 category = '招标'
@@ -117,8 +118,8 @@ class HainanZfcgwSpider(scrapy.Spider):
             item['content'] = response.css('.content01').extract_first()
             item['appendix'] = appendix
             item['category'] = category
-            item['time'] = ''.join(response.css('.basic *::text').extract()).split('时间：')[1].strip()
-            item['source'] = ''.join(response.css('.basic *::text').extract()).split('公告类型：')[0].split('信息来源：')[1].strip()
+            item['time'] = get_times(response.meta['time'])
+            item['source'] = response.meta['source']
             item['website'] = '中国海南政府采购'
             item['link'] = response.meta['url']
             item['type'] = '2'
@@ -127,10 +128,10 @@ class HainanZfcgwSpider(scrapy.Spider):
             item['spider_name'] = 'hainan_zfcgw'
             item['txt'] = ''.join(response.css('.content01 *::text').extract())
             item['module_name'] = '海南-政府采购网'
-            item['time'] = get_times(item['time'])
             print(
                 "===========================>crawled one item" +
                 response.request.url)
+            yield item
         except Exception as e:
             logging.error(
                 self.name +
@@ -139,5 +140,3 @@ class HainanZfcgwSpider(scrapy.Spider):
                 ", exception=" +
                 e.__str__())
             logging.exception(e)
-        yield item
-
