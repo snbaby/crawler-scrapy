@@ -4,16 +4,8 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
-script = """
-function main(splash, args)
-  assert(splash:go(args.url))
-  assert(splash:wait(1))
-  return {
-    html = splash:html(),
-  }
-end
-"""
+from utils.tools.attachment import get_attachments, get_times
+
 
 class JiangsuZfcgwSpider(scrapy.Spider):
     name = 'jiangsu_zfcgw'
@@ -39,7 +31,7 @@ class JiangsuZfcgwSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
         'HTTPCACHE_STORAGE': 'scrapy_splash.SplashAwareFSCacheStorage',
-        }
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -49,35 +41,35 @@ class JiangsuZfcgwSpider(scrapy.Spider):
         try:
             contents = [
                 {
-                    'topic': 'zgysgg',  #资格预审公告
+                    'topic': 'zgysgg',  # 资格预审公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/zgysgg/'
                 },
                 {
-                    'topic': 'gkzbgg',  #公开招标公告
+                    'topic': 'gkzbgg',  # 公开招标公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/gkzbgg/'
                 },
                 {
-                    'topic': 'yqzbgg',  #邀请招标公告
+                    'topic': 'yqzbgg',  # 邀请招标公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/yqzbgg/'
                 },
                 {
-                    'topic': 'jztbgg',  #竞争性谈判公告
+                    'topic': 'jztbgg',  # 竞争性谈判公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/jztbgg/'
                 },
                 {
-                    'topic': 'jzqsgg',  #竞争性磋商公告
+                    'topic': 'jzqsgg',  # 竞争性磋商公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/jzqsgg/'
                 },
                 {
-                    'topic': 'dylygg',  #单一来源公告
+                    'topic': 'dylygg',  # 单一来源公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/dylygg/'
                 },
                 {
-                    'topic': 'xjgg',  #询价公告
+                    'topic': 'xjgg',  # 询价公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/xjgg/'
                 },
                 {
-                    'topic': 'zbgg',  #中标公告
+                    'topic': 'zbgg',  # 中标公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/zbgg/'
                 },
                 {
@@ -85,25 +77,24 @@ class JiangsuZfcgwSpider(scrapy.Spider):
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/cgcjgg/'
                 },
                 {
-                    'topic': 'zzgg',  #废标（终止）公告
+                    'topic': 'zzgg',  # 废标（终止）公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/zzgg/'
                 },
                 {
-                    'topic': 'cggzgg',  #更正公告
+                    'topic': 'cggzgg',  # 更正公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/cggzgg/'
                 },
                 {
-                    'topic': 'qtgg',  #其他公告
+                    'topic': 'qtgg',  # 其他公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/qtgg/'
                 },
                 {
-                    'topic': 'htgg_1',  #合同公告
+                    'topic': 'htgg_1',  # 合同公告
                     'url': 'http://www.ccgp-jiangsu.gov.cn/ggxx/htgg_1/'
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    meta=content)
+                yield scrapy.Request(content['url'], callback=self.parse_page, meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -112,11 +103,11 @@ class JiangsuZfcgwSpider(scrapy.Spider):
         page_count = int(self.parse_pagenum(response))
         try:
             for pagenum in range(page_count):
-                if pagenum==0:
+                if pagenum == 0:
                     url = response.meta['url'] + 'index.html'
                 else:
-                    url = response.meta['url'] + 'index_' + str(pagenum)+'.html'
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta,dont_filter=True)
+                    url = response.meta['url'] + 'index_' + str(pagenum) + '.html'
+                yield scrapy.Request(url, callback=self.parse, meta=response.meta, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -126,10 +117,7 @@ class JiangsuZfcgwSpider(scrapy.Spider):
             # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
             # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
             if not self.add_pagenum:
-                if len(''.join(response.css('.fanye::text').extract()).strip()) > 0:
-                    return int(''.join(response.css('.fanye::text').extract()).split('，')[0].replace('共有','').replace('页','').strip())
-                else:
-                    return 1
+                return response.text.split('createPageHTML(')[2].split(', ')[0]
             return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
