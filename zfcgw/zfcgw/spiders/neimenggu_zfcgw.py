@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
+import json
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
@@ -32,199 +33,67 @@ class NeimengguZfcgwSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
-
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-          splash:go(args.url)
-          wait_for_element(splash, "#itemContainer a[title]")
-          splash:wait(1)
-          return splash:html()
-        end
-        """
         try:
             contents = [
                 {
                     'topic': 'zbgg',  # 招标公告
-                    'url': 'http://www.nmgp.gov.cn/category/cggg?type_name=1'
+                    'type_name': '1',
+                    'total': 8529
                 },
-                {
-                    'topic': 'zbgzgg',  # 招标更正公告
-                    'url': 'http://www.nmgp.gov.cn/category/cggg?type_name=2'
-                },
-                {
-                    'topic': 'zbcjgg',  # 中标(成交)公告
-                    'url': 'http://www.nmgp.gov.cn/category/cggg?type_name=3'
-                },
-                {
-                    'topic': 'zbcjgzgg',  # 中标(成交)更正公告
-                    'url': 'http://www.nmgp.gov.cn/category/cggg?type_name=4'
-                },
-                {
-                    'topic': 'fbgg',  # 废标公告
-                    'url': 'http://www.nmgp.gov.cn/category/cggg?type_name=5'
-                },
-                {
-                    'topic': 'zgysgg',  # 资格预审公告
-                    'url': 'http://www.nmgp.gov.cn/category/cggg?type_name=6'
-                },
-                {
-                    'topic': 'zgysgzgg',  # 资格预审更正公告
-                    'url': 'http://www.nmgp.gov.cn/category/cggg?type_name=7'
-                }
+                # {
+                #     'topic': 'zbgzgg',  # 招标更正公告
+                #     'type_name': '2',
+                #     'total': 1249
+                # },
+                # {
+                #     'topic': 'zbcjgg',  # 中标(成交)公告
+                #     'type_name': '3',
+                #     'total': 7349
+                # },
+                # {
+                #     'topic': 'zbcjgzgg',  # 中标(成交)更正公告
+                #     'type_name': '4',
+                #     'total': 170
+                # },
+                # {
+                #     'topic': 'fbgg',  # 废标公告
+                #     'type_name': '5',
+                #     'total': 1263
+                # },
+                # {
+                #     'topic': 'zgysgg',  # 资格预审公告
+                #     'type_name': '6',
+                #     'total': 2821
+                # },
+                # {
+                #     'topic': 'zgysgzgg',  # 资格预审更正公告
+                #     'type_name': '7',
+                #     'total': 131
+                # }
             ]
             for content in contents:
-                yield SplashRequest(content['url'],
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    meta=content)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_page(self, response):
-        script = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
-
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-            splash:go(args.url)
-            wait_for_element(splash, "#itemContainer a[title]")
-            splash:wait(1)
-            splash:runjs("document.querySelector('#itemContainer').innerHTML = ''")
-            js = string.format("document.querySelector('.holder a:nth-last-child(3)').setAttribute('ck',%d)", args.pagenum)
-            splash:evaljs(js)
-            splash:runjs("document.querySelector('.holder a:nth-last-child(3)').click()")
-            wait_for_element(splash, "#itemContainer a[title]")
-            splash:wait(1)
-            return splash:html()
-        end
-        """
-        page_count = int(self.parse_pagenum(response))
-        try:
-            for pagenum in range(page_count):
-                url = response.meta['url']
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'pagenum': pagenum + 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                return int(response.css('select option:nth-last-child(1)::attr(value)').extract_first())
-            return self.add_pagenum
+                url = 'http://www.nmgp.gov.cn/zfcgwslave/web/index.php?r=new-data%2Fanndata'
+                for currentPage in range(content['total']):
+                    data = {
+                        'type_name': content['type_name'],
+                        'annstartdate_S': '',
+                        'annstartdate_E': '',
+                        'byf_page': str(currentPage+1),
+                        'fun': 'cggg',
+                        'page_size': '18'
+                    }
+                    yield scrapy.FormRequest(url=url, formdata=data, method='POST', dont_filter=True, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        script = """
-                function wait_for_element(splash, css, maxwait)
-                  -- Wait until a selector matches an element
-                  -- in the page. Return an error if waited more
-                  -- than maxwait seconds.
-                  if maxwait == nil then
-                      maxwait = 10
-                  end
-                  return splash:wait_for_resume(string.format([[
-                    function main(splash) {
-                      var selector = '%s';
-                      var maxwait = %s;
-                      var end = Date.now() + maxwait*1000;
-
-                      function check() {
-                        if(document.querySelector(selector)) {
-                          splash.resume('Element found');
-                        } else if(Date.now() >= end) {
-                          var err = 'Timeout waiting for element';
-                          splash.error(err + " " + selector);
-                        } else {
-                          setTimeout(check, 200);
-                        }
-                      }
-                      check();
-                    }
-                  ]], css, maxwait))
-                end
-                function main(splash, args)
-                  splash:go(args.url)
-                  wait_for_element(splash, "form")
-                  splash:wait(1)
-                  return splash:html()
-                end
-                """
-        for tr in response.css('#itemContainer tr'):
-            try:
-                title = tr.css('td:nth-child(4) a[title]::attr(title)').extract_first()
-                url = tr.css('td:nth-child(4) a[title]::attr(href)').extract_first()
-                region = tr.css('td:nth-child(2) span[title]::attr(title)').extract_first()
-                time = tr.css('td:nth-child(5) span::text').extract_first().split('：')[1].strip()
+        try:
+            for row in json.loads((response.text.encode('utf-8').decode("unicode_escape").split(',"SELECT')[0] + ']').replace('<span class="feed-time-warning">','').replace('<\/span>',''))[0]:
+                title = row['TITLE']
+                url = 'http://www.nmgp.gov.cn/category/cggg?tb_id='+row['ay_table_tag']+'&p_id='+row['wp_mark_id']+'&type='+row['type']
+                region = row['ADNAME']
+                time = row['ENDDATE'].replace('[截止：','').replace(']','').strip()
                 result = {
                     'url': url,
                     'title': title,
@@ -233,9 +102,9 @@ class NeimengguZfcgwSpider(scrapy.Spider):
 
                 }
                 yield scrapy.Request(url, callback=self.parse_item, meta=result,dont_filter=True)
-            except Exception as e:
-                logging.error(self.name + ": " + e.__str__())
-                logging.exception(e)
+        except Exception as e:
+            logging.error(self.name + ": " + e.__str__())
+            logging.exception(e)
 
     def parse_item(self, response):
         try:
