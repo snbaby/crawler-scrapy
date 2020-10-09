@@ -6,15 +6,6 @@ from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
 from utils.tools.attachment import get_attachments
 from utils.tools.attachment import get_attachments,get_times
-script = """
-function main(splash, args)
-  assert(splash:go(args.url))
-  assert(splash:wait(1))
-  return {
-    html = splash:html(),
-  }
-end
-"""
 
 class JiangxiZfcgwSpider(scrapy.Spider):
     name = 'jiangxi_zfcgw'
@@ -75,8 +66,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'], args={'lua_source': script, 'wait': 1}, callback=self.parse_page,
-                                    meta=content)
+                yield scrapy.Request(content['url'], callback=self.parse_page, meta=content)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -86,8 +76,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
         try:
             for pagenum in range(page_count):
                 url = response.meta['url'].replace('jyxx.html',str(pagenum+1) + '.html')
-                yield SplashRequest(url, args={'lua_source': script, 'wait': 1}, callback=self.parse, meta=response.meta,
-                                    dont_filter=True)
+                yield scrapy.Request(url, callback=self.parse, meta=response.meta, dont_filter=True)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -118,7 +107,7 @@ class JiangxiZfcgwSpider(scrapy.Spider):
                         'region':region,
                         'time':time
                     }
-                    yield SplashRequest(url, args={'lua_source': script, 'wait': 1},callback=self.pares_htgs, meta=result,dont_filter=True)
+                    yield scrapy.Request(url, callback=self.pares_htgs, meta=result,dont_filter=True)
                 else:
                     href = li.css('a::attr(href)').extract_first().strip()
                     title = ''.join(li.css('a *::text').extract()).strip()
