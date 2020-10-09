@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
+import json
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
@@ -32,186 +33,30 @@ class LiaoningJgggZfcgwSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-              splash:go(args.url)
-              wait_for_element(splash, "#protalInfoid a[onclick]")
-              splash:runjs("document.querySelector('#protalInfoid tbody').innerHTML = ''")
-              splash:runjs("queryall(SYLM.JGGG)")
-              wait_for_element(splash, "#protalInfoid a[onclick]")
-              splash:wait(1)
-              return splash:html()
-            end
-            """
         try:
-            contents = [
-                {
-                    'topic': 'jggg',  # 结果公告
-                    'url': 'http://www.ccgp-liaoning.gov.cn/portalindex.do?method=goPubInfoList'
+            url = 'http://www.ccgp-liaoning.gov.cn/portalindex.do?method=getPubInfoList&t_k=null'
+            pageTotal = 3642
+            for pageCurrent in range(pageTotal):
+                data = {
+                    'current': str(pageCurrent + 1),
+                    'rowCount': '10',
+                    'searchPhrase': '',
+                    'infoTypeCode': '1002',
+                    'privateOrCity': '1',
                 }
-            ]
-            for content in contents:
-                yield SplashRequest(content['url'],
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    meta=content)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_page(self, response):
-        script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-              splash:go(args.url)
-              wait_for_element(splash, "#protalInfoid a[onclick]")
-              splash:runjs("document.querySelector('#protalInfoid tbody').innerHTML = ''")
-              splash:runjs("queryall(SYLM.JGGG)")
-              wait_for_element(splash, "#protalInfoid a[onclick]")
-              splash:runjs("document.querySelector('#protalInfoid tbody').innerHTML = ''")
-              splash:runjs("document.querySelector('#protalInfoid-footer > div > div:nth-child(1) > ul > li:nth-child(3)').classList.remove('active')")
-              js = string.format("document.querySelector('#protalInfoid-footer > div > div:nth-child(1) > ul > li:nth-child(3) > a').setAttribute('data-page',%d)", args.pagenum)
-              splash:evaljs(js)
-              splash:runjs("document.querySelector('#protalInfoid-footer > div > div:nth-child(1) > ul > li:nth-child(3) > a').click()")
-              wait_for_element(splash, "#protalInfoid a[onclick]")
-              splash:wait(1)
-              return splash:html()
-            end
-            """
-        page_count = int(self.parse_pagenum(response))
-        try:
-            for pagenum in range(page_count):
-                url = response.meta['url']
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'pagenum': pagenum + 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                total = int(response.css('.text-default::text').extract_first().split('共')[1].split('条')[0].strip())
-                if total / 10 == int(total / 10):
-                    return int(total / 10)
-                else:
-                    return int(total / 10) + 1
-            return self.add_pagenum
+                yield scrapy.FormRequest(url=url, formdata=data, method='POST', dont_filter=True, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-              splash:go(args.url)
-              wait_for_element(splash, "form")
-              splash:wait(1)
-              return splash:html()
-            end
-            """
-        for tr in response.css('#protalInfoid tbody tr'):
+        result = json.loads(response.text)
+        for row in result['rows']:
             try:
-                title = tr.css('td:nth-child(3)::attr(title)').extract_first()
-                url = 'http://www.ccgp-liaoning.gov.cn/portalindex.do?method=getPubInfoViewOpen&infoId=' + tr.css(
-                    'td:nth-child(3) a::attr(onclick)').extract_first().replace('showInfo(\'', '').replace('\')', '')
-                region = tr.css('td:nth-child(1)::attr(title)').extract_first()
-                time = tr.css('td:nth-child(4)::attr(title)').extract_first()
+                title = row['title']
+                url = row['redirectURL']
+                region = row['districtName']
+                time = row['releaseDate']
                 result = {
                     'url': url,
                     'title': title,
@@ -219,15 +64,10 @@ class LiaoningJgggZfcgwSpider(scrapy.Spider):
                     'time': time
 
                 }
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse_item,
-                                    meta=result)
+                yield scrapy.Request(url,
+                                     dont_filter=True,
+                                     callback=self.parse_item,
+                                     meta=result)
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
