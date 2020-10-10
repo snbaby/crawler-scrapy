@@ -5,7 +5,9 @@ import json
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
+
+
 class QinghaiZfcgwSpider(scrapy.Spider):
     name = 'qinghai_zfcgw'
     custom_settings = {
@@ -26,187 +28,111 @@ class QinghaiZfcgwSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
-        }
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-              splash:go(args.url)
-              return splash:html()
-            end
-            """
         try:
             contents = [
                 {
                     'topic': 'cggs',  # 采购公示
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement1/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement1/index.html',
+                    'categoryCode': 'ZcyAnnouncement1',
+                    # 'total': 159
+                    'total': 1
                 },
                 {
                     'topic': 'gkzb',  # 公开招标11
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement2/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement2/index.html',
+                    'categoryCode': 'ZcyAnnouncement2',
+                    'total': 660
                 },
                 {
                     'topic': 'yqzbgg',  # 邀请招标公告
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3009/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3009/index.html',
+                    'categoryCode': 'ZcyAnnouncement3009',
+                    'total': 3
                 },
                 {
                     'topic': 'jzxtpgg',  # 竞争性谈判公告
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3002/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3002/index.html',
+                    'categoryCode': 'ZcyAnnouncement3002',
+                    'total': 544
                 },
                 {
                     'topic': 'jzxcsgg',  # 竞争性磋商公告
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3011/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3011/index.html',
+                    'categoryCode': 'ZcyAnnouncement3011',
+                    'total': 660
                 },
                 {
                     'topic': 'xjcggg',  # 询价采购公告111
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3003/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3003/index.html',
+                    'categoryCode': 'ZcyAnnouncement3003',
+                    'total': 324
                 },
                 {
                     'topic': 'zbgg',  # 中标公告
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement4/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement4/index.html',
+                    'categoryCode': 'ZcyAnnouncement4',
+                    'total': 660
+
                 },
                 {
                     'topic': 'bggg',  # 变更公告
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement3/index.html',
+                    'categoryCode': 'ZcyAnnouncement3',
+                    'total': 660
                 },
                 {
                     'topic': 'flbgg',  # 废流标公告
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement9999/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement9999/index.html',
+                    'categoryCode': 'ZcyAnnouncement9999',
+                    'total': 632
                 },
                 {
                     'topic': 'zgysgg',  # 资格预审公告
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement8888/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement8888/index.html',
+                    'categoryCode': 'ZcyAnnouncement8888',
+                    'total': 16
                 },
                 {
                     'topic': 'htgg',  # 合同公告
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement5/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement5/index.html',
+                    'categoryCode': 'ZcyAnnouncement5',
+                    'total': 660
                 },
                 {
                     'topic': 'dzmcgg',  # 电子卖场公告
-                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement8/index.html'
+                    'url': 'http://www.ccgp-qinghai.gov.cn/ZcyAnnouncement/ZcyAnnouncement8/index.html',
+                    'categoryCode': 'ZcyAnnouncement8',
+                    'total': 119
                 }
             ]
             for content in contents:
-                yield SplashRequest(content['url'],
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    meta=content)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_page(self, response):
-        script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
+                for pageNo in range(content['total']):
+                    data = {
+                        'categoryCode': content['categoryCode'],
+                        'pageNo': str(pageNo + 1),
+                        'pageSize': '15'
                     }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-              splash:go(args.url)
-              splash:wait(1)
-              splash:runjs("document.querySelector('.list-container').innerHTML = ''")
-              splash:runjs("document.querySelector('.paginationjs-pages .active').classList.add('test')")
-              splash:runjs("document.querySelector('.paginationjs-pages .test').classList.remove('active')")
-              js = string.format("document.querySelector('.paginationjs-pages .test').setAttribute('data-num',%d)", args.pagenum)
-              splash:evaljs(js)
-              splash:runjs("document.querySelector('.paginationjs-pages .test').click()")
-              wait_for_element(splash, ".list-container a")
-              splash:wait(1)
-              return splash:html()
-            end
-            """
-        page_count = int(self.parse_pagenum(response))
-        try:
-            for pagenum in range(page_count):
-                url = response.meta['url']
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'pagenum': pagenum + 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                return int(response.css('.paginationjs-pages li:nth-last-child(2)::attr(data-num)').extract_first().strip())
-            return self.add_pagenum
+                    url = 'http://www.ccgp-qinghai.gov.cn/front/search/category'
+                    yield scrapy.Request(url, body=json.dumps(data), dont_filter=True,
+                                         method='POST',
+                                         headers={'Content-Type': 'application/json'},
+                                         callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.css('.list-container a::attr(href)').extract():
+        for row in json.loads(response.text)['hits']['hits']:
             try:
-                url = response.urljoin(href)
+                item = row['_source']
+                url = 'http://www.ccgp-qinghai.gov.cn'+item['url']
                 result = {
                     'url': url
                 }

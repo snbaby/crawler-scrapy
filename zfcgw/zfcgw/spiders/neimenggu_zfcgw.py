@@ -40,36 +40,36 @@ class NeimengguZfcgwSpider(scrapy.Spider):
                     'type_name': '1',
                     'total': 8529
                 },
-                # {
-                #     'topic': 'zbgzgg',  # 招标更正公告
-                #     'type_name': '2',
-                #     'total': 1249
-                # },
-                # {
-                #     'topic': 'zbcjgg',  # 中标(成交)公告
-                #     'type_name': '3',
-                #     'total': 7349
-                # },
-                # {
-                #     'topic': 'zbcjgzgg',  # 中标(成交)更正公告
-                #     'type_name': '4',
-                #     'total': 170
-                # },
-                # {
-                #     'topic': 'fbgg',  # 废标公告
-                #     'type_name': '5',
-                #     'total': 1263
-                # },
-                # {
-                #     'topic': 'zgysgg',  # 资格预审公告
-                #     'type_name': '6',
-                #     'total': 2821
-                # },
-                # {
-                #     'topic': 'zgysgzgg',  # 资格预审更正公告
-                #     'type_name': '7',
-                #     'total': 131
-                # }
+                {
+                    'topic': 'zbgzgg',  # 招标更正公告
+                    'type_name': '2',
+                    'total': 1249
+                },
+                {
+                    'topic': 'zbcjgg',  # 中标(成交)公告
+                    'type_name': '3',
+                    'total': 7349
+                },
+                {
+                    'topic': 'zbcjgzgg',  # 中标(成交)更正公告
+                    'type_name': '4',
+                    'total': 170
+                },
+                {
+                    'topic': 'fbgg',  # 废标公告
+                    'type_name': '5',
+                    'total': 1263
+                },
+                {
+                    'topic': 'zgysgg',  # 资格预审公告
+                    'type_name': '6',
+                    'total': 2821
+                },
+                {
+                    'topic': 'zgysgzgg',  # 资格预审更正公告
+                    'type_name': '7',
+                    'total': 131
+                }
             ]
             for content in contents:
                 url = 'http://www.nmgp.gov.cn/zfcgwslave/web/index.php?r=new-data%2Fanndata'
