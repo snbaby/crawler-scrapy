@@ -5,7 +5,9 @@ import json
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
+
+
 class XinjiangZfcgwSpider(scrapy.Spider):
     name = 'xinjiang_zfcgw'
     custom_settings = {
@@ -26,176 +28,91 @@ class XinjiangZfcgwSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
-        }
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-                function wait_for_element(splash, css, maxwait)
-                  -- Wait until a selector matches an element
-                  -- in the page. Return an error if waited more
-                  -- than maxwait seconds.
-                  if maxwait == nil then
-                      maxwait = 10
-                  end
-                  return splash:wait_for_resume(string.format([[
-                    function main(splash) {
-                      var selector = '%s';
-                      var maxwait = %s;
-                      var end = Date.now() + maxwait*1000;
-
-                      function check() {
-                        if(document.querySelector(selector)) {
-                          splash.resume('Element found');
-                        } else if(Date.now() >= end) {
-                          var err = 'Timeout waiting for element';
-                          splash.error(err + " " + selector);
-                        } else {
-                          setTimeout(check, 200);
-                        }
-                      }
-                      check();
-                    }
-                  ]], css, maxwait))
-                end
-                function main(splash, args)
-                  splash:go(args.url)
-                  return splash:html()
-                end
-                """
         try:
             contents = [
                 {
                     'topic': 'cgxmgg',  # 采购项目公告
-                    'url': 'http://www.ccgp-xinjiang.gov.cn/ZcyAnnouncement/ZcyAnnouncement2/index.html'
+                    'categoryCode': 'ZcyAnnouncement2',
+                    'pageNo': 660
                 },
                 {
                     'topic': 'cggs',  # 采购公示
-                    'url': 'http://www.ccgp-xinjiang.gov.cn/ZcyAnnouncement/ZcyAnnouncement1/index.html'
+                    'categoryCode': 'ZcyAnnouncement1',
+                    'pageNo': 106
                 },
                 {
                     'topic': 'cgjggg',  # 采购结果公告
-                    'url': 'http://www.ccgp-xinjiang.gov.cn/ZcyAnnouncement/ZcyAnnouncement4/index.html'
+
+                    'categoryCode': 'ZcyAnnouncement4',
+                    'pageNo': 660
                 },
                 {
                     'topic': 'cghtgg',  # 采购合同公告
-                    'url': 'http://www.ccgp-xinjiang.gov.cn/ZcyAnnouncement/ZcyAnnouncement5/index.html'
+
+                    'categoryCode': 'ZcyAnnouncement5',
+                    'pageNo': 660
                 },
                 {
                     'topic': 'cqbggg',  # 澄清变更公告
-                    'url': 'http://www.ccgp-xinjiang.gov.cn/ZcyAnnouncement/ZcyAnnouncement3/index.html'
+
+                    'categoryCode': 'ZcyAnnouncement3',
+                    'pageNo': 660
                 },
                 {
                     'topic': 'fbgg',  # 废标公告
-                    'url': 'http://www.ccgp-xinjiang.gov.cn/ZcyAnnouncement/ZcyAnnouncement10/index.html'
+
+                    'categoryCode': 'ZcyAnnouncement10',
+                    'pageNo': 466
                 },
                 {
                     'topic': 'lyys',  # 履约验收
-                    'url': 'http://www.ccgp-xinjiang.gov.cn/ZcyAnnouncement/ZcyAnnouncement6/index.html'
+
+                    'categoryCode': 'ZcyAnnouncement6',
+                    'pageNo': 10
                 },
                 {
                     'topic': 'dzmcgg',  # 电子卖场公告
-                    'url': 'http://www.ccgp-xinjiang.gov.cn/ZcyAnnouncement/ZcyAnnouncement8/index.html'
+
+                    'categoryCode': 'ZcyAnnouncement8',
+                    'pageNo': 660
                 },
                 {
                     'topic': 'fzfcggg',  # 非政府采购公告
-                    'url': 'http://www.ccgp-xinjiang.gov.cn/ZcyAnnouncement/ZcyAnnouncement9/index.html'
+
+                    'categoryCode': 'ZcyAnnouncement9',
+                    'pageNo': 30
                 }
             ]
+            url = 'http://www.ccgp-xinjiang.gov.cn/front/search/category'
             for content in contents:
-                yield SplashRequest(content['url'],
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': content['url'],
-                                    },
-                                    callback=self.parse_page,
-                                    meta=content)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_page(self, response):
-        script = """
-                function wait_for_element(splash, css, maxwait)
-                  -- Wait until a selector matches an element
-                  -- in the page. Return an error if waited more
-                  -- than maxwait seconds.
-                  if maxwait == nil then
-                      maxwait = 10
-                  end
-                  return splash:wait_for_resume(string.format([[
-                    function main(splash) {
-                      var selector = '%s';
-                      var maxwait = %s;
-                      var end = Date.now() + maxwait*1000;
-
-                      function check() {
-                        if(document.querySelector(selector)) {
-                          splash.resume('Element found');
-                        } else if(Date.now() >= end) {
-                          var err = 'Timeout waiting for element';
-                          splash.error(err + " " + selector);
-                        } else {
-                          setTimeout(check, 200);
-                        }
-                      }
-                      check();
+                for pageNo in range(content['pageNo']):
+                    data = {
+                        "pageNo": str(pageNo + 1),
+                        "pageSize": "15",
+                        "categoryCode": content['categoryCode']
                     }
-                  ]], css, maxwait))
-                end
-                function main(splash, args)
-                  splash:go(args.url)
-                  splash:wait(1)
-                  splash:runjs("document.querySelector('.list-container').innerHTML = ''")
-                  splash:runjs("document.querySelector('.paginationjs-pages .active').classList.add('test')")
-                  splash:runjs("document.querySelector('.paginationjs-pages .test').classList.remove('active')")
-                  js = string.format("document.querySelector('.paginationjs-pages .test').setAttribute('data-num',%d)", args.pagenum)
-                  splash:evaljs(js)
-                  splash:runjs("document.querySelector('.paginationjs-pages .test').click()")
-                  wait_for_element(splash, ".list-container a")
-                  splash:wait(1)
-                  return splash:html()
-                end
-                """
-        page_count = int(self.parse_pagenum(response))
-        try:
-            for pagenum in range(page_count):
-                url = response.meta['url']
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'pagenum': pagenum + 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                return int(
-                    response.css('.paginationjs-pages li:nth-last-child(2)::attr(data-num)').extract_first().strip())
-            return self.add_pagenum
+                    yield scrapy.Request(url, body=json.dumps(data), method='POST',
+                                         dont_filter=True,
+                                         headers={
+                                             'Content-Type': 'application/json',
+                                             'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36',
+                                             'Accept': '*/*'
+                                         }, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        for href in response.css('.list-container a::attr(href)').extract():
+        for hits in json.loads(response.text)['hits']['hits']:
             try:
-                url = response.urljoin(href)
+                url = 'http://www.ccgp-xinjiang.gov.cn/'+hits['_source']['url']
                 result = {
                     'url': url
                 }
