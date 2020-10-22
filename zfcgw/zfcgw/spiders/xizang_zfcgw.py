@@ -4,7 +4,9 @@ import logging
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
-from utils.tools.attachment import get_attachments,get_times
+from utils.tools.attachment import get_attachments, get_times
+
+
 class XizangZfcgwSpider(scrapy.Spider):
     name = 'xizang_zfcgw'
     custom_settings = {
@@ -25,72 +27,20 @@ class XizangZfcgwSpider(scrapy.Spider):
             'utils.pipelines.DuplicatesPipeline.DuplicatesPipeline': 100,
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter'
-        }
+    }
 
     def __init__(self, pagenum=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-            function wait_for_element(splash, css, maxwait)
-              -- Wait until a selector matches an element
-              -- in the page. Return an error if waited more
-              -- than maxwait seconds.
-              if maxwait == nil then
-                  maxwait = 10
-              end
-              return splash:wait_for_resume(string.format([[
-                function main(splash) {
-                  var selector = '%s';
-                  var maxwait = %s;
-                  var end = Date.now() + maxwait*1000;
-
-                  function check() {
-                    if(document.querySelector(selector)) {
-                      splash.resume('Element found');
-                    } else if(Date.now() >= end) {
-                      var err = 'Timeout waiting for element';
-                      splash.error(err + " " + selector);
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  }
-                  check();
-                }
-              ]], css, maxwait))
-            end
-            function main(splash, args)
-              splash:go(args.url)
-              wait_for_element(splash,'#news_div a')
-              splash:runjs("document.querySelector('#news_div').innerHTML = ''")
-              js = string.format("changePage(%d)", args.pagenum)
-              splash:evaljs(js)
-              wait_for_element(splash,'#news_div a')
-              splash:wait(1)
-              return splash:html()
-            end
-            """
         try:
-            contents = [
-                {
-                    'topic': 'cggg',  # 采购公告
-                    'url': 'http://www.ccgp-xizang.gov.cn/shopHome/morePolicyNews.action?categoryId=124,125'
+            url = 'http://www.ccgp-xizang.gov.cn/shopHome/morePolicyNews.action?categoryId=124,125'
+            for pageNo in range(455):
+                data = {
+                    'currentPage': str(pageNo + 1)
                 }
-            ]
-            for content in contents:
-                page_count = 455
-                for pagenum in range(page_count):
-                    yield SplashRequest(content['url'],
-                                        endpoint='execute',
-                                        args={
-                                            'lua_source': script,
-                                            'wait': 1,
-                                            'pagenum': pagenum+1,
-                                            'url': content['url'],
-                                        },
-                                        callback=self.parse,
-                                        meta=content)
+            yield scrapy.FormRequest(url=url, formdata=data, method='POST', dont_filter=True, callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
