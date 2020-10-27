@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import logging
+import json
 
 from scrapy_splash import SplashRequest
 from zfcgw.items import ztbkItem
@@ -33,176 +34,61 @@ class YunnanZfcgwSpider(scrapy.Spider):
         self.add_pagenum = pagenum
 
     def start_requests(self):
-        script = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
-
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-          splash:go(args.url)
-          wait_for_element(splash,'#bulletinlistid tbody a')
-          splash:runjs("document.querySelector('#bulletinlistid tbody').innerHTML = ''")
-          js = string.format("userful('%d')", args.sign)
-          splash:evaljs(js)
-          wait_for_element(splash,'#bulletinlistid tbody a')
-          return splash:html()
-        end
-        """
         try:
             contents = [
                 {
-                    'topic': 'cgxx',  # 采购信息
-                    'url': 'http://www.ccgp-yunnan.gov.cn/bulletin.do?method=moreList&menuSelect=nav2#'
+                    'sign': 1,
+                    'total': 9044
+                },
+                {
+                    'sign': 4,
+                    'total': 274
+                },
+                {
+                    'sign': 3,
+                    'total': 651
+                },
+                {
+                    'sign': 5,
+                    'total': 481
+                },
+                {
+                    'sign': 2,
+                    'total': 7557
+                },
+                {
+                    'sign': 7,
+                    'total': 2517
                 }
             ]
+            url = 'http://www.ccgp-yunnan.gov.cn/bulletin.do?method=moreListQuery'
             for content in contents:
-                signs = [1, 2, 3, 4, 5, 7]
-                for sign in signs:
-                    yield SplashRequest(content['url'],
-                                        endpoint='execute',
-                                        args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'sign': sign,
-                                        'url': content['url'],
-                                        },
-                                        callback=self.parse_page,
-                                        meta={
-                                            'url': content['url'],
-                                            'topic': content['topic'],
-                                            'sign': sign
-                    })
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
+                for pageNo in range(content['total']):
+                    sign = content['sign']
+                    data = {
+                        "current": str(pageNo+1),
+                        "rowCount": "10",
+                        "searchPhrase": "",
+                        "query_bulletintitle": "",
+                        "query_startTime": "",
+                        "query_endTime": "",
+                        "query_sign": str(sign)
+                    }
+                    yield scrapy.FormRequest(url=url, formdata=data,meta={"sign":sign}, method='POST', dont_filter=True, callback=self.parse)
 
-    def parse_page(self, response):
-        script = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
-
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-          splash:go(args.url)
-          wait_for_element(splash,'#bulletinlistid tbody a')
-          splash:runjs("document.querySelector('#bulletinlistid tbody').innerHTML = ''")
-          js = string.format("userful('%d')", args.sign)
-          splash:evaljs(js)
-          wait_for_element(splash,'#bulletinlistid tbody a')
-          splash:runjs("document.querySelector('#bulletinlistid tbody').innerHTML = ''")
-
-          splash:runjs("document.querySelector('.pagination .active').classList.add('test')")
-          splash:runjs("document.querySelector('.pagination .test').classList.remove('active')")
-          js = string.format("document.querySelector('.pagination .test a').setAttribute('data-page',%d)", args.pagenum)
-          splash:evaljs(js)
-          splash:runjs("document.querySelector('.pagination .test a').click()")
-
-          wait_for_element(splash, "#bulletinlistid tbody a")
-          splash:wait(1)
-          return splash:html()
-        end
-        """
-
-        page_count = int(self.parse_pagenum(response))
-        try:
-            for pagenum in range(page_count):
-                url = response.meta['url']
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'pagenum': pagenum + 1,
-                                        'sign': response.meta['sign'],
-                                        'url': url,
-                                    },
-                                    callback=self.parse,
-                                    meta=response.meta)
-        except Exception as e:
-            logging.error(self.name + ": " + e.__str__())
-            logging.exception(e)
-
-    def parse_pagenum(self, response):
-        try:
-            # 在解析页码的方法中判断是否增量爬取并设定爬取列表页数，如果运行
-            # 脚本时没有传入参数pagenum指定爬取前几页列表页，则全量爬取
-            if not self.add_pagenum:
-                total = int(response.css(
-                    '.text-default::text').extract_first().split('共')[1].split('条')[0].strip())
-                if total / 10 == int(total / 10):
-                    return int(total / 10)
-                else:
-                    return int(total / 10) + 1
-            return self.add_pagenum
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        script = """
-        function main(splash, args)
-          splash:go(args.url)
-          splash:wait(1)
-          return splash:html()
-        end
-        """
-        for tr in response.css('#bulletinlistid tbody tr'):
+        for row in json.loads(response.text)['rows']:
             try:
-                title = tr.css('td:nth-child(1)::attr(title)').extract_first()
-                time = tr.css('td:nth-child(4)::attr(title)').extract_first()
-                region = tr.css('td:nth-child(3)::attr(title)').extract_first()
-                bulletin_id = tr.css(
-                    'td:nth-child(1) a::attr(data-bulletin_id)').extract_first()
-                bulletinclass = tr.css(
-                    'td:nth-child(1) a::attr(data-bulletinclass)').extract_first()
-                tabletype = tr.css(
-                    'td:nth-child(1) a::attr(data-tabletype)').extract_first()
+                title = row['bulletintitle']
+                time = row['beginday']
+                region = row['codeName']
+                bulletin_id = row['bulletin_id']
+                bulletinclass = row['bulletinclass']
+                tabletype = row['tabletype']
                 url = response.urljoin(
                     self.create_url(
                         bulletin_id,
@@ -215,15 +101,8 @@ class YunnanZfcgwSpider(scrapy.Spider):
                     'region': region,
                     'url': url
                 }
-                yield SplashRequest(url,
-                                    endpoint='execute',
-                                    args={
-                                        'lua_source': script,
-                                        'wait': 1,
-                                        'url': url,
-                                    },
-                                    callback=self.parse_item,
-                                    meta=result)
+                yield scrapy.Request(url, callback=self.parse_item, meta=result, dont_filter=True)
+
             except Exception as e:
                 logging.error(self.name + ": " + e.__str__())
                 logging.exception(e)
