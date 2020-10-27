@@ -52,47 +52,18 @@ class GansuGgjyptSpider(scrapy.Spider):
                     'prjpropertynewE': 'E',
                     'projectname': ''
                 }
-                yield scrapy.FormRequest(url=url, formdata=data, method='POST', callback=self.parse)
+                yield scrapy.FormRequest(url=url, formdata=data,dont_filter=True, method='POST',
+                                         headers={
+                                             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                             'Accept': 'text/html, */*; q=0.01',
+                                             'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36'
+                                         },
+                                         callback=self.parse)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
 
     def parse(self, response):
-        script = """
-        function wait_for_element(splash, css, maxwait)
-          -- Wait until a selector matches an element
-          -- in the page. Return an error if waited more
-          -- than maxwait seconds.
-          if maxwait == nil then
-              maxwait = 10
-          end
-          return splash:wait_for_resume(string.format([[
-            function main(splash) {
-              var selector = '%s';
-              var maxwait = %s;
-              var end = Date.now() + maxwait*1000;
-
-              function check() {
-                if(document.querySelector(selector)) {
-                  splash.resume('Element found');
-                } else if(Date.now() >= end) {
-                  var err = 'Timeout waiting for element';
-                  splash.error(err + " " + selector);
-                } else {
-                  setTimeout(check, 200);
-                }
-              }
-              check();
-            }
-          ]], css, maxwait))
-        end
-        function main(splash, args)
-          splash:go(args.url)
-          splash:wait(5)
-          wait_for_element(splash, ".jxTradingMainLeft")
-          return splash:html()
-        end
-        """
         try:
             for selector in response.css('.sTradingInformationSelectedBtoList dl'):
                 if not selector.css("::attr(id)").extract_first():
@@ -105,16 +76,7 @@ class GansuGgjyptSpider(scrapy.Spider):
                         'time': time
 
                     }
-                    yield SplashRequest(url,
-                                        endpoint='execute',
-                                        args={
-                                            'lua_source': script,
-                                            'wait': 1,
-                                            'url': url,
-                                        },
-                                        callback=self.parse_item,
-                                        meta=result,
-                                        dont_filter=True)
+                    yield scrapy.Request(url, callback=self.parse_item, dont_filter=True, meta=result)
         except Exception as e:
             logging.error(self.name + ": " + e.__str__())
             logging.exception(e)
@@ -147,8 +109,8 @@ class GansuGgjyptSpider(scrapy.Spider):
                 item['content'] = response.css('.jxTradingPublic').extract_first()
                 item['txt'] = ''.join(response.css('.jxTradingPublic *::text').extract())
             else:
-                item['content'] = ''
-                item['txt'] = ''
+                item['content'] = response.text
+                item['txt'] = response.text
             item['appendix'] = appendix
             item['category'] = category
             item['time'] = response.meta['time']
