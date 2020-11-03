@@ -98,17 +98,25 @@ LOG_ENABLED = True
 LOG_FILE = "spiders.log"
 LOG_LEVEL = "ERROR"
 
-# MYSQL_HOST = '10.8.32.125'
-MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'
-# MYSQL_HOST = '192.168.43.201'
+MYSQL_HOST = '10.8.32.156'
+MYSQL_PASSWORD = 'zw123456'
 MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'Liqin1988'
-# MYSQL_PASSWORD ='Admin123!'
-
-# MYSQL_DB = 'engineering-brain'
-MYSQL_DB = 'python'
-MYSQL_PORT = 3306
+MYSQL_DB = 'engineering-brain'
 MYSQL_CHRSET = 'utf8'
+MYSQL_PORT = 3361
+
+# MYSQL_HOST = '127.0.0.1'
+# MYSQL_PASSWORD = 'yeyang112114'
+# MYSQL_USER = 'root'
+# MYSQL_DB = 'engineering-brain'
+# MYSQL_CHRSET = 'utf8'
+
+# MYSQL_HOST = 'rm-8vbif49m6k7l651e5fo.mysql.zhangbei.rds.aliyuncs.com'
+# MYSQL_PASSWORD = 'Liqin1988'
+# MYSQL_USER = 'root'
+# MYSQL_DB = 'python'
+# MYSQL_CHRSET = 'utf8'
+# MYSQL_PORT = 3306
 
 SPLASH_URL = "http://localhost:8050/"
 
